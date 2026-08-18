@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Write a Post — Tenfold Method</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="wrap">
+      <a href="index.html" class="logo" style="text-decoration:none; color:inherit;">Tenfold</a>
+      <nav class="primary-nav">
+        <a href="portal-dashboard.html">Dashboard</a>
+        <a href="portal-login.html" id="logout-link">Log out</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap" style="max-width:600px;">
+    <div id="not-allowed" style="display:none; padding:40px 0;">
+      <h1>This page is admin-only</h1>
+      <p>You're logged in, but this account doesn't have permission to publish posts.</p>
+      <a href="portal-dashboard.html" class="btn">Back to dashboard</a>
+    </div>
+
+    <div id="post-form-wrap" style="display:none; padding:32px 0;">
+      <h1>Write a new post</h1>
+      <p class="form-error" id="post-error"></p>
+      <p class="small" id="post-success" style="display:none; color:var(--accent);"></p>
+
+      <form id="post-form">
+        <div class="field">
+          <label for="post-title">Title</label>
+          <input type="text" id="post-title" required />
+        </div>
+        <div class="field">
+          <label for="post-tag">Category</label>
+          <input type="text" id="post-tag" placeholder="Mental wellness, Nutrition, Longevity..." required />
+        </div>
+        <div class="field">
+          <label for="post-content">Post content</label>
+          <textarea id="post-content" rows="10" style="width:100%; padding:10px 12px; border-radius:var(--radius); border:1px solid var(--border); font-family:var(--font-body); font-size:14px;" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" id="post-submit">Publish post</button>
+      </form>
+
+      <h2 style="margin-top:40px;">Your published posts</h2>
+      <div id="existing-posts"></div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-client.js"></script>
+  <script>
+    const ADMIN_EMAIL = "tenfoldfunctional@gmail.com";
+
+    async function init() {
+      const { data } = await supabaseClient.auth.getSession();
+      if (!data.session) {
+        window.location.href = 'portal-login.html';
+        return;
+      }
+      if (data.session.user.email !== ADMIN_EMAIL) {
+        document.getElementById('not-allowed').style.display = 'block';
+        return;
+      }
+      document.getElementById('post-form-wrap').style.display = 'block';
+      loadPosts();
+    }
+    init();
+
+    document.getElementById('logout-link').addEventListener('click', async function (e) {
+      e.preventDefault();
+      await supabaseClient.auth.signOut();
+      window.location.href = 'portal-login.html';
+    });
+
+    async function loadPosts() {
+      const { data: posts, error } = await supabaseClient
+        .from('posts')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      const container = document.getElementById('existing-posts');
+      if (error) {
+        container.innerHTML = '<p class="small">Could not load posts.</p>';
+        return;
+      }
+      if (!posts.length) {
+        container.innerHTML = '<p class="small">No posts published yet.</p>';
+        return;
+      }
+      container.innerHTML = posts.map(p => `
+        <div class="card" style="margin-bottom:10px;">
+          <p class="blog-tag">${escapeHtml(p.tag)}</p>
+          <p class="blog-title" style="margin-bottom:6px;">${escapeHtml(p.title)}</p>
+          <button class="btn btn-sm" onclick="deletePost('${p.id}')">Delete</button>
+        </div>
+      `).join('');
+    }
+
+    async function deletePost(id) {
+      if (!confirm('Delete this post?')) return;
+      await supabaseClient.from('posts').delete().eq('id', id);
+      loadPosts();
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    document.getElementById('post-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const errorEl = document.getElementById('post-error');
+      const successEl = document.getElementById('post-success');
+      errorEl.style.display = 'none';
+      successEl.style.display = 'none';
+
+      const btn = document.getElementById('post-submit');
+      btn.disabled = true;
+      btn.textContent = 'Publishing...';
+
+      const title = document.getElementById('post-title').value.trim();
+      const tag = document.getElementById('post-tag').value.trim();
+      const content = document.getElementById('post-content').value.trim();
+
+      const { error } = await supabaseClient.from('posts').insert({ title, tag, content });
+
+      btn.disabled = false;
+      btn.textContent = 'Publish post';
+
+      if (error) {
+        errorEl.textContent = error.message;
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      successEl.textContent = 'Post published!';
+      successEl.style.display = 'block';
+      document.getElementById('post-form').reset();
+      loadPosts();
+    });
+  </script>
+
+</body>
+</html>

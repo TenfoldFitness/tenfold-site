@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Client Portal Login — Tenfold Method</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <div class="login-page">
+    <div class="center" style="margin-bottom:28px;">
+      <a href="index.html" class="logo" style="text-decoration:none; color:inherit;">Tenfold</a>
+      <p style="margin-top:4px;">Client portal</p>
+    </div>
+
+    <div class="login-box" id="login-view">
+      <h1>Log in to your account</h1>
+
+      <p class="form-error" id="login-error"></p>
+
+      <form id="login-form">
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="you@email.com" required />
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="At least 6 characters" required />
+        </div>
+        <p class="forgot" id="forgot-link">Forgot password?</p>
+        <button type="submit" class="btn btn-primary" id="login-submit">Log in</button>
+      </form>
+
+      <p class="signup-note">New client? <a href="#" id="show-signup">Create an account</a></p>
+    </div>
+
+    <div class="login-box" id="signup-view" style="display:none;">
+      <h1>Create your account</h1>
+
+      <p class="form-error" id="signup-error"></p>
+      <p class="small" id="signup-success" style="display:none; color:var(--accent); font-size:13px; margin-bottom:12px;"></p>
+
+      <form id="signup-form">
+        <div class="field">
+          <label for="signup-email">Email</label>
+          <input type="email" id="signup-email" name="email" placeholder="you@email.com" required />
+        </div>
+        <div class="field">
+          <label for="signup-password">Password</label>
+          <input type="password" id="signup-password" name="password" placeholder="At least 6 characters" minlength="6" required />
+        </div>
+        <button type="submit" class="btn btn-primary" id="signup-submit">Create account</button>
+      </form>
+
+      <p class="signup-note">Already have an account? <a href="#" id="show-login">Log in</a></p>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-client.js"></script>
+  <script>
+    const loginView = document.getElementById('login-view');
+    const signupView = document.getElementById('signup-view');
+
+    document.getElementById('show-signup').addEventListener('click', function (e) {
+      e.preventDefault();
+      loginView.style.display = 'none';
+      signupView.style.display = 'block';
+    });
+    document.getElementById('show-login').addEventListener('click', function (e) {
+      e.preventDefault();
+      signupView.style.display = 'none';
+      loginView.style.display = 'block';
+    });
+
+    // Redirect straight to the dashboard if already logged in
+    supabaseClient.auth.getSession().then(({ data }) => {
+      if (data.session) window.location.href = 'portal-dashboard.html';
+    });
+
+    // Log in
+    document.getElementById('login-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const errorEl = document.getElementById('login-error');
+      const btn = document.getElementById('login-submit');
+      errorEl.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Logging in...';
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+      btn.disabled = false;
+      btn.textContent = 'Log in';
+
+      if (error) {
+        errorEl.textContent = error.message === 'Invalid login credentials'
+          ? "That email and password don't match. Please try again."
+          : error.message;
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      window.location.href = 'portal-dashboard.html';
+    });
+
+    // Create account
+    document.getElementById('signup-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const errorEl = document.getElementById('signup-error');
+      const successEl = document.getElementById('signup-success');
+      const btn = document.getElementById('signup-submit');
+      errorEl.style.display = 'none';
+      successEl.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Creating account...';
+
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value;
+
+      const { error } = await supabaseClient.auth.signUp({ email, password });
+
+      btn.disabled = false;
+      btn.textContent = 'Create account';
+
+      if (error) {
+        errorEl.textContent = error.message;
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      successEl.textContent = "Account created! Check your email to confirm, then log in.";
+      successEl.style.display = 'block';
+      document.getElementById('signup-form').reset();
+    });
+
+    // Forgot password
+    document.getElementById('forgot-link').addEventListener('click', async function () {
+      const email = document.getElementById('email').value.trim();
+      const errorEl = document.getElementById('login-error');
+      if (!email) {
+        errorEl.textContent = "Enter your email above first, then click \"Forgot password?\" again.";
+        errorEl.style.display = 'block';
+        return;
+      }
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/reset-password.html',
+      });
+      errorEl.style.display = 'block';
+      errorEl.style.color = 'var(--accent)';
+      errorEl.textContent = error ? error.message : "Check your email for a password reset link.";
+    });
+  </script>
+
+</body>
+</html>

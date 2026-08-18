@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Memberships — Tenfold Method</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .tier-card { background: var(--surface-1); border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+    .tier-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+    .tier-price { font-size: 18px; font-weight: 600; color: var(--accent); }
+    .tier-list { margin: 10px 0 12px; padding-left: 18px; font-size: 13px; color: var(--text-secondary); }
+    .tier-list li { margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="wrap">
+      <a href="index.html" class="logo" style="text-decoration:none; color:inherit;">Tenfold</a>
+      <nav class="primary-nav">
+        <a href="portal-dashboard.html">Dashboard</a>
+        <a href="#" id="logout-link">Log out</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap" style="max-width:600px;">
+    <div style="padding:28px 0 8px;">
+      <h1 style="font-size:24px;">Choose your membership</h1>
+      <p>Every tier builds on the one before it. Pick the level that fits where you are right now — you can always move up later.</p>
+    </div>
+
+    <div class="tier-card">
+      <div class="tier-head"><h2 style="margin:0; font-size:16px;">1. Foundation</h2><span class="tier-price">$20/mo</span></div>
+      <ul class="tier-list">
+        <li>Client portal access</li>
+        <li>Daily workout (6-day split)</li>
+        <li>Fridge-to-recipe &amp; restaurant macro tools</li>
+      </ul>
+      <button class="btn btn-primary btn-sm select-tier" data-tier="1" data-kind="subscription">Select Foundation</button>
+    </div>
+
+    <div class="tier-card">
+      <div class="tier-head"><h2 style="margin:0; font-size:16px;">2. Guided</h2><span class="tier-price">$100/mo</span></div>
+      <ul class="tier-list">
+        <li>Everything in Foundation</li>
+        <li>Custom 4-week workout plan</li>
+        <li>2 virtual check-ins per month</li>
+      </ul>
+      <button class="btn btn-primary btn-sm select-tier" data-tier="2" data-kind="subscription">Select Guided</button>
+    </div>
+
+    <div class="tier-card">
+      <div class="tier-head"><h2 style="margin:0; font-size:16px;">3. Virtual Intensive</h2><span class="tier-price">$1,000 / 12 weeks</span></div>
+      <ul class="tier-list">
+        <li>Everything in Foundation &amp; Guided</li>
+        <li>1 virtual training session/week (12 total)</li>
+        <li>Full nutrition planning</li>
+        <li>Includes premium coaching &amp; nutrition planning fees</li>
+      </ul>
+      <button class="btn btn-primary btn-sm select-tier" data-tier="3" data-kind="package">Select Virtual Intensive</button>
+    </div>
+
+    <div class="tier-card">
+      <div class="tier-head"><h2 style="margin:0; font-size:16px;">4. In-Person Starter</h2><span class="tier-price">$1,200 / 12 weeks</span></div>
+      <ul class="tier-list">
+        <li>Everything above</li>
+        <li>1x/week in-person training (12 sessions)</li>
+        <li>Includes premium coaching &amp; nutrition planning fees</li>
+      </ul>
+      <button class="btn btn-primary btn-sm select-tier" data-tier="4" data-kind="package">Select In-Person Starter</button>
+    </div>
+
+    <div class="tier-card">
+      <div class="tier-head"><h2 style="margin:0; font-size:16px;">5. In-Person Standard</h2><span class="tier-price">$1,600 / 12 weeks</span></div>
+      <ul class="tier-list">
+        <li>Everything above</li>
+        <li>2x/week in-person training (24 sessions)</li>
+        <li>Includes premium coaching &amp; nutrition planning fees</li>
+      </ul>
+      <button class="btn btn-primary btn-sm select-tier" data-tier="5" data-kind="package">Select In-Person Standard</button>
+    </div>
+
+    <div class="tier-card">
+      <div class="tier-head"><h2 style="margin:0; font-size:16px;">6. In-Person Elite</h2><span class="tier-price">$2,200 / 12 weeks</span></div>
+      <ul class="tier-list">
+        <li>Everything above</li>
+        <li>3x/week in-person training (36 sessions)</li>
+        <li>Includes premium coaching &amp; nutrition planning fees</li>
+      </ul>
+      <button class="btn btn-primary btn-sm select-tier" data-tier="6" data-kind="package">Select In-Person Elite</button>
+    </div>
+
+    <div id="checkout-box" style="display:none; padding:20px 0;">
+      <h2 id="checkout-title">Checkout</h2>
+      <div id="card-container" style="margin:14px 0;"></div>
+      <p class="form-error" id="checkout-error"></p>
+      <p class="small" id="checkout-success" style="display:none; color:var(--accent);"></p>
+      <button id="confirm-purchase" class="btn btn-primary">Confirm</button>
+    </div>
+  </main>
+
+  <footer>Tenfold Method &nbsp;&middot;&nbsp; In person &amp; virtual training</footer>
+
+  <script src="https://web.squarecdn.com/v1/square.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-client.js"></script>
+  <script>
+    const SQUARE_APP_ID = "sq0idp-gjwHru8DqZHZoRvhSHirjw"; // production
+    let clientEmail = null;
+
+    supabaseClient.auth.getSession().then(({ data }) => {
+      if (!data.session) { window.location.href = 'portal-login.html'; return; }
+      clientEmail = data.session.user.email;
+    });
+
+    document.getElementById('logout-link').addEventListener('click', async function (e) {
+      e.preventDefault();
+      await supabaseClient.auth.signOut();
+      window.location.href = 'portal-login.html';
+    });
+
+    let squareCard, selectedTier, selectedKind;
+
+    async function initSquare() {
+      const payments = window.Square.payments(SQUARE_APP_ID, "L5KMCJ2K8M3AX");
+      squareCard = await payments.card({
+        style: {
+          input: {
+            fontSize: '14px',
+            color: '#1E2B29',
+          },
+          '.input-container': {
+            borderColor: '#E2DED5',
+            borderRadius: '10px',
+          },
+          '.input-container.is-focus': {
+            borderColor: '#2F6F63',
+          },
+          '.message-text': {
+            color: '#B3453B',
+          },
+        },
+      });
+      await squareCard.attach('#card-container');
+    }
+    initSquare();
+
+    document.querySelectorAll('.select-tier').forEach(btn => {
+      btn.addEventListener('click', function () {
+        selectedTier = parseInt(this.dataset.tier, 10);
+        selectedKind = this.dataset.kind;
+        document.getElementById('checkout-title').textContent =
+          'Checkout — ' + this.textContent.replace('Select ', '');
+        document.getElementById('checkout-box').style.display = 'block';
+        document.getElementById('checkout-box').scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+
+    document.getElementById('confirm-purchase').addEventListener('click', async function () {
+      const errorEl = document.getElementById('checkout-error');
+      const successEl = document.getElementById('checkout-success');
+      errorEl.style.display = 'none';
+      successEl.style.display = 'none';
+      const btn = this;
+      btn.disabled = true;
+      btn.textContent = 'Processing...';
+
+      try {
+        const result = await squareCard.tokenize();
+        if (result.status !== 'OK') throw new Error('Card details could not be verified.');
+
+        const { data: sessionData } = await supabaseClient.auth.getSession();
+        const authToken = sessionData.session ? sessionData.session.access_token : SUPABASE_PUBLISHABLE_KEY;
+
+        const functionName = selectedKind === 'subscription' ? 'start-membership' : 'purchase-package';
+        const response = await fetch(SUPABASE_URL + '/functions/v1/' + functionName, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_PUBLISHABLE_KEY,
+            'Authorization': 'Bearer ' + authToken,
+          },
+          body: JSON.stringify({
+            sourceId: result.token,
+            tier: selectedTier,
+            clientEmail: clientEmail,
+          }),
+        });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error?.message || payload.error?.detail || 'Purchase failed.');
+
+        successEl.textContent = "You're all set! Redirecting to your dashboard...";
+        successEl.style.display = 'block';
+        setTimeout(() => { window.location.href = 'portal-dashboard.html'; }, 1500);
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Confirm';
+      }
+    });
+  </script>
+
+</body>
+</html>

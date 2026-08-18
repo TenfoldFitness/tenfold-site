@@ -1,0 +1,283 @@
+/* ===== Tenfold Method — Shared Styles ===== */
+
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  /* Color tokens — clean & clinical-professional, warmed with a soft teal */
+  --bg: #FAF9F6;
+  --surface-1: #F1F0EA;
+  --surface-2: #FFFFFF;
+  --text-primary: #1E2B29;
+  --text-secondary: #5C6B67;
+  --text-muted: #9BA6A2;
+  --accent: #2F6F63;
+  --accent-bg: #E3EFEA;
+  --border: #E2DED5;
+
+  --radius: 10px;
+  --font-display: 'Newsreader', Georgia, serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  background: linear-gradient(180deg, #E3EFEA 0%, #FAF9F6 20%, #FAF9F6 80%, #E9F1ED 100%);
+  line-height: 1.6;
+}
+
+img { max-width: 100%; display: block; }
+
+a { color: inherit; text-decoration: none; }
+
+.wrap {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* ---- Header / nav ---- */
+.site-header {
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+}
+.site-header .wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+.logo {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+nav.primary-nav {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+nav.primary-nav a:hover { color: var(--text-primary); }
+nav.primary-nav a.current { color: var(--text-primary); font-weight: 500; }
+.pill-link {
+  background: var(--accent-bg);
+  color: var(--accent);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+.pill-link:hover { background: #d8e9e2; }
+.instagram-link svg { width: 18px; height: 18px; vertical-align: -3px; }
+
+/* ---- Buttons ---- */
+.btn {
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 11px 22px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.btn:hover { background: var(--surface-1); }
+.btn-primary {
+  background: var(--text-primary);
+  color: var(--bg);
+  border: none;
+}
+.btn-primary:hover { background: #16201e; }
+.btn-sm { font-size: 13px; padding: 7px 14px; }
+
+/* ---- Sections ---- */
+section { padding: 48px 0; border-top: 1px solid var(--border); }
+section:first-of-type { border-top: none; }
+
+h1 {
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 0 0 10px;
+}
+h2 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0 0 12px;
+}
+p { color: var(--text-secondary); margin: 0 0 14px; }
+p:last-child { margin-bottom: 0; }
+
+.eyebrow {
+  display: inline-block;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+  background: var(--accent-bg);
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 16px;
+}
+
+.kicker {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 0 0 12px;
+}
+
+.center { text-align: center; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+.card {
+  background: var(--surface-1);
+  border-radius: 12px;
+  padding: 16px;
+}
+.card h3 { font-family: var(--font-body); font-size: 14px; font-weight: 600; margin: 8px 0 2px; }
+.card p.small { font-size: 12px; color: var(--text-secondary); margin: 0; }
+.icon { font-size: 22px; color: var(--accent); }
+
+/* ---- Timeline (autonomy / competence / relatedness) ---- */
+.timeline { position: relative; display: flex; justify-content: space-between; gap: 8px; padding: 0 8px; }
+.timeline::before {
+  content: "";
+  position: absolute;
+  top: 20px; left: 48px; right: 48px;
+  height: 1px;
+  background: var(--border);
+}
+.timeline .node { position: relative; flex: 1; text-align: center; }
+.timeline .bubble {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--accent-bg); color: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 600; margin: 0 auto 12px; position: relative; z-index: 1;
+}
+
+/* ---- Footer ---- */
+footer {
+  text-align: center;
+  padding: 28px 0;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ---- About page specific ---- */
+.about-header { display: flex; gap: 24px; align-items: center; padding: 40px 0 32px; }
+.about-header img { width: 110px; height: 110px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+ul.credentials { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+ul.credentials li { font-size: 14px; color: var(--text-secondary); padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+ul.credentials li:last-child { border-bottom: none; padding-bottom: 0; }
+ul.credentials li strong { color: var(--text-primary); font-weight: 600; }
+
+/* ---- Portal login ---- */
+.login-page { max-width: 380px; margin: 0 auto; padding: 60px 20px; }
+.login-box { background: var(--surface-1); border-radius: 16px; padding: 28px; }
+.login-box h1 { font-size: 19px; text-align: center; margin-bottom: 20px; }
+.field { margin-bottom: 14px; }
+.field label { font-size: 13px; color: var(--text-secondary); display: block; margin-bottom: 4px; }
+.field input {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: var(--font-body);
+}
+.field input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.forgot { font-size: 12px; color: var(--accent); text-align: right; margin: 4px 0 16px; cursor: pointer; }
+.login-box .btn-primary { width: 100%; padding: 11px; }
+.signup-note { font-size: 13px; text-align: center; margin-top: 16px; color: var(--text-secondary); }
+.signup-note a { color: var(--accent); font-weight: 500; }
+.form-error { color: #B3453B; font-size: 13px; margin: 0 0 12px; display: none; }
+
+/* ---- Dashboard ---- */
+.welcome h1 { font-size: 24px; }
+.dash-grid { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.dash-grid .card p.label { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em; margin: 0 0 6px; }
+.dash-grid .card p.value { font-size: 15px; font-weight: 600; margin: 0 0 2px; }
+.section-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+.section-head .link { font-size: 13px; color: var(--accent); cursor: pointer; }
+.blog-tag { font-size: 12px; color: var(--accent); margin: 0 0 4px; }
+.blog-title { font-size: 14px; font-weight: 600; margin: 0; }
+
+/* Habit tracker grid */
+.tracker { background: var(--surface-1); border-radius: 12px; padding: 16px; }
+.tracker-row { display: grid; grid-template-columns: 100px repeat(7, 1fr); gap: 6px; align-items: center; margin-bottom: 8px; }
+.tracker-row:last-child { margin-bottom: 0; }
+.tracker-row span { text-align: center; font-size: 13px; }
+.tracker-row .day-label { text-align: left; color: var(--text-primary); }
+.tracker-head span { font-size: 12px; color: var(--text-secondary); }
+.dot-done { color: var(--accent); font-weight: 600; }
+.dot-empty { color: var(--text-muted); }
+
+/* Fridge / restaurant tools */
+.tool-box { background: var(--surface-1); border-radius: 12px; padding: 16px; }
+.tool-box textarea, .tool-box input[type="text"] {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: 13px;
+  font-family: var(--font-body);
+  margin-bottom: 10px;
+  resize: vertical;
+}
+.recipe-card, .restaurant-card { background: var(--surface-2); border-radius: 10px; padding: 12px; }
+.macro-row { display: flex; gap: 14px; font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+.restaurant-entry { border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 10px; }
+.restaurant-entry:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+
+/* ---- Responsive ---- */
+@media (max-width: 480px) {
+  h1 { font-size: 26px; }
+  .about-header { flex-direction: column; text-align: center; }
+  nav.primary-nav { gap: 14px; font-size: 13px; }
+}
+
+.log-choice-btn.selected-choice { background: var(--text-primary); color: var(--bg); border-color: var(--text-primary); }
+
+/* Booking slot picker */
+.slot-btn {
+  font-size: 13px;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  cursor: pointer;
+}
+.slot-btn:hover { background: var(--surface-1); }
+.slot-btn.selected { background: var(--text-primary); color: var(--bg); border-color: var(--text-primary); }
+.slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; }
+.appt-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.appt-row:last-child { border-bottom: none; }
+
+/* ---- Reduced motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
+/* ---- Keyboard focus ---- */
+a:focus-visible, button:focus-visible, .pill-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
