@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Under Tension: Resistance Bands for Back and Hip Pain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #EDE6D8;
+    --paper-deep: #E2D7BF;
+    --ink: #22282A;
+    --ink-soft: #5B5F57;
+    --moss: #3E5C4B;
+    --moss-dim: rgba(62,92,75,0.42);
+    --clay: #A8583D;
+    --line: #CFC1A2;
+    --max: 720px;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html{ scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior: auto; }
+    *{ animation: none !important; transition: none !important; }
+  }
+
+  body{
+    margin:0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection{ background: var(--moss); color: var(--paper); }
+
+  a{ color: var(--clay); }
+  a:focus-visible, button:focus-visible{
+    outline: 2px solid var(--clay);
+    outline-offset: 3px;
+  }
+
+  .wrap{
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  .eyebrow{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--moss);
+  }
+
+  /* HERO */
+  .hero{
+    padding: 88px 0 56px;
+    border-bottom: 1px solid var(--line);
+  }
+  .hero h1{
+    font-family: 'Fraunces', serif;
+    font-optical-sizing: auto;
+    font-weight: 600;
+    font-size: clamp(2.6rem, 7vw, 4.2rem);
+    line-height: 0.98;
+    margin: 18px 0 20px;
+    letter-spacing: -0.01em;
+  }
+  .hero .sub{
+    font-size: clamp(1.05rem, 2.4vw, 1.25rem);
+    color: var(--ink-soft);
+    max-width: 34ch;
+    margin: 0 0 28px;
+  }
+
+  .byline{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+    margin: 0 0 36px;
+  }
+  .byline strong{
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .band-hero{
+    width: 100%;
+    height: 64px;
+    display: block;
+  }
+  .band-hero path{
+    fill: none;
+    stroke: var(--moss);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-dasharray: 600;
+    stroke-dashoffset: 600;
+    animation: draw 1.4s ease forwards 0.2s;
+  }
+  @keyframes draw{ to{ stroke-dashoffset: 0; } }
+
+  section{ padding: 56px 0; }
+  section + section{ border-top: 1px solid var(--line); }
+
+  h2{
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(1.5rem, 4vw, 1.9rem);
+    margin: 10px 0 22px;
+    letter-spacing: -0.005em;
+  }
+
+  p{ margin: 0 0 16px; max-width: 62ch; }
+  p.lede{ font-size: 1.08rem; color: var(--ink-soft); }
+
+  /* EVIDENCE / BAND VISUAL */
+  .claims{
+    list-style: none;
+    margin: 32px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+  }
+  .claim{
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .claim-head{
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .strength-label{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+  .band-track{
+    position: relative;
+    height: 14px;
+    background: var(--paper-deep);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .band-fill{
+    position: absolute;
+    inset: 0;
+    width: 0%;
+    background: var(--moss);
+    border-radius: 999px;
+    transition: width 1.1s cubic-bezier(.22,.9,.3,1);
+  }
+  .claim[data-strength="moderate"] .band-fill{ background: var(--moss-dim); }
+  .claim.in-view .band-fill{ width: var(--fill); }
+
+  .claim-text{ margin-top: 2px; }
+  .claim-text p{ margin: 0 0 6px; font-size: 0.98rem; }
+  .citation{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    letter-spacing: 0.03em;
+  }
+
+  sup{
+    font-weight: 600;
+  }
+  sup a{
+    color: var(--moss);
+    text-decoration: none;
+  }
+  sup a:hover{ color: var(--clay); }
+
+  .footnotes{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    line-height: 1.85;
+    color: var(--ink-soft);
+  }
+  .footnotes ol{
+    margin: 14px 0 0;
+    padding-left: 20px;
+  }
+  .footnotes li{
+    margin-bottom: 10px;
+  }
+  .footnotes li::marker{
+    color: var(--moss);
+    font-weight: 600;
+  }
+  .footnotes a{
+    color: var(--ink-soft);
+    text-decoration-color: var(--line);
+  }
+  .footnotes a:hover{
+    color: var(--clay);
+    text-decoration-color: var(--clay);
+  }
+  .footnotes .unlinked{ opacity: 0.75; }
+
+  /* PROGRAM CARD */
+  .program-grid{
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    margin-top: 28px;
+  }
+  .program-cell{
+    background: var(--paper);
+    padding: 18px 20px;
+  }
+  .program-cell .k{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--clay);
+    display: block;
+    margin-bottom: 6px;
+  }
+  .program-cell .v{ font-size: 0.98rem; }
+  @media (max-width: 480px){
+    .program-grid{ grid-template-columns: 1fr; }
+  }
+
+  ul.plain{ margin: 18px 0 0; padding-left: 20px; }
+  ul.plain li{ margin-bottom: 12px; max-width: 60ch; }
+
+  .callout{
+    border-left: 3px solid var(--clay);
+    padding: 4px 0 4px 18px;
+    margin: 28px 0 0;
+    color: var(--ink-soft);
+    font-size: 0.96rem;
+  }
+
+  .cta-line{
+    font-style: italic;
+    color: var(--clay);
+  }
+
+  footer{
+    padding: 40px 0 80px;
+  }
+  footer .disclaimer{
+    margin-top: 28px;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    max-width: 60ch;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <section class="hero">
+    <span class="eyebrow">Rehab Science · Resistance Training</span>
+    <h1>Under Tension</h1>
+    <p class="sub">What the research actually says about training your way out of back and hip pain, and where that evidence runs out.</p>
+    <div class="byline"><strong>Sarah</strong> · Tenfold Method</div>
+    <svg class="band-hero" viewBox="0 0 600 64" preserveAspectRatio="none">
+      <path d="M0,32 C100,10 150,54 240,32 C330,10 380,54 470,32 C520,20 560,40 600,28" />
+    </svg>
+  </section>
+
+  <section>
+    <p class="lede">In fifteen years of coaching people through pain and stiffness, I have watched the same pattern play out more times than I can count. Someone's back or hip starts hurting, so they stop moving it, and the stillness ends up doing more damage than the original ache ever would have. Back and hip pain are common enough that almost everyone deals with a flare up eventually, and exercise is one of the few things that actually holds up when researchers look closely at it. Resistance training and targeted stretching produce real, measurable drops in chronic low back and hip pain.<sup><a href="#fn1">1</a></sup><sup><a href="#fn2">2</a></sup> The catch, and I tell every client this upfront, is that the benefit is usually short to medium term, and it depends entirely on the program fitting the person doing it.</p>
+    <p>One honest note before I get into the research: very little of it tested resistance bands by name. Most of it comes from broader resistance training and stretching studies. That gap matters less than it sounds, because a band's job is simple. It supplies resistance through a range of motion, the same job a cable machine or a dumbbell does. In my own Functional Movement Training sessions, bands are often what I reach for first, precisely because the loading principles below transfer directly, even when the original study used different equipment.</p>
+  </section>
+
+  <section>
+    <span class="eyebrow">The Evidence, At Full Stretch</span>
+    <h2>Not every claim carries the same weight</h2>
+    <p>I am careful never to oversell a client on an exercise, and I want to do the same thing here. Here is what the current research actually supports, sized to how much tension it can hold. A fully drawn band means strong, consistent support across studies. A half drawn band means the support is real but thinner, or the finding is narrower than it first sounds.</p>
+
+    <ul class="claims">
+      <li class="claim" data-strength="strong" style="--fill:100%">
+        <div class="claim-head">
+          <span class="strength-label">STRONG</span>
+        </div>
+        <div class="band-track"><div class="band-fill"></div></div>
+        <div class="claim-text">
+          <p>Exercise produces small gains in the short term and moderate, lasting improvement in chronic mechanical low back pain.<sup><a href="#fn3">3</a></sup></p>
+        </div>
+      </li>
+
+      <li class="claim" data-strength="moderate" style="--fill:62%">
+        <div class="claim-head">
+          <span class="strength-label">MODERATE</span>
+        </div>
+        <div class="band-track"><div class="band-fill"></div></div>
+        <div class="claim-text">
+          <p>Pairing resistance training with back extension work meaningfully lowers pain and disability. People who gain more than 20 percent in strength see the biggest drop in pain.<sup><a href="#fn4">4</a></sup></p>
+        </div>
+      </li>
+
+      <li class="claim" data-strength="moderate" style="--fill:62%">
+        <div class="claim-head">
+          <span class="strength-label">MODERATE</span>
+        </div>
+        <div class="band-track"><div class="band-fill"></div></div>
+        <div class="claim-text">
+          <p>Stretching eases low back pain by loosening passive muscle stiffness and widening range of motion.<sup><a href="#fn5">5</a></sup></p>
+        </div>
+      </li>
+
+      <li class="claim" data-strength="moderate" style="--fill:62%">
+        <div class="claim-head">
+          <span class="strength-label">MODERATE</span>
+        </div>
+        <div class="band-track"><div class="band-fill"></div></div>
+        <div class="claim-text">
+          <p>Hip strengthening and stretching ease hip osteoarthritis pain in the short term, but that benefit does not hold up at the medium term mark.<sup><a href="#fn6">6</a></sup></p>
+        </div>
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <span class="eyebrow">Why It Works</span>
+    <h2>The mechanism behind the relief</h2>
+    <p>This is the part I find genuinely satisfying to explain to clients, because it takes the mystery out of why a simple band can do so much. Loading matters more than the tool that provides it. Moderate resistance, worked twice a week for two sets of eight to twelve reps, produced pain relief that lasted up to two years in some patients.<sup><a href="#fn7">7</a></sup> A band makes this easy to approximate. Color and length stand in for a percentage of a one rep max, and eight to twelve reps to a hard but doable finish is the same target either way.</p>
+    <p>Motor control work aimed at the deep stabilizers, the transversus abdominis and the lumbar multifidus, helps most when someone has trouble recruiting those muscles in the first place.<sup><a href="#fn8">8</a></sup> Separately, exercise turns down pain signaling through endocannabinoid pathways and anti-inflammatory effects, and that shift shows up after a single session, not just after weeks of consistent training.<sup><a href="#fn9">9</a></sup><sup><a href="#fn10">10</a></sup></p>
+    <p>I say this to almost every client with back pain who wants to skip leg day: hip work is not a side note in a back pain program. Muscles crossing the hip and pelvis set the stability of the low back directly, so a plan that skips the hips is only treating half the chain.<sup><a href="#fn11">11</a></sup><sup><a href="#fn12">12</a></sup></p>
+  </section>
+
+  <section>
+    <span class="eyebrow">The Stretch Side</span>
+    <h2>What flexibility is actually doing</h2>
+    <p>Clients tend to treat stretching as an afterthought, something to squeeze in if there is time left at the end of a session. I push back on that every chance I get, because the research keeps landing on the same handful of reasons it matters just as much as the loading work.</p>
+    <ul class="plain">
+      <li>Stretching lowers passive stiffness and eases pressure on nerve roots through the elastic give of connective tissue.<sup><a href="#fn13">13</a></sup></li>
+      <li>People with more hip and trunk flexibility keep better control of the erector spinae at the end range of a forward bend. Losing that control is linked to abnormal spinal loading and pain that keeps returning.<sup><a href="#fn14">14</a></sup></li>
+      <li>A well built program stretches the hip flexors and lumbar extensors while strengthening the abdominals and glutes, which corrects an overly tilted pelvis and spreads out the load the low back has been carrying alone.<sup><a href="#fn15">15</a></sup></li>
+      <li>Fascial stretching targets the trigger points that form when tension loads unevenly through tissue, and it works best paired with strengthening and coordination work rather than done on its own.<sup><a href="#fn16">16</a></sup></li>
+    </ul>
+  </section>
+
+  <section>
+    <span class="eyebrow">Programming Notes</span>
+    <h2>Turning this into an actual routine</h2>
+    <p>This is close to how I actually build these plans with clients, and it is worth saying plainly: the research is consistent on one point, a program built for a specific person outperforms a generic one. Pain mechanism, movement pattern, and individual biomechanical deficits should all shape what gets prescribed.<sup><a href="#fn17">17</a></sup><sup><a href="#fn18">18</a></sup> Core stability work beats generic strengthening for cutting pain, disability, and fear of movement in chronic low back pain, and the best results come from combining stability training with resistance work rather than choosing one over the other.<sup><a href="#fn19">19</a></sup></p>
+
+    <div class="program-grid">
+      <div class="program-cell">
+        <span class="k">Load</span>
+        <span class="v">Moderate tension, roughly 50 to 70 percent of max effort</span>
+      </div>
+      <div class="program-cell">
+        <span class="k">Frequency</span>
+        <span class="v">Twice weekly</span>
+      </div>
+      <div class="program-cell">
+        <span class="k">Volume</span>
+        <span class="v">2 sets of 8 to 12 reps per movement</span>
+      </div>
+      <div class="program-cell">
+        <span class="k">Pair with</span>
+        <span class="v">Hip flexor and lumbar extensor stretching, deep core activation</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <span class="eyebrow">Where The Evidence Runs Thin</span>
+    <h2>What this research does not show</h2>
+    <p>I would rather tell you where this evidence gets thin than let you find out the hard way, so here is the honest version.</p>
+    <ul class="plain">
+      <li>Hip osteoarthritis benefits fade by the medium term mark. There is no evidence yet that the relief lasts.<sup><a href="#fn20">20</a></sup></li>
+      <li>Sticking with the program is the real obstacle. Some of these studies saw dropout rates near 50 percent.<sup><a href="#fn21">21</a></sup></li>
+      <li>Almost none of this research tested resistance bands specifically. One case study did use bands directly and found real gains in a client with chronic low back pain,<sup><a href="#fn22">22</a></sup> but most of what is above comes from broader resistance training and stretching studies, and band based routines borrow those findings rather than being tested directly.</li>
+    </ul>
+    <p class="callout">None of this replaces a clinician. Anyone starting a program for back or hip pain should get a licensed clinician's input on exercise selection, intensity, and how fast to progress.</p>
+    <p>If your back or hip has been holding you back and you are not sure where a band fits into the picture, that is exactly the kind of question I like sitting down with people over. <span class="cta-line">Feel free to schedule a session and we can build something that actually fits your body and your life.</span></p>
+  </section>
+
+  <footer>
+    <span class="eyebrow">Footnotes</span>
+    <div class="footnotes">
+      <ol>
+        <li id="fn1"><a href="https://www.mdpi.com/2227-9032/12/2/242" target="_blank" rel="noopener">The Role of Physical Exercise in Chronic Musculoskeletal Pain: Best Medicine, Healthcare (2024)</a></li>
+        <li id="fn2"><a href="https://pubmed.ncbi.nlm.nih.gov/26267006/" target="_blank" rel="noopener">Physical exercise as non-pharmacological treatment of chronic pain: Why and when, Best Practice &amp; Research Clinical Rheumatology (2015)</a></li>
+        <li id="fn3"><a href="https://www.mdpi.com/2227-9032/12/2/242" target="_blank" rel="noopener">The Role of Physical Exercise in Chronic Musculoskeletal Pain: Best Medicine, Healthcare (2024)</a></li>
+        <li id="fn4"><a href="https://www.dovepress.com/chronic-pain-management-in-the-obese-patient-a-focused-review-of-key-c-peer-reviewed-fulltext-article-JPR" target="_blank" rel="noopener">Chronic pain management in the obese patient: a focused review of key challenges and potential exercise solutions, Journal of Pain Research (2015)</a></li>
+        <li id="fn5"><a href="https://www.brjp.org.br/article/doi/10.5935/2595-0118.20220001" target="_blank" rel="noopener">Mechanisms of muscle stretching exercises for reduction of low back pain: narrative review, Brazilian Journal of Pain (2022)</a></li>
+        <li id="fn6"><a href="https://www.mdpi.com/2227-9032/12/2/242" target="_blank" rel="noopener">The Role of Physical Exercise in Chronic Musculoskeletal Pain: Best Medicine, Healthcare (2024)</a></li>
+        <li id="fn7"><a href="https://www.mdpi.com/2227-9032/12/2/242" target="_blank" rel="noopener">The Role of Physical Exercise in Chronic Musculoskeletal Pain: Best Medicine, Healthcare (2024)</a></li>
+        <li id="fn8"><a href="https://eor.bioscientifica.com/view/journals/eor/8/7/EOR-23-0057.xml" target="_blank" rel="noopener">The effect and mechanism of motor control exercise on low back pain: a narrative review, EFORT Open Reviews (2023)</a></li>
+        <li id="fn9"><a href="https://eor.bioscientifica.com/view/journals/eor/8/7/EOR-23-0057.xml" target="_blank" rel="noopener">The effect and mechanism of motor control exercise on low back pain: a narrative review, EFORT Open Reviews (2023)</a></li>
+        <li id="fn10"><a href="https://pubmed.ncbi.nlm.nih.gov/33062901/" target="_blank" rel="noopener">Exercise-induced hypoalgesia after acute and regular exercise, Pain Reports (2020)</a></li>
+        <li id="fn11" class="unlinked">Kwok, 2021 (full source unconfirmed)</li>
+        <li id="fn12" class="unlinked">Hui, 2024 (full source unconfirmed)</li>
+        <li id="fn13"><a href="https://www.brjp.org.br/article/doi/10.5935/2595-0118.20220001" target="_blank" rel="noopener">Mechanisms of muscle stretching exercises for reduction of low back pain: narrative review, Brazilian Journal of Pain (2022)</a></li>
+        <li id="fn14" class="unlinked">Kwok, 2021 (full source unconfirmed)</li>
+        <li id="fn15" class="unlinked">Radziszewski, 2012 (full source unconfirmed)</li>
+        <li id="fn16"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11698533/" target="_blank" rel="noopener">Myofascial System and Physical Exercise: A Narrative Review on Stretching, Cureus (2024)</a></li>
+        <li id="fn17"><a href="https://onlinelibrary.wiley.com/doi/full/10.1002/ejp.2190" target="_blank" rel="noopener">Personalized assessment and management of non-specific low back pain, European Journal of Pain (2023)</a></li>
+        <li id="fn18"><a href="https://doi.org/10.3390/jcm12175510" target="_blank" rel="noopener">The role of back muscle dysfunctions in chronic low back pain: state-of-the-art and clinical implications, Journal of Clinical Medicine (2023)</a></li>
+        <li id="fn19"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11103918/" target="_blank" rel="noopener">An Integrated Approach to Chronic Low Back Pain: Consecutive Loop TheraBand Training Combined With PNF and Conventional Physiotherapy, Cureus (2024)</a></li>
+        <li id="fn20"><a href="https://www.mdpi.com/2227-9032/12/2/242" target="_blank" rel="noopener">The Role of Physical Exercise in Chronic Musculoskeletal Pain: Best Medicine, Healthcare (2024)</a></li>
+        <li id="fn21"><a href="https://www.dovepress.com/chronic-pain-management-in-the-obese-patient-a-focused-review-of-key-c-peer-reviewed-fulltext-article-JPR" target="_blank" rel="noopener">Chronic pain management in the obese patient: a focused review of key challenges and potential exercise solutions, Journal of Pain Research (2015)</a></li>
+        <li id="fn22"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11103918/" target="_blank" rel="noopener">An Integrated Approach to Chronic Low Back Pain: Consecutive Loop TheraBand Training Combined With PNF and Conventional Physiotherapy, Cureus (2024)</a></li>
+      </ol>
+    </div>
+    <p class="disclaimer">This article summarizes published research for general education. It is not medical advice and does not replace an evaluation from a licensed clinician.</p>
+  </footer>
+
+</div>
+
+<script>
+  const claims = document.querySelectorAll('.claim');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if(e.isIntersecting){
+        e.target.classList.add('in-view');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.4 });
+  claims.forEach(c => io.observe(c));
+</script>
+
+</body>
+</html>
