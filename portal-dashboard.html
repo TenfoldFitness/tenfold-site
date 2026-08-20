@@ -296,7 +296,9 @@
         const hasValidMembership = active && (!active.expires_at || new Date(active.expires_at) > new Date());
 
         if (!hasValidMembership) {
-          window.location.href = 'membership.html';
+          const dashParams = new URLSearchParams(window.location.search);
+          const dashTier = dashParams.get('tier');
+          window.location.href = 'membership.html' + (dashTier ? '?tier=' + dashTier : '');
           return;
         }
       }

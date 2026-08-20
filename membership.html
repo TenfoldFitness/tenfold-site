@@ -158,6 +158,15 @@
       });
     });
 
+    // If someone arrived here with a tier already chosen on the Pricing
+    // page (e.g. membership.html?tier=2), skip straight to checkout for
+    // that tier instead of making them pick again.
+    const preselectedTier = new URLSearchParams(window.location.search).get('tier');
+    if (preselectedTier) {
+      const matchingBtn = document.querySelector('.select-tier[data-tier="' + preselectedTier + '"]');
+      if (matchingBtn) matchingBtn.click();
+    }
+
     document.getElementById('confirm-purchase').addEventListener('click', async function () {
       const errorEl = document.getElementById('checkout-error');
       const successEl = document.getElementById('checkout-success');

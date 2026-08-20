@@ -74,9 +74,13 @@
       loginView.style.display = 'block';
     });
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const tierParam = urlParams.get('tier');
+    const dashboardUrl = 'portal-dashboard.html' + (tierParam ? '?tier=' + tierParam : '');
+
     // Redirect straight to the dashboard if already logged in
     supabaseClient.auth.getSession().then(({ data }) => {
-      if (data.session) window.location.href = 'portal-dashboard.html';
+      if (data.session) window.location.href = dashboardUrl;
     });
 
     // Log in
@@ -104,7 +108,7 @@
         return;
       }
 
-      window.location.href = 'portal-dashboard.html';
+      window.location.href = dashboardUrl;
     });
 
     // Create account
@@ -121,7 +125,10 @@
       const email = document.getElementById('signup-email').value.trim();
       const password = document.getElementById('signup-password').value;
 
-      const { error } = await supabaseClient.auth.signUp({ email, password });
+      const { error } = await supabaseClient.auth.signUp({
+        email, password,
+        options: { emailRedirectTo: window.location.origin + '/portal-login.html' + (tierParam ? '?tier=' + tierParam : '') },
+      });
 
       btn.disabled = false;
       btn.textContent = 'Create account';

@@ -39,7 +39,7 @@
       <p>15 minutes, no cost, no pressure. Let's talk about what you need and whether Tenfold Method is the right fit.</p>
     </div>
 
-    <div class="tool-box" id="lead-form-wrap">
+    <div class="tool-box" id="contact-form-wrap">
       <div class="field">
         <label for="lead-name">Name</label>
         <input type="text" id="lead-name" required />
@@ -63,7 +63,12 @@
           <option value="Mental health">Mental health</option>
         </select>
       </div>
+      <p class="form-error" id="contact-error"></p>
+      <button class="btn btn-primary btn-sm" id="contact-continue">Continue to scheduling</button>
+    </div>
 
+    <div class="tool-box" id="schedule-form-wrap" style="display:none;">
+      <p class="small" style="margin-bottom:14px; color:var(--accent);">Thanks! Now pick a time that works for you.</p>
       <div class="field">
         <label for="lead-date">Pick a date for your free consultation</label>
         <input type="date" id="lead-date" required />
@@ -109,7 +114,52 @@
       return slots;
     }
 
-    let selectedSlotISO = null;
+    const params = new URLSearchParams(window.location.search);
+    const tierInterest = params.get('tier') || null;
+    let leadId = null;
+
+    document.getElementById('contact-continue').addEventListener('click', async function () {
+      const errorEl = document.getElementById('contact-error');
+      errorEl.style.display = 'none';
+
+      const name = document.getElementById('lead-name').value.trim();
+      const email = document.getElementById('lead-email').value.trim();
+      const phone = document.getElementById('lead-phone').value.trim();
+      const priority = document.getElementById('lead-priority').value;
+
+      if (!name || !email || !phone || !priority) {
+        errorEl.textContent = 'Please fill in all fields above.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      const btn = this;
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+
+      try {
+        const response = await fetch(SUPABASE_URL + '/functions/v1/save-lead', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_PUBLISHABLE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ name, email, phone, priority, tierInterest }),
+        });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error?.message || 'Something went wrong. Please try again.');
+
+        leadId = payload.leadId;
+        document.getElementById('contact-form-wrap').style.display = 'none';
+        document.getElementById('schedule-form-wrap').style.display = 'block';
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Continue to scheduling';
+      }
+    });
 
     async function renderSlotsForDate(dateStr) {
       const picker = document.getElementById('slot-picker');
@@ -183,16 +233,6 @@
       errorEl.style.display = 'none';
       successEl.style.display = 'none';
 
-      const name = document.getElementById('lead-name').value.trim();
-      const email = document.getElementById('lead-email').value.trim();
-      const phone = document.getElementById('lead-phone').value.trim();
-      const priority = document.getElementById('lead-priority').value;
-
-      if (!name || !email || !phone || !priority) {
-        errorEl.textContent = 'Please fill in all fields above.';
-        errorEl.style.display = 'block';
-        return;
-      }
       if (!selectedSlotISO) {
         errorEl.textContent = 'Please pick an available time.';
         errorEl.style.display = 'block';
@@ -211,12 +251,12 @@
             'apikey': SUPABASE_PUBLISHABLE_KEY,
             'Authorization': 'Bearer ' + SUPABASE_PUBLISHABLE_KEY,
           },
-          body: JSON.stringify({ name, email, phone, priority, appointmentTime: selectedSlotISO }),
+          body: JSON.stringify({ leadId, appointmentTime: selectedSlotISO }),
         });
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.error?.message || 'Could not book your consultation right now.');
 
-        document.getElementById('lead-form-wrap').style.display = 'none';
+        document.getElementById('schedule-form-wrap').style.display = 'none';
         successEl.textContent = "You're booked! Check your email for the confirmation and video call link.";
         successEl.style.display = 'block';
       } catch (err) {
