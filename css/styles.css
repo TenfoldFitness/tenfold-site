@@ -27,8 +27,18 @@ body {
   margin: 0;
   font-family: var(--font-body);
   color: var(--text-primary);
-  background: linear-gradient(180deg, #E3EFEA 0%, #FAF9F6 20%, #FAF9F6 80%, #E9F1ED 100%);
+  background: linear-gradient(-45deg, #E3EFEA, #FAF9F6, #F4ECD8, #E9F1ED, #EAF3EE);
+  background-size: 400% 400%;
+  animation: gradientShift 22s ease infinite;
   line-height: 1.6;
+}
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body { animation: none; background: linear-gradient(180deg, #E3EFEA 0%, #FAF9F6 30%, #FAF9F6 70%, #E9F1ED 100%); }
 }
 
 img { max-width: 100%; display: block; }
@@ -270,6 +280,48 @@ ul.credentials li strong { color: var(--text-primary); font-weight: 600; }
 .slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; }
 .appt-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
 .appt-row:last-child { border-bottom: none; }
+
+/* ---- Scroll reveal ---- */
+.reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.6s ease, transform 0.6s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+.reassure-line { font-size: 13px; color: var(--text-muted); margin-top: 10px; }
+
+/* ---- Quiz ---- */
+.quiz-box { background: var(--surface-1); border-radius: 16px; padding: 26px; max-width: 520px; margin: 0 auto; box-shadow: 0 2px 16px rgba(15,110,86,0.06); }
+.quiz-q { margin-bottom: 20px; }
+.quiz-q p.label { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+.quiz-choices { display: flex; flex-wrap: wrap; gap: 8px; }
+.quiz-choice { font-size: 13px; padding: 9px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface-2); cursor: pointer; transition: all 0.15s ease; }
+.quiz-choice:hover { border-color: var(--accent); }
+.quiz-choice.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
+.quiz-result { display: none; text-align: center; padding-top: 12px; border-top: 1px solid var(--border); margin-top: 4px; }
+.quiz-result.show { display: block; }
+
+/* ---- Pillars (equal badges, not weighted metrics) ---- */
+.pillars-row { display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; }
+.pillar-card { flex: 1; min-width: 160px; max-width: 200px; text-align: center; background: var(--surface-1); border-radius: 16px; padding: 22px 16px; }
+.pillar-badge { width: 52px; height: 52px; border-radius: 50%; background: var(--accent-bg); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; }
+.pillar-badge svg { width: 24px; height: 24px; stroke: var(--accent); }
+.pillar-title { font-weight: 600; font-size: 15px; margin-bottom: 6px; }
+.pillar-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+.pillar-plus { display: flex; align-items: center; font-size: 20px; color: var(--text-muted); padding: 0 2px; }
+
+/* ---- Cost reassurance banner ---- */
+.cost-banner { background: linear-gradient(135deg, var(--accent-bg) 0%, #F4ECD8 100%); border-radius: 16px; padding: 26px; text-align: center; border: 1px solid rgba(201,162,75,0.25); }
+
+/* ---- FAQ ---- */
+.faq-item { border-bottom: 1px solid var(--border); padding: 16px 4px; }
+.faq-q { font-weight: 600; font-size: 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+.faq-a { font-size: 13px; color: var(--text-secondary); margin-top: 10px; line-height: 1.6; display: none; }
+.faq-item.open .faq-a { display: block; }
+.faq-item.open .faq-arrow { transform: rotate(180deg); }
+.faq-arrow { transition: transform 0.2s ease; font-size: 12px; color: var(--accent); }
+
+@media (max-width: 600px) {
+  .pillars-row { flex-direction: column; align-items: center; }
+  .pillar-plus { display: none; }
+}
 
 /* ---- Reduced motion ---- */
 @media (prefers-reduced-motion: reduce) {

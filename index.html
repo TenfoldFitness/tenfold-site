@@ -33,6 +33,7 @@
         <p style="max-width:460px; margin:0 auto 24px;">This isn't fitness coaching with the occasional mindset tip added on. It's real mental health support and expert physical training, delivered together as one program, not two separate services.</p>
         <a href="consultation.html" class="btn btn-primary">Book a consultation</a>
         <a href="#framework" class="btn" style="margin-left:10px;">See the framework</a>
+        <p class="reassure-line">No commitment. No sales pitch. Just a conversation.</p>
       </div>
     </section>
 
@@ -96,18 +97,130 @@
       </div>
     </section>
 
-    <section id="framework">
+    <section class="reveal">
+      <div class="wrap">
+        <p class="center" style="font-size:12px; letter-spacing:0.06em; color:var(--text-muted); text-transform:uppercase; margin:0 0 6px;">Not sure where to start?</p>
+        <h2 class="center" style="margin-bottom:1.25rem;">Find your fit in 3 questions</h2>
+
+        <div class="quiz-box" id="quiz-box">
+          <div class="quiz-q" data-q="1">
+            <p class="label">1. What's your main focus right now?</p>
+            <div class="quiz-choices">
+              <span class="quiz-choice" data-val="physical">Physical health</span>
+              <span class="quiz-choice" data-val="fitness">Improving fitness</span>
+              <span class="quiz-choice" data-val="weight">Losing weight</span>
+              <span class="quiz-choice" data-val="mental">Mental health</span>
+            </div>
+          </div>
+          <div class="quiz-q" data-q="2">
+            <p class="label">2. How much support do you want?</p>
+            <div class="quiz-choices">
+              <span class="quiz-choice" data-val="self">Just the tools, self-guided</span>
+              <span class="quiz-choice" data-val="regular">Regular coaching check-ins</span>
+              <span class="quiz-choice" data-val="weekly">Hands-on, every week</span>
+            </div>
+          </div>
+          <div class="quiz-q" data-q="3">
+            <p class="label">3. Virtual or in-person?</p>
+            <div class="quiz-choices">
+              <span class="quiz-choice" data-val="virtual">Virtual works great</span>
+              <span class="quiz-choice" data-val="inperson">I'd like in-person</span>
+            </div>
+          </div>
+
+          <div class="quiz-result" id="quiz-result">
+            <p class="small" style="margin-bottom:6px;">Based on your answers, you'd likely thrive in:</p>
+            <p id="quiz-tier-name" style="font-size:20px; font-weight:600; margin-bottom:14px; color:var(--accent);"></p>
+            <a href="#" id="quiz-cta" class="btn btn-primary btn-sm">See this package</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="framework" class="reveal">
       <div class="wrap">
         <p class="center" style="font-size:12px; letter-spacing:0.06em; color:var(--text-muted); text-transform:uppercase; margin:0 0 6px;">The Tenfold Framework</p>
-        <h2 class="center" style="margin-bottom:0.5rem;">Three pillars, one method</h2>
-        <p class="center" style="max-width:500px; margin:0 auto 1.5rem;">My approach is grounded in self-determination theory: the psychological model built around the three needs proven to drive lasting change.</p>
-        <p class="center">
+        <h2 class="center" style="margin-bottom:0.4rem;">Three pillars, one method</h2>
+        <p class="center small" style="max-width:440px; margin:0 auto 1.5rem;">Not a ranking, not a score, three equally essential parts of the same approach.</p>
+
+        <div class="pillars-row">
+          <div class="pillar-card">
+            <div class="pillar-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9"/>
+                <path d="M15 9l-2 5-5 2 2-5 5-2Z"/>
+              </svg>
+            </div>
+            <p class="pillar-title">Autonomy</p>
+            <p class="pillar-desc">You're in the driver's seat</p>
+          </div>
+
+          <span class="pillar-plus">+</span>
+
+          <div class="pillar-card">
+            <div class="pillar-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 18V10M4 10l4-6 4 6M4 10h8M12 18V4M20 18V13M20 13l-4-3M20 13l4-3"/>
+              </svg>
+            </div>
+            <p class="pillar-title">Competence</p>
+            <p class="pillar-desc">Progress you can feel</p>
+          </div>
+
+          <span class="pillar-plus">+</span>
+
+          <div class="pillar-card">
+            <div class="pillar-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="8" cy="9" r="3"/>
+                <circle cx="16" cy="9" r="3"/>
+                <path d="M4 19c0-2.8 2-5 4-5s4 2.2 4 5M12 19c0-2.8 2-5 4-5s4 2.2 4 5"/>
+              </svg>
+            </div>
+            <p class="pillar-title">Relatedness</p>
+            <p class="pillar-desc">A real relationship</p>
+          </div>
+        </div>
+
+        <p class="center" style="margin-top:1.5rem;">
           <a href="framework.html" style="font-size:14px; color:var(--accent); font-weight:500;">Read the full framework &rarr;</a>
         </p>
       </div>
     </section>
 
-    <section>
+    <section class="reveal">
+      <div class="wrap">
+        <div class="cost-banner">
+          <p style="font-weight:600; margin-bottom:6px;">Cost shouldn't decide who gets to be healthy.</p>
+          <p class="small" style="margin-bottom:12px;">I offer sliding-scale pricing for people with limited financial means, no one should be priced out of feeling strong and supported.</p>
+          <a href="pricing.html" style="font-size:13px; color:var(--accent); font-weight:500;">See pricing &amp; sliding scale &rarr;</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="reveal">
+      <div class="wrap">
+        <h2 class="center" style="margin-bottom:1.25rem;">Questions people ask before starting</h2>
+        <div class="faq-item">
+          <div class="faq-q">Do I need any equipment? <span class="faq-arrow">&#9660;</span></div>
+          <p class="faq-a">Not necessarily. Programs can be built around resistance bands, dumbbells, or just your bodyweight, whatever you have access to.</p>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">What if I'm not "in shape" yet? <span class="faq-arrow">&#9660;</span></div>
+          <p class="faq-a">That's exactly who this is for. Every plan starts from where you actually are, not where you think you should be.</p>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Can I change or cancel my plan later? <span class="faq-arrow">&#9660;</span></div>
+          <p class="faq-a">Yes. Monthly plans can be adjusted as your needs change, so you're never locked into something that no longer fits.</p>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Is the mental health side real, qualified support? <span class="faq-arrow">&#9660;</span></div>
+          <p class="faq-a">Yes. It's delivered by someone formally trained with real clinical experience, not a fitness coach offering casual advice on the side.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="reveal">
       <div class="wrap" style="display:flex; gap:1.25rem; align-items:center;">
         <img src="images/sarah.jpg" alt="Portrait of Sarah, founder of Tenfold Method" style="width:64px; height:64px; border-radius:50%; object-fit:cover; flex-shrink:0;" />
         <div>
@@ -127,6 +240,63 @@
   </main>
 
   <footer>Tenfold Method &nbsp;&middot;&nbsp; In person &amp; virtual training</footer>
+
+  <script>
+    // Scroll-reveal for sections
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.classList.add('visible');
+      });
+    }, { threshold: 0.15 });
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+    // FAQ accordion
+    document.querySelectorAll('.faq-q').forEach(q => {
+      q.addEventListener('click', () => q.parentElement.classList.toggle('open'));
+    });
+
+    // Quiz logic
+    const quizAnswers = {};
+    document.querySelectorAll('.quiz-q').forEach(qBlock => {
+      const qNum = qBlock.dataset.q;
+      qBlock.querySelectorAll('.quiz-choice').forEach(choice => {
+        choice.addEventListener('click', () => {
+          qBlock.querySelectorAll('.quiz-choice').forEach(c => c.classList.remove('selected'));
+          choice.classList.add('selected');
+          quizAnswers[qNum] = choice.dataset.val;
+          maybeShowQuizResult();
+        });
+      });
+    });
+
+    function maybeShowQuizResult() {
+      if (!quizAnswers['1'] || !quizAnswers['2'] || !quizAnswers['3']) return;
+
+      const support = quizAnswers['2'];
+      const setting = quizAnswers['3'];
+      let tierNum, tierLabel, ctaHref, ctaText;
+
+      if (support === 'self') {
+        tierNum = 1; tierLabel = 'Foundation — $20/mo';
+        ctaHref = 'signup.html?tier=1'; ctaText = 'See this package';
+      } else if (support === 'regular' && setting === 'virtual') {
+        tierNum = 2; tierLabel = 'Guided — $100/mo';
+        ctaHref = 'signup.html?tier=2'; ctaText = 'See this package';
+      } else if (support === 'weekly' && setting === 'virtual') {
+        tierNum = 3; tierLabel = 'Virtual Intensive — $1,000 / 12 wks';
+        ctaHref = 'signup.html?tier=3'; ctaText = 'See this package';
+      } else {
+        tierLabel = 'In-Person Coaching — Contact for pricing';
+        ctaHref = 'consultation.html?tier=4'; ctaText = 'Book a consultation';
+      }
+
+      document.getElementById('quiz-tier-name').textContent = tierLabel;
+      document.getElementById('quiz-cta').href = ctaHref;
+      document.getElementById('quiz-cta').textContent = ctaText;
+      document.getElementById('quiz-result').classList.add('show');
+      document.getElementById('quiz-result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  </script>
 
 </body>
 </html>
