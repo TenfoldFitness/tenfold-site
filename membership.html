@@ -200,9 +200,15 @@
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.error?.message || payload.error?.detail || 'Purchase failed.');
 
-        successEl.textContent = "You're all set! Redirecting to your dashboard...";
+        let nextUrl = 'portal-dashboard.html';
+        if (selectedTier === 2 || selectedTier === 3) {
+          nextUrl = 'schedule-checkin.html?tier=' + selectedTier;
+          successEl.textContent = "Payment complete! Let's get your first check-in on the calendar...";
+        } else {
+          successEl.textContent = "You're all set! Redirecting to your dashboard...";
+        }
         successEl.style.display = 'block';
-        setTimeout(() => { window.location.href = 'portal-dashboard.html'; }, 1500);
+        setTimeout(() => { window.location.href = nextUrl; }, 1500);
       } catch (err) {
         errorEl.textContent = err.message;
         errorEl.style.display = 'block';

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Schedule Your Check-In — Tenfold</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .slot-btn {
+      font-size: 13px; padding: 8px 10px; border-radius: var(--radius);
+      border: 1px solid var(--border); background: var(--surface-2); cursor: pointer;
+    }
+    .slot-btn:hover { background: var(--surface-1); }
+    .slot-btn.selected { background: var(--text-primary); color: var(--bg); border-color: var(--text-primary); }
+    .slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="wrap">
+      <a href="index.html" class="logo" style="text-decoration:none; color:inherit;">Tenfold</a>
+    </div>
+  </header>
+
+  <main class="wrap" style="max-width:600px;">
+    <div style="padding:32px 0 8px;">
+      <h1 style="font-size:24px;">Schedule your first coaching check-in</h1>
+      <p>To help you get started right away, we recommend booking within the next 3 days. If that doesn't work with your schedule, feel free to pick a date further out — whatever works for you.</p>
+    </div>
+
+    <div class="tool-box" id="schedule-form-wrap">
+      <div class="field">
+        <label for="appt-date">Pick a date</label>
+        <input type="date" id="appt-date" required />
+      </div>
+      <div id="slot-picker" style="margin:12px 0;"></div>
+      <p class="form-error" id="appt-error"></p>
+      <button class="btn btn-primary btn-sm" id="appt-submit" disabled>Confirm check-in</button>
+    </div>
+    <p class="small" id="appt-success" style="display:none; color:var(--accent); margin-top:16px;"></p>
+  </main>
+
+  <footer>Tenfold &nbsp;&middot;&nbsp; In person &amp; virtual coaching</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-client.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const tier = params.get('tier') || '2';
+    let clientEmail = null;
+
+    supabaseClient.auth.getSession().then(({ data }) => {
+      if (!data.session) { window.location.href = 'portal-login.html'; return; }
+      clientEmail = data.session.user.email;
+    });
+
+    const AVAILABILITY = {
+      0: [], 1: [[5, 9], [16, 21]], 2: [[5, 9], [16, 21]], 3: [[5, 9], [16, 21]],
+      4: [[5, 9], [16, 21]], 5: [[5, 9], [16, 21]], 6: [[7, 14]],
+    };
+    const SESSION_MINUTES = 45;
+
+    function generateSlotsForDate(dateStr) {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const dayOfWeek = new Date(y, m - 1, d).getDay();
+      const windows = AVAILABILITY[dayOfWeek] || [];
+      const slots = [];
+      windows.forEach(([startHour, endHour]) => {
+        let current = new Date(y, m - 1, d, startHour, 0);
+        const end = new Date(y, m - 1, d, endHour, 0);
+        while (current.getTime() + SESSION_MINUTES * 60000 <= end.getTime()) {
+          slots.push(new Date(current));
+          current = new Date(current.getTime() + SESSION_MINUTES * 60000);
+        }
+      });
+      return slots;
+    }
+
+    let selectedSlotISO = null;
+
+    async function renderSlotsForDate(dateStr) {
+      const picker = document.getElementById('slot-picker');
+      const submitBtn = document.getElementById('appt-submit');
+      selectedSlotISO = null;
+      submitBtn.disabled = true;
+      picker.innerHTML = '<p class="small">Loading available times...</p>';
+
+      const allSlots = generateSlotsForDate(dateStr);
+      if (!allSlots.length) {
+        picker.innerHTML = '<p class="small">Sarah isn\'t available on this day. Please pick another date.</p>';
+        return;
+      }
+
+      let busyPeriods = [];
+      try {
+        const { data: sessionData } = await supabaseClient.auth.getSession();
+        const response = await fetch(SUPABASE_URL + '/functions/v1/get-availability', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_PUBLISHABLE_KEY,
+            'Authorization': 'Bearer ' + sessionData.session.access_token,
+          },
+          body: JSON.stringify({ date: dateStr }),
+        });
+        const payload = await response.json();
+        busyPeriods = (payload.busyPeriods || []).map(p => ({
+          start: new Date(p.start).getTime(),
+          end: new Date(p.start).getTime() + (p.durationMinutes || 45) * 60000,
+        }));
+      } catch (e) {
+        console.error('Could not load availability:', e);
+      }
+
+      const thisSlotDuration = SESSION_MINUTES * 60000;
+      const openSlots = allSlots.filter(slot => {
+        const slotStart = slot.getTime();
+        const slotEnd = slotStart + thisSlotDuration;
+        return !busyPeriods.some(p => slotStart < p.end && p.start < slotEnd);
+      });
+
+      if (!openSlots.length) {
+        picker.innerHTML = '<p class="small">No open times left on this day. Please pick another date.</p>';
+        return;
+      }
+
+      picker.innerHTML = '<div class="slot-grid"></div>';
+      const grid = picker.querySelector('.slot-grid');
+      openSlots.forEach(slot => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'slot-btn';
+        btn.textContent = slot.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          selectedSlotISO = slot.toISOString();
+          submitBtn.disabled = false;
+        });
+        grid.appendChild(btn);
+      });
+    }
+
+    document.getElementById('appt-date').addEventListener('change', function () {
+      if (this.value) renderSlotsForDate(this.value);
+    });
+
+    // Default the date field to today to nudge toward the 3-day window
+    document.getElementById('appt-date').valueAsDate = new Date();
+    renderSlotsForDate(new Date().toISOString().slice(0, 10));
+
+    document.getElementById('appt-submit').addEventListener('click', async function () {
+      const errorEl = document.getElementById('appt-error');
+      errorEl.style.display = 'none';
+      if (!selectedSlotISO) {
+        errorEl.textContent = 'Please pick an available time.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      const btn = this;
+      btn.disabled = true;
+      btn.textContent = 'Booking...';
+
+      const { data: sessionData } = await supabaseClient.auth.getSession();
+      const email = sessionData.session.user.email;
+      const authToken = sessionData.session.access_token;
+
+      const { error } = await supabaseClient.from('appointments').insert({
+        client_email: email,
+        appointment_time: selectedSlotISO,
+        type: 'checkin',
+        duration_minutes: SESSION_MINUTES,
+        status: 'upcoming',
+        location: 'Virtual',
+        notes: 'First coaching check-in (Tier ' + tier + ' signup)',
+      });
+
+      if (error) {
+        errorEl.textContent = error.message;
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Confirm check-in';
+        return;
+      }
+
+      try {
+        await fetch(SUPABASE_URL + '/functions/v1/send-booking-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_PUBLISHABLE_KEY,
+            'Authorization': 'Bearer ' + authToken,
+          },
+          body: JSON.stringify({
+            clientEmail: email,
+            appointmentTime: selectedSlotISO,
+            type: 'booked',
+            location: 'Virtual',
+            notes: 'First coaching check-in',
+          }),
+        });
+      } catch (e) { console.error('Email send failed:', e); }
+
+      document.getElementById('schedule-form-wrap').style.display = 'none';
+      document.getElementById('appt-success').textContent = "Check-in booked! Now let's get your initial planning consultation on the calendar.";
+      document.getElementById('appt-success').style.display = 'block';
+
+      setTimeout(() => {
+        window.location.href = 'schedule-consultation.html?tier=' + tier;
+      }, 1500);
+    });
+  </script>
+
+</body>
+</html>

@@ -32,55 +32,16 @@
         <button type="submit" class="btn btn-primary" id="login-submit">Log in</button>
       </form>
 
-      <p class="signup-note">New client? <a href="#" id="show-signup">Create an account</a></p>
-    </div>
-
-    <div class="login-box" id="signup-view" style="display:none;">
-      <h1>Create your account</h1>
-
-      <p class="form-error" id="signup-error"></p>
-      <p class="small" id="signup-success" style="display:none; color:var(--accent); font-size:13px; margin-bottom:12px;"></p>
-
-      <form id="signup-form">
-        <div class="field">
-          <label for="signup-email">Email</label>
-          <input type="email" id="signup-email" name="email" placeholder="you@email.com" required />
-        </div>
-        <div class="field">
-          <label for="signup-password">Password</label>
-          <input type="password" id="signup-password" name="password" placeholder="At least 6 characters" minlength="6" required />
-        </div>
-        <button type="submit" class="btn btn-primary" id="signup-submit">Create account</button>
-      </form>
-
-      <p class="signup-note">Already have an account? <a href="#" id="show-login">Log in</a></p>
+      <p class="signup-note">New client? <a href="pricing.html" style="color:var(--accent);">View coaching packages</a></p>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-client.js"></script>
   <script>
-    const loginView = document.getElementById('login-view');
-    const signupView = document.getElementById('signup-view');
-
-    document.getElementById('show-signup').addEventListener('click', function (e) {
-      e.preventDefault();
-      loginView.style.display = 'none';
-      signupView.style.display = 'block';
-    });
-    document.getElementById('show-login').addEventListener('click', function (e) {
-      e.preventDefault();
-      signupView.style.display = 'none';
-      loginView.style.display = 'block';
-    });
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const tierParam = urlParams.get('tier');
-    const dashboardUrl = 'portal-dashboard.html' + (tierParam ? '?tier=' + tierParam : '');
-
     // Redirect straight to the dashboard if already logged in
     supabaseClient.auth.getSession().then(({ data }) => {
-      if (data.session) window.location.href = dashboardUrl;
+      if (data.session) window.location.href = 'portal-dashboard.html';
     });
 
     // Log in
@@ -108,40 +69,7 @@
         return;
       }
 
-      window.location.href = dashboardUrl;
-    });
-
-    // Create account
-    document.getElementById('signup-form').addEventListener('submit', async function (e) {
-      e.preventDefault();
-      const errorEl = document.getElementById('signup-error');
-      const successEl = document.getElementById('signup-success');
-      const btn = document.getElementById('signup-submit');
-      errorEl.style.display = 'none';
-      successEl.style.display = 'none';
-      btn.disabled = true;
-      btn.textContent = 'Creating account...';
-
-      const email = document.getElementById('signup-email').value.trim();
-      const password = document.getElementById('signup-password').value;
-
-      const { error } = await supabaseClient.auth.signUp({
-        email, password,
-        options: { emailRedirectTo: window.location.origin + '/portal-login.html' + (tierParam ? '?tier=' + tierParam : '') },
-      });
-
-      btn.disabled = false;
-      btn.textContent = 'Create account';
-
-      if (error) {
-        errorEl.textContent = error.message;
-        errorEl.style.display = 'block';
-        return;
-      }
-
-      successEl.textContent = "Account created! Check your email to confirm, then log in.";
-      successEl.style.display = 'block';
-      document.getElementById('signup-form').reset();
+      window.location.href = 'portal-dashboard.html';
     });
 
     // Forgot password

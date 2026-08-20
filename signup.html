@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign Up — Tenfold</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="wrap">
+      <a href="index.html" class="logo" style="text-decoration:none; color:inherit;">Tenfold</a>
+    </div>
+  </header>
+
+  <main class="wrap" style="max-width:500px;">
+    <div style="padding:32px 0 8px; text-align:center;">
+      <h1 style="font-size:24px;" id="signup-heading">Create your account</h1>
+      <p class="small" id="signup-subheading"></p>
+    </div>
+
+    <div class="tool-box">
+      <div class="field">
+        <label for="su-name">Name</label>
+        <input type="text" id="su-name" required />
+      </div>
+      <div class="field">
+        <label for="su-email">Email</label>
+        <input type="email" id="su-email" required />
+      </div>
+      <div class="field">
+        <label for="su-phone">Phone number</label>
+        <input type="tel" id="su-phone" required />
+      </div>
+      <div class="field">
+        <label for="su-priority">What is your top priority right now?</label>
+        <select id="su-priority" style="width:100%; padding:10px 12px; border-radius:var(--radius); border:1px solid var(--border); font-family:var(--font-body); font-size:14px;">
+          <option value="">Select one</option>
+          <option value="Physical health">Physical health</option>
+          <option value="Improving my fitness">Improving my fitness</option>
+          <option value="Losing weight">Losing weight</option>
+          <option value="Planning for the future">Planning for the future</option>
+          <option value="Mental health">Mental health</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="su-password">Create a password</label>
+        <input type="password" id="su-password" required minlength="6" placeholder="At least 6 characters" />
+      </div>
+      <p class="form-error" id="signup-error"></p>
+      <button class="btn btn-primary btn-sm" id="signup-submit">Continue to payment</button>
+    </div>
+
+    <p class="small center" style="margin-top:16px;">Already have an account? <a href="portal-login.html" style="color:var(--accent);">Log in</a></p>
+  </main>
+
+  <footer>Tenfold &nbsp;&middot;&nbsp; In person &amp; virtual coaching</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-client.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const tier = params.get('tier') || '1';
+
+    const TIER_NAMES = {
+      '1': 'Foundation ($20/mo)',
+      '2': 'Guided ($100/mo)',
+      '3': 'Virtual Intensive ($1,000 / 12 weeks)',
+    };
+    document.getElementById('signup-subheading').textContent =
+      'Signing up for ' + (TIER_NAMES[tier] || 'Tenfold Method') + '. Payment comes next.';
+
+    document.getElementById('signup-submit').addEventListener('click', async function () {
+      const errorEl = document.getElementById('signup-error');
+      errorEl.style.display = 'none';
+
+      const name = document.getElementById('su-name').value.trim();
+      const email = document.getElementById('su-email').value.trim();
+      const phone = document.getElementById('su-phone').value.trim();
+      const priority = document.getElementById('su-priority').value;
+      const password = document.getElementById('su-password').value;
+
+      if (!name || !email || !phone || !priority || !password) {
+        errorEl.textContent = 'Please fill in every field above.';
+        errorEl.style.display = 'block';
+        return;
+      }
+      if (password.length < 6) {
+        errorEl.textContent = 'Password must be at least 6 characters.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      const btn = this;
+      btn.disabled = true;
+      btn.textContent = 'Creating your account...';
+
+      const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({ email, password });
+
+      if (signUpError) {
+        errorEl.textContent = signUpError.message;
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Continue to payment';
+        return;
+      }
+
+      // Save their contact info for you to see, and for later use in scheduling
+      await supabaseClient.from('client_profiles').upsert({ email, name, phone, priority });
+
+      // If email confirmation is off, this now gives us a real session immediately.
+      if (!signUpData.session) {
+        // Fallback: try logging in directly (covers edge cases where
+        // signUp doesn't return a session even with confirmation off)
+        const { error: loginError } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (loginError) {
+          errorEl.textContent = "Account created, but we couldn't log you in automatically. Please check your email or try logging in.";
+          errorEl.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Continue to payment';
+          return;
+        }
+      }
+
+      window.location.href = 'membership.html?tier=' + tier + '&flow=signup';
+    });
+  </script>
+
+</body>
+</html>
