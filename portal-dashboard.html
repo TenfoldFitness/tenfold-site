@@ -141,6 +141,13 @@
     </section>
 
     <section>
+      <h2>Your profile</h2>
+      <div class="tool-box" id="profile-box">
+        <p class="small">Loading...</p>
+      </div>
+    </section>
+
+    <section>
       <h2>Daily workout</h2>
       <div class="tool-box">
         <p class="small" style="margin-bottom:4px;" id="workout-focus-label">Loading today's focus...</p>
@@ -313,6 +320,7 @@
       loadRestaurants(email);
       checkMembership(email);
       initWorkoutLog(email);
+      loadProfile(email);
     });
 
     let clientHasMembership = false;
@@ -320,6 +328,83 @@
     async function getAuthToken() {
       const { data } = await supabaseClient.auth.getSession();
       return data.session ? data.session.access_token : SUPABASE_PUBLISHABLE_KEY;
+    }
+
+    function drawRadarChart(scores) {
+      const labels = Object.keys(scores);
+      const n = labels.length;
+      const size = 320, center = size / 2, maxR = 110;
+      const angleStep = (Math.PI * 2) / n;
+
+      function pointFor(i, value) {
+        const angle = -Math.PI / 2 + i * angleStep;
+        const r = (value / 10) * maxR;
+        return [center + r * Math.cos(angle), center + r * Math.sin(angle)];
+      }
+
+      let rings = '';
+      [0.25, 0.5, 0.75, 1].forEach(f => {
+        const pts = labels.map((_, i) => pointFor(i, 10 * f).join(',')).join(' ');
+        rings += `<polygon points="${pts}" fill="none" stroke="#D8D3C4" stroke-width="1" stroke-dasharray="3,3"/>`;
+      });
+
+      let axes = '';
+      let labelEls = '';
+      labels.forEach((label, i) => {
+        const [x, y] = pointFor(i, 10);
+        axes += `<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" stroke="#D8D3C4" stroke-width="1"/>`;
+        const [lx, ly] = pointFor(i, 12.5);
+        labelEls += `<text x="${lx}" y="${ly}" font-size="10" fill="#5C6B67" text-anchor="middle" dominant-baseline="middle">${label}</text>`;
+      });
+
+      const dataPts = labels.map((label, i) => pointFor(i, scores[label]).join(',')).join(' ');
+      const dots = labels.map((label, i) => {
+        const [x, y] = pointFor(i, scores[label]);
+        return `<circle cx="${x}" cy="${y}" r="4.5" fill="#2F6F63"/>`;
+      }).join('');
+
+      return `<svg viewBox="0 0 ${size} ${size}" style="width:100%; max-width:320px;">
+        ${rings}${axes}
+        <polygon points="${dataPts}" fill="#2F6F63" fill-opacity="0.18" stroke="#2F6F63" stroke-width="2"/>
+        ${dots}${labelEls}
+      </svg>`;
+    }
+
+    async function loadProfile(email) {
+      const { data: assessments } = await supabaseClient
+        .from('assessments')
+        .select('*')
+        .eq('client_email', email)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      const box = document.getElementById('profile-box');
+      if (!assessments || !assessments.length) {
+        box.innerHTML = `
+          <p class="small" style="margin-bottom:12px;">You haven't taken your starting assessment yet.</p>
+          <a href="assessment.html" class="btn btn-primary btn-sm">Take assessment</a>
+        `;
+        return;
+      }
+
+      const a = assessments[0];
+      const chartHtml = drawRadarChart({
+        'Strength': a.strength_score,
+        'Aerobic': a.aerobic_score,
+        'Balance': a.balance_score,
+        'Mobility': a.mobility_score,
+        'Mental Clarity': a.mental_clarity_score,
+        'Low Stress': a.stress_score,
+        'Connection': a.relational_score,
+      });
+
+      const takenDate = new Date(a.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+
+      box.innerHTML = `
+        <div style="text-align:center;">${chartHtml}</div>
+        <p class="small center" style="margin:8px 0 14px;">Last taken ${takenDate}</p>
+        <div class="center"><a href="assessment.html" class="btn btn-sm">Retake assessment</a></div>
+      `;
     }
 
     async function checkMembership(email) {
@@ -773,6 +858,8 @@
 
         try {
           const authToken = await getAuthToken();
+          const { data: sessionForWorkout } = await supabaseClient.auth.getSession();
+          const workoutClientEmail = sessionForWorkout.session ? sessionForWorkout.session.user.email : null;
           const response = await fetch(SUPABASE_URL + '/functions/v1/get-workout', {
             method: 'POST',
             headers: {
@@ -780,7 +867,7 @@
               'apikey': SUPABASE_PUBLISHABLE_KEY,
               'Authorization': 'Bearer ' + authToken,
             },
-            body: JSON.stringify({ equipment, focus: todayFocus }),
+            body: JSON.stringify({ equipment, focus: todayFocus, clientEmail: workoutClientEmail }),
           });
           const payload = await response.json();
           if (!response.ok) throw new Error(payload.error?.message || 'Could not build a workout right now.');

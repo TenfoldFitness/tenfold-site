@@ -87,11 +87,15 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-client.js"></script>
   <script>
+    const ADMIN_EMAIL = "tenfoldfunctional@gmail.com";
+
     async function checkHasMembership() {
       const { data: sessionData } = await supabaseClient.auth.getSession();
       if (!sessionData.session) return false;
 
       const email = sessionData.session.user.email;
+      if (email === ADMIN_EMAIL) return true;
+
       const { data: memberships } = await supabaseClient
         .from('memberships')
         .select('*')

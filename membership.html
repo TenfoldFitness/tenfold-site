@@ -200,13 +200,8 @@
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.error?.message || payload.error?.detail || 'Purchase failed.');
 
-        let nextUrl = 'portal-dashboard.html';
-        if (selectedTier === 2 || selectedTier === 3) {
-          nextUrl = 'schedule-checkin.html?tier=' + selectedTier;
-          successEl.textContent = "Payment complete! Let's get your first check-in on the calendar...";
-        } else {
-          successEl.textContent = "You're all set! Redirecting to your dashboard...";
-        }
+        const nextUrl = 'assessment.html?tier=' + selectedTier;
+        successEl.textContent = "Payment complete! Let's build your starting profile...";
         successEl.style.display = 'block';
         setTimeout(() => { window.location.href = nextUrl; }, 1500);
       } catch (err) {
