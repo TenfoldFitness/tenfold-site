@@ -20,7 +20,10 @@
   <header class="site-header">
     <div class="wrap">
       <a href="index.html" class="logo" style="text-decoration:none; color:inherit;">Tenfold</a>
-      <nav class="primary-nav">
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Menu" aria-expanded="false" aria-controls="primary-nav">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <nav class="primary-nav" id="primary-nav">
         <a href="framework.html">The Framework</a>
         <a href="about.html">About</a>
         <a href="blog.html">Blog</a>
@@ -92,6 +95,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-client.js"></script>
   <script>
+    // Don't let visitors pick a date that's already passed
+    document.getElementById('lead-date').min = new Date().toISOString().split('T')[0];
+
     // Same real weekly availability as the client dashboard
     const AVAILABILITY = {
       0: [],
@@ -274,5 +280,6 @@
     });
   </script>
 
+  <script src="js/nav-toggle.js" defer></script>
 </body>
 </html>

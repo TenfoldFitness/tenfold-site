@@ -5,13 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Memberships — Tenfold Method</title>
   <link rel="stylesheet" href="css/styles.css" />
-  <style>
-    .tier-card { background: var(--surface-1); border-radius: 12px; padding: 18px; margin-bottom: 14px; }
-    .tier-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
-    .tier-price { font-size: 18px; font-weight: 600; color: var(--accent); }
-    .tier-list { margin: 10px 0 12px; padding-left: 18px; font-size: 13px; color: var(--text-secondary); }
-    .tier-list li { margin-bottom: 4px; }
-  </style>
 </head>
 <body>
 
@@ -27,10 +20,18 @@
 
   <main class="wrap" style="max-width:600px;">
     <div style="padding:28px 0 8px;">
-      <h1 style="font-size:24px;">Choose your membership</h1>
-      <p>Every tier builds on the one before it. Pick the level that fits where you are right now — you can always move up later.</p>
+      <h1 style="font-size:24px;" id="membership-heading">Choose your membership</h1>
+      <p id="membership-subheading">Every tier builds on the one before it. Pick the level that fits where you are right now — you can always move up later.</p>
     </div>
 
+    <div id="confirmed-plan" class="confirmed-plan" style="display:none;">
+      <p class="confirmed-label">You're joining</p>
+      <div class="tier-head"><h2 style="margin:0; font-size:18px;" id="confirmed-name"></h2><span class="tier-price" id="confirmed-price"></span></div>
+      <ul class="tier-list" id="confirmed-features"></ul>
+      <button type="button" class="change-plan-link" id="change-plan-link">Not the right fit? Compare other plans</button>
+    </div>
+
+    <div id="tier-list">
     <div class="tier-card">
       <div class="tier-head"><h2 style="margin:0; font-size:16px;">1. Foundation</h2><span class="tier-price">$20/mo</span></div>
       <ul class="tier-list">
@@ -91,13 +92,19 @@
       </ul>
       <button class="btn btn-primary btn-sm select-tier" data-tier="6" data-kind="package">Select In-Person Elite</button>
     </div>
+    </div>
 
     <div id="checkout-box" style="display:none; padding:20px 0;">
       <h2 id="checkout-title">Checkout</h2>
+      <div class="order-summary">
+        <span id="order-summary-label">Plan</span>
+        <span class="os-total" id="order-summary-total"></span>
+      </div>
       <div id="card-container" style="margin:14px 0;"></div>
       <p class="form-error" id="checkout-error"></p>
       <p class="small" id="checkout-success" style="display:none; color:var(--accent);"></p>
       <button id="confirm-purchase" class="btn btn-primary">Confirm</button>
+      <p class="trust-line">🔒 Secure payment via Square &middot; Cancel or change your plan anytime.</p>
     </div>
   </main>
 
@@ -119,6 +126,38 @@
       e.preventDefault();
       await supabaseClient.auth.signOut();
       window.location.href = 'portal-login.html';
+    });
+
+    const TIER_INFO = {
+      '1': { name: 'Foundation', price: '$20/mo', total: '$20/month, billed monthly', features: ['Client portal access', 'Daily workout (6-day split)', 'Fridge-to-recipe &amp; restaurant macro tools'] },
+      '2': { name: 'Guided', price: '$100/mo', total: '$100/month, billed monthly', features: ['Everything in Foundation', 'Custom 4-week workout plan', '2 virtual check-ins per month'] },
+      '3': { name: 'Virtual Intensive', price: '$1,000 / 12 weeks', total: '$1,000 one-time, covers 12 weeks', features: ['Everything in Foundation &amp; Guided', '1 virtual training session/week (12 total)', 'Full nutrition planning'] },
+      '4': { name: 'In-Person Starter', price: '$1,200 / 12 weeks', total: '$1,200 one-time, covers 12 weeks', features: ['Everything above', '1x/week in-person training (12 sessions)'] },
+      '5': { name: 'In-Person Standard', price: '$1,600 / 12 weeks', total: '$1,600 one-time, covers 12 weeks', features: ['Everything above', '2x/week in-person training (24 sessions)'] },
+      '6': { name: 'In-Person Elite', price: '$2,200 / 12 weeks', total: '$2,200 one-time, covers 12 weeks', features: ['Everything above', '3x/week in-person training (36 sessions)'] },
+    };
+
+    function showConfirmedPlan(tierId) {
+      const info = TIER_INFO[tierId];
+      if (!info) return;
+      document.getElementById('membership-heading').textContent = "You're almost there";
+      document.getElementById('membership-subheading').textContent = 'Confirm your plan below, then add payment to get started.';
+      document.getElementById('confirmed-name').textContent = info.name;
+      document.getElementById('confirmed-price').textContent = info.price;
+      document.getElementById('confirmed-features').innerHTML = info.features.map(f => '<li>' + f + '</li>').join('');
+      document.getElementById('confirmed-plan').style.display = 'block';
+      document.getElementById('tier-list').style.display = 'none';
+      document.getElementById('order-summary-label').textContent = info.name;
+      document.getElementById('order-summary-total').textContent = info.total;
+    }
+
+    document.getElementById('change-plan-link').addEventListener('click', function () {
+      document.getElementById('confirmed-plan').style.display = 'none';
+      document.getElementById('checkout-box').style.display = 'none';
+      document.getElementById('tier-list').style.display = 'block';
+      document.getElementById('membership-heading').textContent = 'Choose your membership';
+      document.getElementById('membership-subheading').textContent = 'Every tier builds on the one before it. Pick the level that fits where you are right now — you can always move up later.';
+      document.getElementById('tier-list').scrollIntoView({ behavior: 'smooth' });
     });
 
     let squareCard, selectedTier, selectedKind;
@@ -153,8 +192,11 @@
         selectedKind = this.dataset.kind;
         document.getElementById('checkout-title').textContent =
           'Checkout — ' + this.textContent.replace('Select ', '');
+        document.getElementById('confirm-purchase').textContent =
+          selectedKind === 'subscription' ? 'Start my membership' : 'Confirm my package';
+        showConfirmedPlan(String(selectedTier));
         document.getElementById('checkout-box').style.display = 'block';
-        document.getElementById('checkout-box').scrollIntoView({ behavior: 'smooth' });
+        document.getElementById('confirmed-plan').scrollIntoView({ behavior: 'smooth' });
       });
     });
 

@@ -110,43 +110,15 @@
     </div>
 
     <div id="gated-tools" style="display:none;">
-    <section id="booking-section" style="display:none;">
-      <h2>Book a session</h2>
-      <div class="tool-box">
-        <div class="field">
-          <label>Location</label>
-          <div style="display:flex; gap:8px;">
-            <button type="button" class="btn btn-sm location-choice-btn selected-choice" id="location-virtual" data-location="Virtual">Virtual</button>
-            <button type="button" class="btn btn-sm location-choice-btn" id="location-in-person" data-location="In-person">In-person</button>
-          </div>
-        </div>
-        <div class="field">
-          <label for="appt-date">Pick a date</label>
-          <input type="date" id="appt-date" required />
-        </div>
-        <div id="slot-picker" style="margin:12px 0;"></div>
-        <div class="field">
-          <label for="appt-notes">Anything to share ahead of time? (optional)</label>
-          <textarea id="appt-notes" rows="2"></textarea>
-        </div>
-        <p class="form-error" id="appt-error"></p>
-        <p class="small" id="appt-success" style="display:none; color:var(--accent);"></p>
-        <button class="btn btn-primary btn-sm" id="appt-submit" disabled>Confirm booking</button>
-      </div>
-    </section>
 
-    <section id="my-appointments-section">
-      <h2>Your upcoming appointments</h2>
-      <div id="my-appointments-list" class="tool-box"><p class="small">Loading...</p></div>
-    </section>
+    <nav class="tab-nav" id="dash-tab-nav">
+      <button type="button" class="tab-btn active" data-tab="today">Today</button>
+      <button type="button" class="tab-btn" data-tab="meals">Meals</button>
+      <button type="button" class="tab-btn" data-tab="book">Book &amp; Pay</button>
+      <button type="button" class="tab-btn" data-tab="progress">Progress</button>
+    </nav>
 
-    <section>
-      <h2>Your profile</h2>
-      <div class="tool-box" id="profile-box">
-        <p class="small">Loading...</p>
-      </div>
-    </section>
-
+    <div class="tab-panel" data-tab-panel="today">
     <section>
       <h2>Daily workout</h2>
       <div class="tool-box">
@@ -212,7 +184,9 @@
         </div>
       </div>
     </section>
+    </div>
 
+    <div class="tab-panel" data-tab-panel="meals" style="display:none;">
     <section>
       <h2>What's in your fridge?</h2>
       <div class="tool-box">
@@ -244,6 +218,49 @@
         <p class="small" style="margin-top:8px;">Macros are estimated, not verified nutrition facts.</p>
       </div>
     </section>
+    </div>
+
+    <div class="tab-panel" data-tab-panel="book" style="display:none;">
+    <section id="booking-section" style="display:none;">
+      <h2>Book a session</h2>
+      <div class="tool-box">
+        <div class="field">
+          <label>Location</label>
+          <div style="display:flex; gap:8px;">
+            <button type="button" class="btn btn-sm location-choice-btn selected-choice" id="location-virtual" data-location="Virtual">Virtual</button>
+            <button type="button" class="btn btn-sm location-choice-btn" id="location-in-person" data-location="In-person">In-person</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="appt-date">Pick a date</label>
+          <input type="date" id="appt-date" required />
+        </div>
+        <div id="slot-picker" style="margin:12px 0;"></div>
+        <div class="field">
+          <label for="appt-notes">Anything to share ahead of time? (optional)</label>
+          <textarea id="appt-notes" rows="2"></textarea>
+        </div>
+        <p class="form-error" id="appt-error"></p>
+        <p class="small" id="appt-success" style="display:none; color:var(--accent);"></p>
+        <button class="btn btn-primary btn-sm" id="appt-submit" disabled>Confirm booking</button>
+      </div>
+    </section>
+
+    <section id="my-appointments-section">
+      <h2>Your upcoming appointments</h2>
+      <div id="my-appointments-list" class="tool-box"><p class="small">Loading...</p></div>
+    </section>
+    </div>
+
+    <div class="tab-panel" data-tab-panel="progress" style="display:none;">
+    <section>
+      <h2>Your profile</h2>
+      <div class="tool-box" id="profile-box">
+        <p class="small">Loading...</p>
+      </div>
+    </section>
+    </div>
+
     </div>
 
   </main>
@@ -447,6 +464,19 @@
       window.location.href = 'portal-login.html';
     });
 
+    // ---- Dashboard tabs: show one job at a time instead of one long scroll ----
+    function activateTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabName);
+      });
+      document.querySelectorAll('.tab-panel').forEach(panel => {
+        panel.style.display = panel.dataset.tabPanel === tabName ? 'block' : 'none';
+      });
+    }
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+    });
+
     // Real: load the 3 most recent blog posts
     async function loadBlogPreview() {
       const { data: posts, error } = await supabaseClient
@@ -474,6 +504,9 @@
     // ---- Square payments ----
     const SQUARE_APP_ID = "sq0idp-gjwHru8DqZHZoRvhSHirjw"; // production
     const SUPABASE_FUNCTION_URL = SUPABASE_URL + "/functions/v1/process-payment";
+
+    // Don't let clients pick a date that's already passed
+    document.getElementById('appt-date').min = new Date().toISOString().split('T')[0];
 
     // Sarah's real weekly availability (24-hour time, [startHour, endHour])
     const AVAILABILITY = {
@@ -677,6 +710,7 @@
             document.getElementById('location-virtual').classList.add('selected-choice');
             document.getElementById('location-in-person').classList.remove('selected-choice');
           }
+          activateTab('book');
           document.getElementById('booking-section').style.display = 'block';
           document.querySelector('#booking-section h2').textContent = 'Reschedule your session';
           document.getElementById('appt-submit').textContent = 'Confirm new time';
@@ -694,6 +728,7 @@
         return;
       }
       rescheduleApptId = null;
+      activateTab('book');
       document.querySelector('#booking-section h2').textContent = 'Book a session';
       document.getElementById('appt-submit').textContent = 'Confirm booking';
       document.getElementById('booking-section').style.display = 'block';

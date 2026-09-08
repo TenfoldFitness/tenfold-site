@@ -26,7 +26,7 @@
   <main class="wrap" style="max-width:600px;">
     <div style="padding:32px 0 8px;">
       <h1 style="font-size:24px;">Schedule your initial planning consultation</h1>
-      <p>This short session is where Sarah builds your custom plan. To help you get started right away, we recommend booking within the next 3 days — but if that doesn't fit your schedule, feel free to pick a date further out.</p>
+      <p>This short session is where Sarah builds your custom plan. To get started right away, book within the next 3 days — but if that doesn't fit your schedule, feel free to pick a date further out.</p>
     </div>
 
     <div class="tool-box" id="schedule-form-wrap">
@@ -38,7 +38,10 @@
       <p class="form-error" id="appt-error"></p>
       <button class="btn btn-primary btn-sm" id="appt-submit" disabled>Confirm consultation</button>
     </div>
-    <p class="small" id="appt-success" style="display:none; color:var(--accent); margin-top:16px;"></p>
+    <div id="appt-success" style="display:none; margin-top:16px;">
+      <p class="small" id="appt-success-text" style="color:var(--accent); margin-bottom:16px;"></p>
+      <a href="portal-dashboard.html" class="btn btn-primary btn-sm">Go to my dashboard &rarr;</a>
+    </div>
   </main>
 
   <footer>Tenfold &nbsp;&middot;&nbsp; In person &amp; virtual coaching</footer>
@@ -46,6 +49,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-client.js"></script>
   <script>
+    // Don't let clients pick a date that's already passed
+    document.getElementById('appt-date').min = new Date().toISOString().split('T')[0];
+
     const params = new URLSearchParams(window.location.search);
     const tier = params.get('tier') || '2';
 
@@ -144,8 +150,22 @@
       if (this.value) renderSlotsForDate(this.value);
     });
 
-    document.getElementById('appt-date').valueAsDate = new Date();
-    renderSlotsForDate(new Date().toISOString().slice(0, 10));
+    // Default the date field to the soonest day that actually has availability,
+    // so a client landing here on (say) a Sunday isn't greeted with "not available"
+    // as their very first booking experience.
+    function findNextAvailableDate(fromDate, maxDaysAhead) {
+      for (let i = 0; i <= maxDaysAhead; i++) {
+        const d = new Date(fromDate);
+        d.setDate(d.getDate() + i);
+        const dow = d.getDay();
+        if ((AVAILABILITY[dow] || []).length > 0) return d;
+      }
+      return fromDate; // fallback, shouldn't happen given the weekly schedule
+    }
+
+    const defaultDate = findNextAvailableDate(new Date(), 14);
+    document.getElementById('appt-date').valueAsDate = defaultDate;
+    renderSlotsForDate(defaultDate.toISOString().slice(0, 10));
 
     document.getElementById('appt-submit').addEventListener('click', async function () {
       const errorEl = document.getElementById('appt-error');
@@ -201,12 +221,8 @@
       } catch (e) { console.error('Email send failed:', e); }
 
       document.getElementById('schedule-form-wrap').style.display = 'none';
-      document.getElementById('appt-success').textContent = "You're all set! Taking you to your dashboard now...";
+      document.getElementById('appt-success-text').textContent = "You're all set! Sarah will see you then.";
       document.getElementById('appt-success').style.display = 'block';
-
-      setTimeout(() => {
-        window.location.href = 'portal-dashboard.html';
-      }, 1500);
     });
   </script>
 

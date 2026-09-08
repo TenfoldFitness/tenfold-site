@@ -33,24 +33,26 @@
     </div>
 
     <div class="tool-box" id="assess-form">
-      <div class="assess-q">
+      <p class="small" id="assess-progress" style="margin:-4px 0 20px; color:var(--text-muted);">0 of 7 answered</p>
+
+      <div class="assess-q" id="assess-q-squats">
         <label>How many bodyweight squats can you do in a row, resting only if you need to?</label>
         <p class="hint">Stand up from a chair with no hands if squats aren't accessible, and estimate your best effort.</p>
         <input type="number" id="q-squats" min="0" max="200" placeholder="e.g. 15" />
       </div>
 
-      <div class="assess-q">
+      <div class="assess-q" id="assess-q-aerobic">
         <label>How many minutes can you walk briskly (or climb stairs) before needing a real break?</label>
         <p class="hint">Your honest best guess is enough, no need to actually go test it right now unless you want to.</p>
         <input type="number" id="q-aerobic" min="0" max="120" placeholder="e.g. 10" />
       </div>
 
-      <div class="assess-q">
+      <div class="assess-q" id="assess-q-balance">
         <label>How many seconds can you balance on one leg (eyes open)?</label>
         <input type="number" id="q-balance" min="0" max="180" placeholder="e.g. 20" />
       </div>
 
-      <div class="assess-q">
+      <div class="assess-q" id="assess-q-mobility">
         <label>How easily can you get up off the floor without using your hands?</label>
         <div class="rating-row" data-target="q-mobility">
           <button type="button" class="rating-btn" data-val="2">1</button>
@@ -62,7 +64,7 @@
         <p class="hint">1 = need a lot of help getting up, 5 = completely effortless</p>
       </div>
 
-      <div class="assess-q">
+      <div class="assess-q" id="assess-q-mental">
         <label>How would you rate your mental clarity and focus lately?</label>
         <div class="rating-row" data-target="q-mental">
           <button type="button" class="rating-btn" data-val="2">1</button>
@@ -73,7 +75,7 @@
         </div>
       </div>
 
-      <div class="assess-q">
+      <div class="assess-q" id="assess-q-stress">
         <label>How would you rate your current stress levels?</label>
         <div class="rating-row" data-target="q-stress">
           <button type="button" class="rating-btn" data-val="2">1 (very high)</button>
@@ -84,7 +86,7 @@
         </div>
       </div>
 
-      <div class="assess-q">
+      <div class="assess-q" id="assess-q-relational">
         <label>How connected do you feel to the people in your life right now?</label>
         <div class="rating-row" data-target="q-relational">
           <button type="button" class="rating-btn" data-val="2">1</button>
@@ -102,7 +104,8 @@
     <div class="tool-box" id="assess-results" style="display:none;">
       <h2 style="font-size:18px; margin-bottom:14px;">Your profile</h2>
       <div id="radar-container" style="text-align:center; margin-bottom:16px;"></div>
-      <p class="small" style="margin-bottom:16px;">This isn't a medical or diagnostic test, just a starting snapshot to help build your plan. We'll check back in periodically so you can see how it shifts over time.</p>
+      <p class="small" style="margin-bottom:16px;">This isn't a medical or diagnostic test, just a starting snapshot to help build your plan. I'll check back in periodically so you can see how it shifts over time.</p>
+      <p class="form-error" id="continue-error" style="display:none;"></p>
       <button class="btn btn-primary btn-sm" id="continue-btn">Continue</button>
     </div>
   </main>
@@ -121,13 +124,39 @@
       clientEmail = data.session.user.email;
     });
 
+    const QUESTION_LABELS = {
+      'q-squats': 'bodyweight squats',
+      'q-aerobic': 'brisk walking / stairs time',
+      'q-balance': 'one-leg balance',
+      'q-mobility': 'getting up off the floor',
+      'q-mental': 'mental clarity',
+      'q-stress': 'stress levels',
+      'q-relational': 'connection to others',
+    };
+    const TOTAL_QUESTIONS = Object.keys(QUESTION_LABELS).length;
+
+    function updateProgress() {
+      let answered = 0;
+      ['q-squats', 'q-aerobic', 'q-balance'].forEach(id => {
+        if (document.getElementById(id).value.trim() !== '') answered++;
+      });
+      ['q-mobility', 'q-mental', 'q-stress', 'q-relational'].forEach(id => {
+        if (getSelectedRating(id) !== null) answered++;
+      });
+      document.getElementById('assess-progress').textContent = answered + ' of ' + TOTAL_QUESTIONS + ' answered';
+    }
+
     document.querySelectorAll('.rating-row').forEach(row => {
       row.querySelectorAll('.rating-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           row.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('selected'));
           btn.classList.add('selected');
+          updateProgress();
         });
       });
+    });
+    ['q-squats', 'q-aerobic', 'q-balance'].forEach(id => {
+      document.getElementById(id).addEventListener('input', updateProgress);
     });
 
     function scoreFromCount(value, thresholds) {
@@ -200,9 +229,15 @@
       const stress = getSelectedRating('q-stress');
       const relational = getSelectedRating('q-relational');
 
-      if (isNaN(squats) || isNaN(aerobicMin) || isNaN(balanceSec) || !mobility || !mental || !stress || !relational) {
-        errorEl.textContent = 'Please answer every question above.';
+      const values = { 'q-squats': squats, 'q-aerobic': aerobicMin, 'q-balance': balanceSec,
+        'q-mobility': mobility, 'q-mental': mental, 'q-stress': stress, 'q-relational': relational };
+      const missing = Object.keys(values).filter(id => values[id] === null || isNaN(values[id]));
+
+      if (missing.length > 0) {
+        const names = missing.map(id => QUESTION_LABELS[id]);
+        errorEl.textContent = (missing.length === 1 ? 'Please answer: ' : 'Please answer these ' + missing.length + ': ') + names.join(', ') + '.';
         errorEl.style.display = 'block';
+        document.getElementById('assess-q-' + missing[0].replace('q-', '')).scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
       }
 
@@ -238,13 +273,25 @@
 
     document.getElementById('continue-btn').addEventListener('click', async function () {
       const btn = this;
+      const errorEl = document.getElementById('continue-error');
+      errorEl.style.display = 'none';
       btn.disabled = true;
       btn.textContent = 'Saving...';
 
-      await supabaseClient.from('assessments').insert({
+      const { error } = await supabaseClient.from('assessments').insert({
         client_email: clientEmail,
         ...latestScores,
       });
+
+      if (error) {
+        errorEl.textContent = "Your results couldn't be saved just now (" + error.message + "). They're still on this screen — check your connection and try again.";
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Try again';
+        return;
+      }
+
+      btn.textContent = 'Saved';
 
       if (tier === '2' || tier === '3') {
         window.location.href = 'schedule-checkin.html?tier=' + tier;

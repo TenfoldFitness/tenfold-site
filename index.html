@@ -12,7 +12,10 @@
   <header class="site-header">
     <div class="wrap">
       <a href="index.html" class="logo" style="text-decoration:none; color:inherit;">Tenfold</a>
-      <nav class="primary-nav">
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Menu" aria-expanded="false" aria-controls="primary-nav">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <nav class="primary-nav" id="primary-nav">
         <a href="framework.html">The Framework</a>
         <a href="about.html">About</a>
         <a href="blog.html">Blog</a>
@@ -46,19 +49,6 @@
       </div>
     </section>
 
-    <!-- TOPIC PILLS -->
-    <section>
-      <div class="wrap">
-        <div class="pill-row">
-          <a href="#services" class="topic-pill">Functional Movement</a>
-          <a href="#services" class="topic-pill">Mental Acuity</a>
-          <a href="#services" class="topic-pill">Nutrition</a>
-          <a href="framework.html" class="topic-pill">The Framework</a>
-          <a href="pricing.html" class="topic-pill">Pricing</a>
-        </div>
-      </div>
-    </section>
-
     <!-- STAT STRIP -->
     <section style="padding-top:0;">
       <div class="wrap">
@@ -79,48 +69,6 @@
       </div>
     </section>
 
-    <!-- WHY: THE METHOD -->
-    <section class="reveal">
-      <div class="wrap">
-        <p class="section-label"><span class="ten-mark">10</span>WHY TENFOLD EXISTS</p>
-        <h2 style="font-size:38px;">The Method</h2>
-        <p style="max-width:480px; margin:0 0 32px; font-size:15px;">Six ideas that shape everything, from how programs are built to how conversations go.</p>
-
-        <div class="index-grid">
-          <div class="index-card">
-            <p class="index-num">01</p>
-            <p class="index-name">Grounded in Research</p>
-            <p class="index-copy">Every recommendation is backed by real evidence, not trends.</p>
-          </div>
-          <div class="index-card">
-            <p class="index-num">02</p>
-            <p class="index-name">Built Through Action</p>
-            <p class="index-copy">Real change comes from small, consistent steps, not overnight overhauls.</p>
-          </div>
-          <div class="index-card">
-            <p class="index-num">03</p>
-            <p class="index-name">A Trained Mindset</p>
-            <p class="index-copy">Optimism and curiosity aren't just nice to have, they're tools you can actually build.</p>
-          </div>
-          <div class="index-card">
-            <p class="index-num">04</p>
-            <p class="index-name">Questioning Limits</p>
-            <p class="index-copy">Real growth means challenging the boundaries you've assumed are fixed.</p>
-          </div>
-          <div class="index-card">
-            <p class="index-num">05</p>
-            <p class="index-name">Simple, Not Basic</p>
-            <p class="index-copy">Thoughtful living doesn't require complexity, just intention.</p>
-          </div>
-          <div class="index-card">
-            <p class="index-num">06</p>
-            <p class="index-name">Built Together</p>
-            <p class="index-copy">This isn't a solo journey. Real change happens in real relationship.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <!-- UNEXPECTED FULL-BLEED MOMENT -->
     <section class="reveal" style="border-top:none; padding:0;">
       <div class="bleed-band">
@@ -129,12 +77,12 @@
       </div>
     </section>
 
-    <!-- HOW: THE TENFOLD FRAMEWORK -->
+    <!-- WHY + HOW: THE TENFOLD FRAMEWORK (merged) -->
     <section id="framework" class="reveal">
       <div class="wrap">
         <p class="section-label"><span class="ten-mark">10</span>THE TENFOLD FRAMEWORK</p>
-        <h2 style="font-size:34px;">Three pillars, one method</h2>
-        <p style="max-width:480px; margin:0 0 32px; font-size:15px;">Here's specifically how The Method shows up in your coaching, day to day. Not a ranking, not a score, three equally essential parts of the same approach.</p>
+        <h2 style="font-size:34px;">One method, three pillars</h2>
+        <p style="max-width:520px; margin:0 0 32px; font-size:15px;">Grounded in research. Built through small, consistent action. Never done alone. That thinking shows up in your coaching through three equally essential parts &mdash; not a ranking, not a score.</p>
 
         <div class="index-grid cols-3">
           <div class="index-card">
@@ -157,6 +105,48 @@
         <p style="margin-top:1.5rem;">
           <a href="framework.html" style="font-size:14px; color:var(--accent); font-weight:500;">Read the full framework &rarr;</a>
         </p>
+      </div>
+    </section>
+
+    <!-- DECIDE: QUIZ -->
+    <section class="reveal">
+      <div class="wrap">
+        <p class="section-label center"><span class="ten-mark">10</span>NOT SURE WHERE TO START?</p>
+        <h2 class="center" style="margin-bottom:1.25rem;">Find your fit in 3 questions</h2>
+
+        <div class="quiz-box" id="quiz-box">
+          <div class="quiz-q" data-q="1">
+            <p class="label">1. What's your main focus right now?</p>
+            <div class="quiz-choices">
+              <span class="quiz-choice" data-val="physical">Physical health</span>
+              <span class="quiz-choice" data-val="fitness">Improving fitness</span>
+              <span class="quiz-choice" data-val="weight">Losing weight</span>
+              <span class="quiz-choice" data-val="mental">Mental health</span>
+            </div>
+          </div>
+          <div class="quiz-q" data-q="2">
+            <p class="label">2. How much support do you want?</p>
+            <div class="quiz-choices">
+              <span class="quiz-choice" data-val="self">Just the tools, self-guided</span>
+              <span class="quiz-choice" data-val="regular">Regular coaching check-ins</span>
+              <span class="quiz-choice" data-val="weekly">Hands-on, every week</span>
+            </div>
+          </div>
+          <div class="quiz-q" data-q="3">
+            <p class="label">3. Virtual or in-person?</p>
+            <div class="quiz-choices">
+              <span class="quiz-choice" data-val="virtual">Virtual works great</span>
+              <span class="quiz-choice" data-val="inperson">I'd like in-person</span>
+            </div>
+          </div>
+
+          <div class="quiz-result" id="quiz-result">
+            <p class="small" style="margin-bottom:6px;">Based on your answers, you'd likely thrive in:</p>
+            <p id="quiz-tier-name" style="font-size:20px; font-weight:600; margin-bottom:6px; color:var(--accent);"></p>
+            <p id="quiz-clarifier" class="small" style="display:none; margin-bottom:14px;"></p>
+            <a href="#" id="quiz-cta" class="btn btn-primary btn-sm">See this package</a>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -221,47 +211,6 @@
       </div>
     </section>
 
-    <!-- DECIDE: QUIZ -->
-    <section class="reveal">
-      <div class="wrap">
-        <p class="section-label center"><span class="ten-mark">10</span>NOT SURE WHERE TO START?</p>
-        <h2 class="center" style="margin-bottom:1.25rem;">Find your fit in 3 questions</h2>
-
-        <div class="quiz-box" id="quiz-box">
-          <div class="quiz-q" data-q="1">
-            <p class="label">1. What's your main focus right now?</p>
-            <div class="quiz-choices">
-              <span class="quiz-choice" data-val="physical">Physical health</span>
-              <span class="quiz-choice" data-val="fitness">Improving fitness</span>
-              <span class="quiz-choice" data-val="weight">Losing weight</span>
-              <span class="quiz-choice" data-val="mental">Mental health</span>
-            </div>
-          </div>
-          <div class="quiz-q" data-q="2">
-            <p class="label">2. How much support do you want?</p>
-            <div class="quiz-choices">
-              <span class="quiz-choice" data-val="self">Just the tools, self-guided</span>
-              <span class="quiz-choice" data-val="regular">Regular coaching check-ins</span>
-              <span class="quiz-choice" data-val="weekly">Hands-on, every week</span>
-            </div>
-          </div>
-          <div class="quiz-q" data-q="3">
-            <p class="label">3. Virtual or in-person?</p>
-            <div class="quiz-choices">
-              <span class="quiz-choice" data-val="virtual">Virtual works great</span>
-              <span class="quiz-choice" data-val="inperson">I'd like in-person</span>
-            </div>
-          </div>
-
-          <div class="quiz-result" id="quiz-result">
-            <p class="small" style="margin-bottom:6px;">Based on your answers, you'd likely thrive in:</p>
-            <p id="quiz-tier-name" style="font-size:20px; font-weight:600; margin-bottom:14px; color:var(--accent);"></p>
-            <a href="#" id="quiz-cta" class="btn btn-primary btn-sm">See this package</a>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <!-- COST REASSURANCE -->
     <section class="reveal">
       <div class="wrap">
@@ -296,17 +245,9 @@
       </div>
     </section>
 
-    <!-- TRUST + FINAL CTA, combined -->
+    <!-- FINAL CTA -->
     <section class="reveal center">
       <div class="wrap">
-        <div style="display:flex; gap:1.25rem; align-items:center; text-align:left; margin-bottom:32px;">
-          <img src="images/sarah.jpg" alt="Portrait of Sarah, founder of Tenfold" style="width:64px; height:64px; border-radius:50%; object-fit:cover; flex-shrink:0;" />
-          <div>
-            <p style="font-size:12px; letter-spacing:0.05em; color:var(--text-muted); text-transform:uppercase; margin:0 0 4px;">About the founder</p>
-            <p class="small" style="margin:0 0 6px;">Sarah holds an M.S.W. and M.B.A. from Boston College (2015) and is a Certified Personal Trainer (ISSA), with 15+ years of combined clinical and fitness experience.</p>
-            <a href="about.html" style="font-size:13px; color:var(--accent); font-weight:500;">Read Sarah's full story &rarr;</a>
-          </div>
-        </div>
         <p style="margin-bottom:16px;">Ready to start? Let's talk about what you need.</p>
         <a href="consultation.html" class="btn btn-primary">Get started</a>
       </div>
@@ -349,7 +290,7 @@
 
       const support = quizAnswers['2'];
       const setting = quizAnswers['3'];
-      let tierLabel, ctaHref, ctaText;
+      let tierLabel, ctaHref, ctaText, clarifier = '';
 
       if (support === 'self') {
         tierLabel = 'Foundation — $20/mo';
@@ -363,15 +304,20 @@
       } else {
         tierLabel = 'In-Person Coaching — Contact for pricing';
         ctaHref = 'consultation.html?tier=4'; ctaText = 'Book a consultation';
+        clarifier = "In-person coaching is fully customized, so let's talk it through on a quick call first — that's why this one starts with a consultation instead of instant sign-up.";
       }
 
       document.getElementById('quiz-tier-name').textContent = tierLabel;
       document.getElementById('quiz-cta').href = ctaHref;
       document.getElementById('quiz-cta').textContent = ctaText;
+      const clarifierEl = document.getElementById('quiz-clarifier');
+      clarifierEl.textContent = clarifier;
+      clarifierEl.style.display = clarifier ? 'block' : 'none';
       document.getElementById('quiz-result').classList.add('show');
       document.getElementById('quiz-result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   </script>
 
+  <script src="js/nav-toggle.js" defer></script>
 </body>
 </html>

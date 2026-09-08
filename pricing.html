@@ -10,6 +10,11 @@
     .price-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
     .price-value { font-size: 15px; font-weight: 600; color: var(--accent); }
     .price-contact { font-size: 12px; color: var(--text-muted); font-style: italic; }
+
+    .track-desc { font-size:13px; color:var(--text-secondary); margin:16px 0 16px; }
+    .track-tiers .price-card { margin-bottom: 6px; }
+    .track-tiers .price-card:last-child { margin-bottom: 0; }
+    #pricing-tab-nav { margin-top: 28px; }
   </style>
 </head>
 <body>
@@ -17,7 +22,10 @@
   <header class="site-header">
     <div class="wrap">
       <a href="index.html" class="logo" style="text-decoration:none; color:inherit;">Tenfold</a>
-      <nav class="primary-nav">
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Menu" aria-expanded="false" aria-controls="primary-nav">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <nav class="primary-nav" id="primary-nav">
         <a href="framework.html">The Framework</a>
         <a href="about.html">About</a>
         <a href="blog.html">Blog</a>
@@ -50,40 +58,58 @@
       <a href="consultation.html" class="btn btn-sm">Book now</a>
     </div>
 
-    <div class="price-card">
-      <div class="price-head"><h2 style="margin:0; font-size:16px;">1. Foundation</h2><span class="price-value">$20/mo</span></div>
-      <p class="small" style="margin:0 0 12px;">Portal access, daily coaching-guided workouts, fridge &amp; restaurant tools</p>
-      <a href="signup.html?tier=1" class="btn btn-primary btn-sm">Sign up</a>
+    <nav class="tab-nav" id="pricing-tab-nav">
+      <button type="button" class="tab-btn active" data-tab="self-guided">1&nbsp;&middot;&nbsp;Self-Guided</button>
+      <button type="button" class="tab-btn" data-tab="virtual">2&nbsp;&middot;&nbsp;Virtual Coaching</button>
+      <button type="button" class="tab-btn" data-tab="inperson">3&nbsp;&middot;&nbsp;In-Person Coaching</button>
+    </nav>
+
+    <div class="tab-panel" data-tab-panel="self-guided">
+      <p class="track-desc">Portal access and daily tools you use on your own, no coaching calls required.</p>
+      <div class="track-tiers">
+        <div class="price-card">
+          <div class="price-head"><h2 style="margin:0; font-size:16px;">Foundation</h2><span class="price-value">$20/mo</span></div>
+          <p class="small" style="margin:0 0 12px;">Portal access, daily coaching-guided workouts, fridge &amp; restaurant tools</p>
+          <a href="signup.html?tier=1" class="btn btn-primary btn-sm">Sign up</a>
+        </div>
+      </div>
     </div>
 
-    <div class="price-card">
-      <div class="price-head"><h2 style="margin:0; font-size:16px;">2. Guided</h2><span class="price-value">$100/mo</span></div>
-      <p class="small" style="margin:0 0 12px;">Everything in Foundation, plus a custom 4-week plan and 2 virtual coaching check-ins per month</p>
-      <a href="signup.html?tier=2" class="btn btn-primary btn-sm">Sign up</a>
+    <div class="tab-panel" data-tab-panel="virtual" style="display:none;">
+      <p class="track-desc">Everything in Foundation, plus real coaching check-ins over video.</p>
+      <div class="track-tiers">
+        <div class="price-card">
+          <div class="price-head"><h2 style="margin:0; font-size:16px;">Guided</h2><span class="price-value">$100/mo</span></div>
+          <p class="small" style="margin:0 0 12px;">A custom 4-week plan and 2 virtual coaching check-ins per month</p>
+          <a href="signup.html?tier=2" class="btn btn-primary btn-sm">Sign up</a>
+        </div>
+        <div class="price-card">
+          <div class="price-head"><h2 style="margin:0; font-size:16px;">Virtual Intensive</h2><span class="price-value">$1,000 / 12 wks</span></div>
+          <p class="small" style="margin:0 0 12px;">1 virtual coaching session per week (12 total) and full nutrition planning</p>
+          <a href="signup.html?tier=3" class="btn btn-primary btn-sm">Sign up</a>
+        </div>
+      </div>
     </div>
 
-    <div class="price-card">
-      <div class="price-head"><h2 style="margin:0; font-size:16px;">3. Virtual Intensive</h2><span class="price-value">$1,000 / 12 wks</span></div>
-      <p class="small" style="margin:0 0 12px;">Everything above, plus 1 virtual coaching session per week (12 total) and full nutrition planning</p>
-      <a href="signup.html?tier=3" class="btn btn-primary btn-sm">Sign up</a>
-    </div>
-
-    <div class="price-card">
-      <div class="price-head"><h2 style="margin:0; font-size:16px;">4. In-Person Starter</h2><span class="price-contact">Contact for pricing</span></div>
-      <p class="small" style="margin:0 0 12px;">Everything above, plus 1x/week in-person coaching (12 sessions)</p>
-      <a href="consultation.html?tier=4" class="btn btn-sm">Book a consultation</a>
-    </div>
-
-    <div class="price-card">
-      <div class="price-head"><h2 style="margin:0; font-size:16px;">5. In-Person Standard</h2><span class="price-contact">Contact for pricing</span></div>
-      <p class="small" style="margin:0 0 12px;">Everything above, plus 2x/week in-person coaching (24 sessions)</p>
-      <a href="consultation.html?tier=5" class="btn btn-sm">Book a consultation</a>
-    </div>
-
-    <div class="price-card">
-      <div class="price-head"><h2 style="margin:0; font-size:16px;">6. In-Person Elite</h2><span class="price-contact">Contact for pricing</span></div>
-      <p class="small" style="margin:0 0 12px;">Everything above, plus 3x/week in-person coaching (36 sessions)</p>
-      <a href="consultation.html?tier=6" class="btn btn-sm">Book a consultation</a>
+    <div class="tab-panel" data-tab-panel="inperson" style="display:none;">
+      <p class="track-desc">Everything above, plus hands-on sessions with Sarah. Custom pricing based on frequency &mdash; let's talk it through.</p>
+      <div class="track-tiers">
+        <div class="price-card">
+          <div class="price-head"><h2 style="margin:0; font-size:16px;">Starter &middot; 1x/week</h2><span class="price-contact">Contact for pricing</span></div>
+          <p class="small" style="margin:0 0 12px;">In-person coaching once a week (12 sessions)</p>
+          <a href="consultation.html?tier=4" class="btn btn-sm">Book a consultation</a>
+        </div>
+        <div class="price-card">
+          <div class="price-head"><h2 style="margin:0; font-size:16px;">Standard &middot; 2x/week</h2><span class="price-contact">Contact for pricing</span></div>
+          <p class="small" style="margin:0 0 12px;">In-person coaching twice a week (24 sessions)</p>
+          <a href="consultation.html?tier=5" class="btn btn-sm">Book a consultation</a>
+        </div>
+        <div class="price-card">
+          <div class="price-head"><h2 style="margin:0; font-size:16px;">Elite &middot; 3x/week</h2><span class="price-contact">Contact for pricing</span></div>
+          <p class="small" style="margin:0 0 12px;">In-person coaching three times a week (36 sessions)</p>
+          <a href="consultation.html?tier=6" class="btn btn-sm">Book a consultation</a>
+        </div>
+      </div>
     </div>
 
     <div class="center" style="padding: 20px 0 40px;">
@@ -94,5 +120,19 @@
 
   <footer>Tenfold &nbsp;&middot;&nbsp; In person &amp; virtual coaching</footer>
 
+  <script>
+    document.querySelectorAll('#pricing-tab-nav .tab-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('#pricing-tab-nav .tab-btn').forEach(function (b) {
+          b.classList.toggle('active', b === btn);
+        });
+        document.querySelectorAll('.tab-panel').forEach(function (panel) {
+          panel.style.display = panel.dataset.tabPanel === btn.dataset.tab ? 'block' : 'none';
+        });
+      });
+    });
+  </script>
+
+  <script src="js/nav-toggle.js" defer></script>
 </body>
 </html>

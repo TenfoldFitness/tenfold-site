@@ -17,7 +17,10 @@
   <header class="site-header">
     <div class="wrap">
       <a href="index.html" class="logo" style="text-decoration:none; color:inherit;">Tenfold</a>
-      <nav class="primary-nav">
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Menu" aria-expanded="false" aria-controls="primary-nav">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <nav class="primary-nav" id="primary-nav">
         <a href="framework.html" class="current">The Framework</a>
         <a href="about.html">About</a>
         <a href="blog.html">Blog</a>
@@ -59,9 +62,52 @@
 
     <section>
       <div class="wrap">
+        <p class="section-label"><span class="ten-mark">10</span>THE METHOD</p>
+        <h2>Six ideas behind everything</h2>
+        <p style="max-width:520px; margin:0 0 32px; font-size:15px;">Before it's three pillars, it's six ideas that shape how programs are built and how conversations go.</p>
+
+        <div class="index-grid">
+          <div class="index-card">
+            <p class="index-num">01</p>
+            <p class="index-name">Grounded in Research</p>
+            <p class="index-copy">Every recommendation is backed by real evidence, not trends.</p>
+          </div>
+          <div class="index-card">
+            <p class="index-num">02</p>
+            <p class="index-name">Built Through Action</p>
+            <p class="index-copy">Real change comes from small, consistent steps, not overnight overhauls.</p>
+          </div>
+          <div class="index-card">
+            <p class="index-num">03</p>
+            <p class="index-name">A Trained Mindset</p>
+            <p class="index-copy">Optimism and curiosity aren't just nice to have, they're tools you can actually build.</p>
+          </div>
+          <div class="index-card">
+            <p class="index-num">04</p>
+            <p class="index-name">Questioning Limits</p>
+            <p class="index-copy">Real growth means challenging the boundaries you've assumed are fixed.</p>
+          </div>
+          <div class="index-card">
+            <p class="index-num">05</p>
+            <p class="index-name">Simple, Not Basic</p>
+            <p class="index-copy">Thoughtful living doesn't require complexity, just intention.</p>
+          </div>
+          <div class="index-card">
+            <p class="index-num">06</p>
+            <p class="index-name">Built Together</p>
+            <p class="index-copy">This isn't a solo journey. Real change happens in real relationship.</p>
+          </div>
+        </div>
+
+        <p class="center" style="max-width:520px; margin:40px auto 0; font-size:14px; color:var(--text-secondary);">That's the thinking behind the method. Here's how it actually shows up, session to session.</p>
+      </div>
+    </section>
+
+    <section style="border-top:none; padding-top:0;">
+      <div class="wrap">
         <p class="section-label center"><span class="ten-mark">10</span>THE THREE PILLARS</p>
         <h2 class="center">Every session, built around three needs</h2>
-        <p class="center" style="max-width:520px; margin:0 auto 2rem; font-size:15px;">Every program, every session, and every conversation is built around these three psychological needs.</p>
+        <p class="center" style="max-width:520px; margin:0 auto 2rem; font-size:15px;">Not a ranking, not a score &mdash; three equally essential needs every program is built around.</p>
 
         <div>
           <div class="pillar-block">
@@ -94,5 +140,6 @@
   <div class="motif-footer" style="padding:20px 0;">TENFOLD <span class="ten-mark">10</span> METHOD</div>
   <footer>Tenfold Method &nbsp;&middot;&nbsp; In person &amp; virtual training</footer>
 
+  <script src="js/nav-toggle.js" defer></script>
 </body>
 </html>
