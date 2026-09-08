@@ -167,6 +167,41 @@ nav.primary-nav a.current { color: var(--text-primary); font-weight: 500; }
 .pill-link:hover { background: var(--text-primary); color: var(--bg); }
 .instagram-link svg { width: 18px; height: 18px; vertical-align: -3px; }
 
+.nav-toggle {
+  display: none;
+  background: none;
+  border: none;
+  padding: 6px;
+  margin: -6px;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+.nav-toggle svg { width: 22px; height: 22px; display: block; }
+
+/* ---- Mobile nav: collapse the header links into a toggled dropdown ---- */
+@media (max-width: 680px) {
+  .site-header .wrap { position: relative; }
+  .nav-toggle { display: block; }
+  nav.primary-nav {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 20px 18px;
+    z-index: 30;
+  }
+  nav.primary-nav.open { display: flex; }
+  nav.primary-nav a { width: 100%; padding: 10px 0; }
+  nav.primary-nav .pill-link { width: 100%; text-align: center; margin-top: 8px; }
+  nav.primary-nav .instagram-link { padding: 10px 0; }
+}
+
 /* ---- Buttons: sharp, architectural ---- */
 .btn {
   display: inline-block;
@@ -386,7 +421,12 @@ ul.credentials li strong { color: var(--text-primary); font-weight: 600; }
   font-family: var(--font-body);
 }
 .field input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
-.forgot { font-size: 12px; color: var(--accent); text-align: right; margin: 4px 0 16px; cursor: pointer; }
+.forgot {
+  display: block; width: 100%; font-size: 12px; color: var(--accent); text-align: right;
+  margin: 4px 0 16px; cursor: pointer; background: none; border: none; padding: 4px 0;
+  font-family: inherit;
+}
+.forgot:hover, .forgot:focus-visible { text-decoration: underline; }
 .login-box .btn-primary { width: 100%; padding: 11px; }
 .signup-note { font-size: 13px; text-align: center; margin-top: 16px; color: var(--text-secondary); }
 .signup-note a { color: var(--accent); font-weight: 500; }
@@ -429,6 +469,50 @@ ul.credentials li strong { color: var(--text-primary); font-weight: 600; }
 .macro-row { display: flex; gap: 14px; font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
 .restaurant-entry { border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 10px; }
 .restaurant-entry:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+
+/* Dashboard tabs — group tools by what the client is trying to do */
+.tab-nav { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 24px; overflow-x: auto; }
+.tab-btn {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 10px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tab-btn:hover { color: var(--text-primary); }
+.tab-btn.active { color: var(--text-primary); border-bottom-color: var(--accent); }
+.tab-panel section:first-of-type { border-top: none; padding-top: 0; }
+
+/* ---- Membership checkout: shared between membership.html and signup.html ---- */
+.tier-card { background: var(--surface-1); border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+.tier-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.tier-price { font-size: 18px; font-weight: 600; color: var(--accent); }
+.tier-list { margin: 10px 0 12px; padding-left: 18px; font-size: 13px; color: var(--text-secondary); }
+.tier-list li { margin-bottom: 4px; }
+
+.confirmed-plan { background: var(--accent-bg); border: 1px solid var(--accent); border-radius: 12px; padding: 22px; margin-bottom: 20px; }
+.confirmed-label { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent-deep); margin: 0 0 6px; }
+.confirmed-plan .tier-price { color: var(--accent-deep); }
+.change-plan-link { font-size: 13px; color: var(--accent); text-decoration: underline; cursor: pointer; background: none; border: none; padding: 0; font-family: var(--font-body); }
+.order-summary { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin: 4px 0 12px; font-size: 14px; }
+.order-summary .os-total { font-weight: 600; color: var(--text-primary); }
+.trust-line { font-size: 12px; color: var(--text-muted); margin: 12px 0 0; }
+
+/* ---- Join flow (signup.html): confirmed plan as a persistent side panel + 2-step wizard ---- */
+.join-grid { display: grid; grid-template-columns: 260px 1fr; gap: 28px; align-items: start; }
+.join-summary { position: sticky; top: 24px; }
+.join-summary .confirmed-plan { margin-bottom: 12px; }
+.join-summary .order-summary { flex-direction: column; align-items: flex-start; gap: 2px; }
+.step-indicator { font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 14px; }
+@media (max-width: 680px) {
+  .join-grid { grid-template-columns: 1fr; gap: 0; }
+  .join-summary { position: static; }
+}
 
 /* ---- Responsive ---- */
 @media (max-width: 480px) {
