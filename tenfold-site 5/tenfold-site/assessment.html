@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your Assessment — Tenfold</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .assess-q { margin-bottom: 26px; }
+    .assess-q label { display:block; font-weight:600; font-size:14px; margin-bottom:6px; }
+    .assess-q .hint { font-size:12px; color:var(--text-muted); margin-bottom:10px; }
+    .assess-q input[type="number"] { width:120px; }
+    .rating-row { display:flex; gap:6px; }
+    .rating-btn {
+      width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border);
+      background: var(--surface-2); cursor: pointer; font-size: 13px;
+    }
+    .rating-btn.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="wrap">
+      <a href="index.html" class="logo" style="text-decoration:none; color:inherit;">Tenfold</a>
+    </div>
+  </header>
+
+  <main class="wrap" style="max-width:600px;">
+    <div style="padding:32px 0 8px;">
+      <h1 style="font-size:24px;">Your starting point</h1>
+      <p>A few quick tests and honest self-ratings. There's no pass or fail here, just a real snapshot so your plan can be built around where you're actually starting from, not a guess.</p>
+    </div>
+
+    <div class="tool-box" id="assess-form">
+      <p class="small" id="assess-progress" style="margin:-4px 0 20px; color:var(--text-muted);">0 of 7 answered</p>
+
+      <div class="assess-q" id="assess-q-squats">
+        <label>How many bodyweight squats can you do in a row, resting only if you need to?</label>
+        <p class="hint">Stand up from a chair with no hands if squats aren't accessible, and estimate your best effort.</p>
+        <input type="number" id="q-squats" min="0" max="200" placeholder="e.g. 15" />
+      </div>
+
+      <div class="assess-q" id="assess-q-aerobic">
+        <label>How many minutes can you walk briskly (or climb stairs) before needing a real break?</label>
+        <p class="hint">Your honest best guess is enough, no need to actually go test it right now unless you want to.</p>
+        <input type="number" id="q-aerobic" min="0" max="120" placeholder="e.g. 10" />
+      </div>
+
+      <div class="assess-q" id="assess-q-balance">
+        <label>How many seconds can you balance on one leg (eyes open)?</label>
+        <input type="number" id="q-balance" min="0" max="180" placeholder="e.g. 20" />
+      </div>
+
+      <div class="assess-q" id="assess-q-mobility">
+        <label>How easily can you get up off the floor without using your hands?</label>
+        <div class="rating-row" data-target="q-mobility">
+          <button type="button" class="rating-btn" data-val="2">1</button>
+          <button type="button" class="rating-btn" data-val="4">2</button>
+          <button type="button" class="rating-btn" data-val="6">3</button>
+          <button type="button" class="rating-btn" data-val="8">4</button>
+          <button type="button" class="rating-btn" data-val="10">5</button>
+        </div>
+        <p class="hint">1 = need a lot of help getting up, 5 = completely effortless</p>
+      </div>
+
+      <div class="assess-q" id="assess-q-mental">
+        <label>How would you rate your mental clarity and focus lately?</label>
+        <div class="rating-row" data-target="q-mental">
+          <button type="button" class="rating-btn" data-val="2">1</button>
+          <button type="button" class="rating-btn" data-val="4">2</button>
+          <button type="button" class="rating-btn" data-val="6">3</button>
+          <button type="button" class="rating-btn" data-val="8">4</button>
+          <button type="button" class="rating-btn" data-val="10">5</button>
+        </div>
+      </div>
+
+      <div class="assess-q" id="assess-q-stress">
+        <label>How would you rate your current stress levels?</label>
+        <div class="rating-row" data-target="q-stress">
+          <button type="button" class="rating-btn" data-val="2">1 (very high)</button>
+          <button type="button" class="rating-btn" data-val="4">2</button>
+          <button type="button" class="rating-btn" data-val="6">3</button>
+          <button type="button" class="rating-btn" data-val="8">4</button>
+          <button type="button" class="rating-btn" data-val="10">5 (very low)</button>
+        </div>
+      </div>
+
+      <div class="assess-q" id="assess-q-relational">
+        <label>How connected do you feel to the people in your life right now?</label>
+        <div class="rating-row" data-target="q-relational">
+          <button type="button" class="rating-btn" data-val="2">1</button>
+          <button type="button" class="rating-btn" data-val="4">2</button>
+          <button type="button" class="rating-btn" data-val="6">3</button>
+          <button type="button" class="rating-btn" data-val="8">4</button>
+          <button type="button" class="rating-btn" data-val="10">5</button>
+        </div>
+      </div>
+
+      <p class="form-error" id="assess-error"></p>
+      <button class="btn btn-primary btn-sm" id="assess-submit">See my results</button>
+    </div>
+
+    <div class="tool-box" id="assess-results" style="display:none;">
+      <h2 style="font-size:18px; margin-bottom:14px;">Your profile</h2>
+      <div id="radar-container" style="text-align:center; margin-bottom:16px;"></div>
+      <p class="small" style="margin-bottom:16px;">This isn't a medical or diagnostic test, just a starting snapshot to help build your plan. I'll check back in periodically so you can see how it shifts over time.</p>
+      <p class="form-error" id="continue-error" style="display:none;"></p>
+      <button class="btn btn-primary btn-sm" id="continue-btn">Continue</button>
+    </div>
+  </main>
+
+  <footer>Tenfold &nbsp;&middot;&nbsp; In person &amp; virtual coaching</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-client.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const tier = params.get('tier') || '1';
+    let clientEmail = null;
+
+    supabaseClient.auth.getSession().then(({ data }) => {
+      if (!data.session) { window.location.href = 'portal-login.html'; return; }
+      clientEmail = data.session.user.email;
+    });
+
+    const QUESTION_LABELS = {
+      'q-squats': 'bodyweight squats',
+      'q-aerobic': 'brisk walking / stairs time',
+      'q-balance': 'one-leg balance',
+      'q-mobility': 'getting up off the floor',
+      'q-mental': 'mental clarity',
+      'q-stress': 'stress levels',
+      'q-relational': 'connection to others',
+    };
+    const TOTAL_QUESTIONS = Object.keys(QUESTION_LABELS).length;
+
+    function updateProgress() {
+      let answered = 0;
+      ['q-squats', 'q-aerobic', 'q-balance'].forEach(id => {
+        if (document.getElementById(id).value.trim() !== '') answered++;
+      });
+      ['q-mobility', 'q-mental', 'q-stress', 'q-relational'].forEach(id => {
+        if (getSelectedRating(id) !== null) answered++;
+      });
+      document.getElementById('assess-progress').textContent = answered + ' of ' + TOTAL_QUESTIONS + ' answered';
+    }
+
+    document.querySelectorAll('.rating-row').forEach(row => {
+      row.querySelectorAll('.rating-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          row.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          updateProgress();
+        });
+      });
+    });
+    ['q-squats', 'q-aerobic', 'q-balance'].forEach(id => {
+      document.getElementById(id).addEventListener('input', updateProgress);
+    });
+
+    function scoreFromCount(value, thresholds) {
+      // thresholds: [ [minValue, score], ... ] ascending
+      let score = thresholds[0][1];
+      for (const [min, s] of thresholds) {
+        if (value >= min) score = s;
+      }
+      return score;
+    }
+
+    function getSelectedRating(target) {
+      const row = document.querySelector('.rating-row[data-target="' + target + '"]');
+      const selected = row.querySelector('.rating-btn.selected');
+      return selected ? parseInt(selected.dataset.val, 10) : null;
+    }
+
+    function drawRadarChart(scores) {
+      // scores: {label: value(0-10)}, rendered as an SVG radar chart in brand colors
+      const labels = Object.keys(scores);
+      const n = labels.length;
+      const size = 320, center = size / 2, maxR = 110;
+      const angleStep = (Math.PI * 2) / n;
+
+      function pointFor(i, value) {
+        const angle = -Math.PI / 2 + i * angleStep;
+        const r = (value / 10) * maxR;
+        return [center + r * Math.cos(angle), center + r * Math.sin(angle)];
+      }
+
+      let rings = '';
+      [0.25, 0.5, 0.75, 1].forEach(f => {
+        const pts = labels.map((_, i) => pointFor(i, 10 * f).join(',')).join(' ');
+        rings += `<polygon points="${pts}" fill="none" stroke="#D8D3C4" stroke-width="1" stroke-dasharray="3,3"/>`;
+      });
+
+      let axes = '';
+      let labelEls = '';
+      labels.forEach((label, i) => {
+        const [x, y] = pointFor(i, 10);
+        axes += `<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" stroke="#D8D3C4" stroke-width="1"/>`;
+        const [lx, ly] = pointFor(i, 12.5);
+        labelEls += `<text x="${lx}" y="${ly}" font-size="10" fill="#5C6B67" text-anchor="middle" dominant-baseline="middle">${label}</text>`;
+      });
+
+      const dataPts = labels.map((label, i) => pointFor(i, scores[label]).join(',')).join(' ');
+      const dots = labels.map((label, i) => {
+        const [x, y] = pointFor(i, scores[label]);
+        return `<circle cx="${x}" cy="${y}" r="4.5" fill="#2F6F63"/>`;
+      }).join('');
+
+      return `<svg viewBox="0 0 ${size} ${size}" style="width:100%; max-width:340px;">
+        ${rings}${axes}
+        <polygon points="${dataPts}" fill="#2F6F63" fill-opacity="0.18" stroke="#2F6F63" stroke-width="2"/>
+        ${dots}${labelEls}
+      </svg>`;
+    }
+
+    let latestScores = null;
+
+    document.getElementById('assess-submit').addEventListener('click', function () {
+      const errorEl = document.getElementById('assess-error');
+      errorEl.style.display = 'none';
+
+      const squats = parseInt(document.getElementById('q-squats').value, 10);
+      const aerobicMin = parseInt(document.getElementById('q-aerobic').value, 10);
+      const balanceSec = parseInt(document.getElementById('q-balance').value, 10);
+      const mobility = getSelectedRating('q-mobility');
+      const mental = getSelectedRating('q-mental');
+      const stress = getSelectedRating('q-stress');
+      const relational = getSelectedRating('q-relational');
+
+      const values = { 'q-squats': squats, 'q-aerobic': aerobicMin, 'q-balance': balanceSec,
+        'q-mobility': mobility, 'q-mental': mental, 'q-stress': stress, 'q-relational': relational };
+      const missing = Object.keys(values).filter(id => values[id] === null || isNaN(values[id]));
+
+      if (missing.length > 0) {
+        const names = missing.map(id => QUESTION_LABELS[id]);
+        errorEl.textContent = (missing.length === 1 ? 'Please answer: ' : 'Please answer these ' + missing.length + ': ') + names.join(', ') + '.';
+        errorEl.style.display = 'block';
+        document.getElementById('assess-q-' + missing[0].replace('q-', '')).scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      const strengthScore = scoreFromCount(squats, [[0,2],[5,4],[10,6],[20,8],[30,10]]);
+      const aerobicScore = scoreFromCount(aerobicMin, [[0,2],[5,4],[10,6],[20,8],[30,10]]);
+      const balanceScore = scoreFromCount(balanceSec, [[0,2],[10,4],[20,6],[35,8],[50,10]]);
+
+      latestScores = {
+        aerobic_score: aerobicScore,
+        strength_score: strengthScore,
+        balance_score: balanceScore,
+        mobility_score: mobility,
+        mental_clarity_score: mental,
+        stress_score: stress,
+        relational_score: relational,
+        raw_answers: { squats, aerobicMin, balanceSec },
+      };
+
+      const chartHtml = drawRadarChart({
+        'Strength': strengthScore,
+        'Aerobic': aerobicScore,
+        'Balance': balanceScore,
+        'Mobility': mobility,
+        'Mental Clarity': mental,
+        'Low Stress': stress,
+        'Connection': relational,
+      });
+
+      document.getElementById('radar-container').innerHTML = chartHtml;
+      document.getElementById('assess-form').style.display = 'none';
+      document.getElementById('assess-results').style.display = 'block';
+    });
+
+    document.getElementById('continue-btn').addEventListener('click', async function () {
+      const btn = this;
+      const errorEl = document.getElementById('continue-error');
+      errorEl.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+
+      const { error } = await supabaseClient.from('assessments').insert({
+        client_email: clientEmail,
+        ...latestScores,
+      });
+
+      if (error) {
+        errorEl.textContent = "Your results couldn't be saved just now (" + error.message + "). They're still on this screen — check your connection and try again.";
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Try again';
+        return;
+      }
+
+      btn.textContent = 'Saved';
+
+      if (tier === '2' || tier === '3') {
+        window.location.href = 'schedule-checkin.html?tier=' + tier;
+      } else {
+        window.location.href = 'portal-dashboard.html';
+      }
+    });
+  </script>
+
+</body>
+</html>

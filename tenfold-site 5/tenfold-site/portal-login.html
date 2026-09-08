@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Client Portal Login — Tenfold Method</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <div class="login-page">
+    <div class="center" style="margin-bottom:28px;">
+      <a href="index.html" class="logo" style="text-decoration:none; color:inherit;">Tenfold</a>
+      <p style="margin-top:4px;">Client portal</p>
+    </div>
+
+    <div class="login-box" id="login-view">
+      <h1>Log in to your account</h1>
+
+      <p class="form-error" id="login-error"></p>
+
+      <form id="login-form">
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="you@email.com" required />
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="At least 6 characters" required />
+        </div>
+        <button type="button" class="forgot" id="forgot-link">Forgot password?</button>
+        <button type="submit" class="btn btn-primary" id="login-submit">Log in</button>
+      </form>
+
+      <p class="signup-note">New client? <a href="pricing.html" style="color:var(--accent);">View coaching packages</a></p>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-client.js"></script>
+  <script>
+    // Redirect straight to the dashboard if already logged in
+    supabaseClient.auth.getSession().then(({ data }) => {
+      if (data.session) window.location.href = 'portal-dashboard.html';
+    });
+
+    // Log in
+    document.getElementById('login-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const errorEl = document.getElementById('login-error');
+      const btn = document.getElementById('login-submit');
+      errorEl.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Logging in...';
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+      btn.disabled = false;
+      btn.textContent = 'Log in';
+
+      if (error) {
+        errorEl.textContent = error.message === 'Invalid login credentials'
+          ? "That email and password don't match. Please try again."
+          : error.message;
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      window.location.href = 'portal-dashboard.html';
+    });
+
+    // Forgot password
+    document.getElementById('forgot-link').addEventListener('click', async function () {
+      const email = document.getElementById('email').value.trim();
+      const errorEl = document.getElementById('login-error');
+      if (!email) {
+        errorEl.textContent = "Enter your email above first, then click \"Forgot password?\" again.";
+        errorEl.style.display = 'block';
+        return;
+      }
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/reset-password.html',
+      });
+      errorEl.style.display = 'block';
+      errorEl.style.color = 'var(--accent)';
+      errorEl.textContent = error ? error.message : "Check your email for a password reset link.";
+    });
+  </script>
+
+</body>
+</html>

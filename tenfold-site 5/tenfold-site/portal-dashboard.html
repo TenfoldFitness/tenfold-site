@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — Tenfold Method</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="wrap">
+      <a href="index.html" class="logo" style="text-decoration:none; color:inherit;">Tenfold</a>
+      <nav class="primary-nav">
+        <span style="color:var(--text-primary); font-weight:500;">Dashboard</span>
+        <a href="admin-dashboard.html" id="admin-link" style="display:none;">Admin dashboard</a>
+        <a href="#" id="logout-link">Log out</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <div class="welcome" style="padding:28px 0 8px;">
+      <h1 id="welcome-name">Welcome back</h1>
+      <p>Here's what's happening with your Tenfold Method account.</p>
+    </div>
+
+    <section style="border-top:none; padding-top:0;">
+      <div class="grid dash-grid">
+        <div class="card">
+          <p class="label">Next appointment</p>
+          <div id="next-appt"><p class="value">Loading...</p></div>
+        </div>
+        <div class="card">
+          <p class="label">Book a session</p>
+          <p class="value" style="margin-bottom:10px;">Ready for your next one?</p>
+          <button class="btn btn-sm btn-primary" id="open-booking">Book now</button>
+        </div>
+        <div class="card">
+          <p class="label">Billing</p>
+          <p class="value">Package: 5 sessions</p>
+          <p class="small" style="margin-bottom:10px;">3 remaining &middot; Paid in full</p>
+          <button class="btn btn-sm" id="open-billing">View billing</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="pay-section" style="display:none;">
+      <h2>Pay for a session or package</h2>
+      <div class="tool-box">
+        <div class="field">
+          <label for="pay-amount">What are you paying for?</label>
+          <select id="pay-amount" style="width:100%; padding:10px 12px; border-radius:var(--radius); border:1px solid var(--border); font-family:var(--font-body); font-size:14px;">
+            <option value="7500">Single session — $75.00</option>
+            <option value="35000">5-session package — $350.00</option>
+            <option value="65000">10-session package — $650.00</option>
+          </select>
+        </div>
+        <div id="card-container" style="margin:14px 0;"></div>
+        <p class="form-error" id="pay-error"></p>
+        <p class="small" id="pay-success" style="display:none; color:var(--accent);"></p>
+        <button id="card-button" class="btn btn-primary btn-sm">Pay now</button>
+      </div>
+    </section>
+
+    <section id="blog">
+      <div class="section-head">
+        <h2 style="margin:0;">Latest from the blog</h2>
+        <a href="blog.html" class="link">View all</a>
+      </div>
+      <div class="grid" id="blog-list">
+        <div class="card">
+          <p class="blog-tag">Loading...</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2 style="margin:0;">Nutrition &amp; habit tracker</h2>
+        <span class="link">Add today's entry</span>
+      </div>
+      <div class="tracker">
+        <div class="tracker-row tracker-head">
+          <span></span>
+          <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+        </div>
+        <div class="tracker-row">
+          <span class="day-label">Meals logged</span>
+          <span class="dot-done">&#10003;</span><span class="dot-done">&#10003;</span><span class="dot-done">&#10003;</span><span class="dot-empty">&middot;</span><span class="dot-empty">&middot;</span><span class="dot-empty">&middot;</span><span class="dot-empty">&middot;</span>
+        </div>
+        <div class="tracker-row">
+          <span class="day-label">Water intake</span>
+          <span class="dot-done">&#10003;</span><span class="dot-done">&#10003;</span><span class="dot-empty">&middot;</span><span class="dot-empty">&middot;</span><span class="dot-empty">&middot;</span><span class="dot-empty">&middot;</span><span class="dot-empty">&middot;</span>
+        </div>
+        <div class="tracker-row">
+          <span class="day-label">Movement</span>
+          <span class="dot-done">&#10003;</span><span class="dot-empty">&middot;</span><span class="dot-done">&#10003;</span><span class="dot-empty">&middot;</span><span class="dot-empty">&middot;</span><span class="dot-empty">&middot;</span><span class="dot-empty">&middot;</span>
+        </div>
+      </div>
+    </section>
+
+    <div id="membership-required" style="display:none; padding:24px 0;">
+      <div class="card center">
+        <h2 style="margin-bottom:6px;">Unlock the daily workout &amp; nutrition tools</h2>
+        <p class="small" style="margin-bottom:14px;">These tools are part of Tenfold Method's paid membership tiers, starting at $20/month.</p>
+        <a href="membership.html" class="btn btn-primary btn-sm">View memberships</a>
+      </div>
+    </div>
+
+    <div id="gated-tools" style="display:none;">
+
+    <nav class="tab-nav" id="dash-tab-nav">
+      <button type="button" class="tab-btn active" data-tab="today">Today</button>
+      <button type="button" class="tab-btn" data-tab="meals">Meals</button>
+      <button type="button" class="tab-btn" data-tab="book">Book &amp; Pay</button>
+      <button type="button" class="tab-btn" data-tab="progress">Progress</button>
+    </nav>
+
+    <div class="tab-panel" data-tab-panel="today">
+    <section>
+      <h2>Daily workout</h2>
+      <div class="tool-box">
+        <p class="small" style="margin-bottom:4px;" id="workout-focus-label">Loading today's focus...</p>
+        <p class="small" style="margin-bottom:12px;">Pick your equipment to build today's workout.</p>
+        <div id="workout-equipment-choices" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;">
+          <button class="btn btn-sm workout-choice" data-equipment="Resistance bands">Resistance bands</button>
+          <button class="btn btn-sm workout-choice" data-equipment="Dumbbells">Dumbbells</button>
+          <button class="btn btn-sm workout-choice" data-equipment="Bodyweight">Bodyweight</button>
+        </div>
+        <p class="form-error" id="workout-error"></p>
+        <div id="workout-result"></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Log today's workout</h2>
+      <div class="tool-box">
+        <div id="streak-display" style="margin-bottom:14px;">
+          <p class="value" style="font-size:20px; margin:0;">🔥 <span id="streak-count">0</span> day streak</p>
+        </div>
+
+        <div id="already-logged" style="display:none;">
+          <p class="small" style="color:var(--accent);">You've already logged today's workout. Nice work! 🎉</p>
+        </div>
+
+        <div id="log-form-wrap">
+          <div class="field">
+            <label>What did you do today?</label>
+            <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+              <button type="button" class="btn btn-sm log-choice-btn" id="log-choice-suggested">Today's suggested workout</button>
+              <button type="button" class="btn btn-sm log-choice-btn" id="log-choice-other">Something else</button>
+            </div>
+            <textarea id="log-custom-workout" rows="2" placeholder="Describe what you did..." style="display:none;"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="log-feeling">How did you feel afterward?</label>
+            <select id="log-feeling" style="width:100%; padding:10px 12px; border-radius:var(--radius); border:1px solid var(--border); font-family:var(--font-body); font-size:14px;">
+              <option value="">Select one</option>
+              <option value="5">Great</option>
+              <option value="4">Good</option>
+              <option value="3">Okay</option>
+              <option value="2">Tired</option>
+              <option value="1">Rough</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="log-difficulty">How difficult was it?</label>
+            <select id="log-difficulty" style="width:100%; padding:10px 12px; border-radius:var(--radius); border:1px solid var(--border); font-family:var(--font-body); font-size:14px;">
+              <option value="">Select one</option>
+              <option value="1">Very easy</option>
+              <option value="2">Easy</option>
+              <option value="3">Moderate</option>
+              <option value="4">Hard</option>
+              <option value="5">Very hard</option>
+            </select>
+          </div>
+
+          <p class="form-error" id="log-error"></p>
+          <button class="btn btn-primary btn-sm" id="log-submit">Log workout</button>
+        </div>
+      </div>
+    </section>
+    </div>
+
+    <div class="tab-panel" data-tab-panel="meals" style="display:none;">
+    <section>
+      <h2>What's in your fridge?</h2>
+      <div class="tool-box">
+        <p class="small" style="margin-bottom:10px;">List what you have on hand and get 3 recipe ideas back.</p>
+        <textarea rows="2" id="fridge-input" placeholder="chicken breast, spinach, rice, eggs..."></textarea>
+        <button class="btn btn-primary btn-sm" style="margin-bottom:14px;" id="get-recipes-btn">Get recipes</button>
+        <p class="form-error" id="recipe-error"></p>
+
+        <div class="grid" id="recipe-results"></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2 style="margin:0;">Favorite restaurants</h2>
+        <span class="link" id="show-add-restaurant">Add a restaurant</span>
+      </div>
+      <div class="tool-box">
+        <p class="small" style="margin-bottom:12px;">Pick your go-to spots and see the estimated macros for meals you order.</p>
+
+        <div id="restaurant-add-form" style="display:none; margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid var(--border);">
+          <input type="text" id="restaurant-name" placeholder="Restaurant name (e.g. Chipotle)" style="margin-bottom:8px;" />
+          <input type="text" id="meal-description" placeholder="Meal (e.g. Chicken bowl, white rice, black beans)" style="margin-bottom:8px;" />
+          <p class="form-error" id="restaurant-error"></p>
+          <button class="btn btn-primary btn-sm" id="add-restaurant-btn">Get estimated macros &amp; save</button>
+        </div>
+
+        <div id="restaurant-list"><p class="small">Loading...</p></div>
+        <p class="small" style="margin-top:8px;">Macros are estimated, not verified nutrition facts.</p>
+      </div>
+    </section>
+    </div>
+
+    <div class="tab-panel" data-tab-panel="book" style="display:none;">
+    <section id="booking-section" style="display:none;">
+      <h2>Book a session</h2>
+      <div class="tool-box">
+        <div class="field">
+          <label>Location</label>
+          <div style="display:flex; gap:8px;">
+            <button type="button" class="btn btn-sm location-choice-btn selected-choice" id="location-virtual" data-location="Virtual">Virtual</button>
+            <button type="button" class="btn btn-sm location-choice-btn" id="location-in-person" data-location="In-person">In-person</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="appt-date">Pick a date</label>
+          <input type="date" id="appt-date" required />
+        </div>
+        <div id="slot-picker" style="margin:12px 0;"></div>
+        <div class="field">
+          <label for="appt-notes">Anything to share ahead of time? (optional)</label>
+          <textarea id="appt-notes" rows="2"></textarea>
+        </div>
+        <p class="form-error" id="appt-error"></p>
+        <p class="small" id="appt-success" style="display:none; color:var(--accent);"></p>
+        <button class="btn btn-primary btn-sm" id="appt-submit" disabled>Confirm booking</button>
+      </div>
+    </section>
+
+    <section id="my-appointments-section">
+      <h2>Your upcoming appointments</h2>
+      <div id="my-appointments-list" class="tool-box"><p class="small">Loading...</p></div>
+    </section>
+    </div>
+
+    <div class="tab-panel" data-tab-panel="progress" style="display:none;">
+    <section>
+      <h2>Your profile</h2>
+      <div class="tool-box" id="profile-box">
+        <p class="small">Loading...</p>
+      </div>
+    </section>
+    </div>
+
+    </div>
+
+  </main>
+
+  <footer>Tenfold Method &nbsp;&middot;&nbsp; In person &amp; virtual training</footer>
+
+  <script>
+    // Runs immediately, independent of login/network — today's focus
+    // should always show even if something else is slow to load.
+    const WEEKLY_SPLIT = {
+      1: "Legs",                 // Monday
+      2: "Chest & Biceps",       // Tuesday
+      3: "Back & Abs",           // Wednesday
+      4: "Shoulders",            // Thursday
+      5: "Legs",                 // Friday
+      6: "Biceps & Triceps",     // Saturday
+      0: null,                   // Sunday - rest day
+    };
+    const todayFocus = WEEKLY_SPLIT[new Date().getDay()];
+    const focusLabel = document.getElementById('workout-focus-label');
+    const equipmentChoices = document.getElementById('workout-equipment-choices');
+
+    if (!todayFocus) {
+      focusLabel.textContent = "Today is a rest day — recovery is part of the plan too.";
+      equipmentChoices.style.display = 'none';
+    } else {
+      focusLabel.textContent = "Today's focus: " + todayFocus;
+    }
+  </script>
+
+  <script src="https://web.squarecdn.com/v1/square.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-client.js"></script>
+  <script>
+    const ADMIN_EMAIL = "tenfoldfunctional@gmail.com";
+    document.body.style.visibility = 'hidden'; // hide everything until membership is confirmed
+
+    // Real: require a logged-in session AND an active membership to view
+    // the dashboard at all (admin account is exempt from the membership check).
+    supabaseClient.auth.getSession().then(async ({ data }) => {
+      if (!data.session) {
+        window.location.href = 'portal-login.html';
+        return;
+      }
+      const email = data.session.user.email;
+
+      if (email !== ADMIN_EMAIL) {
+        const { data: memberships } = await supabaseClient
+          .from('memberships')
+          .select('*')
+          .eq('client_email', email)
+          .eq('status', 'active')
+          .order('tier', { ascending: false })
+          .limit(1);
+
+        const active = memberships && memberships.length ? memberships[0] : null;
+        const hasValidMembership = active && (!active.expires_at || new Date(active.expires_at) > new Date());
+
+        if (!hasValidMembership) {
+          const dashParams = new URLSearchParams(window.location.search);
+          const dashTier = dashParams.get('tier');
+          window.location.href = 'membership.html' + (dashTier ? '?tier=' + dashTier : '');
+          return;
+        }
+      }
+
+      document.body.style.visibility = 'visible';
+      document.getElementById('welcome-name').textContent = 'Welcome back, ' + email.split('@')[0];
+      if (email === ADMIN_EMAIL) {
+        document.getElementById('admin-link').style.display = 'inline';
+      }
+      loadNextAppointment(email);
+      loadMyAppointments(email);
+      loadRestaurants(email);
+      checkMembership(email);
+      initWorkoutLog(email);
+      loadProfile(email);
+    });
+
+    let clientHasMembership = false;
+
+    async function getAuthToken() {
+      const { data } = await supabaseClient.auth.getSession();
+      return data.session ? data.session.access_token : SUPABASE_PUBLISHABLE_KEY;
+    }
+
+    function drawRadarChart(scores) {
+      const labels = Object.keys(scores);
+      const n = labels.length;
+      const size = 320, center = size / 2, maxR = 110;
+      const angleStep = (Math.PI * 2) / n;
+
+      function pointFor(i, value) {
+        const angle = -Math.PI / 2 + i * angleStep;
+        const r = (value / 10) * maxR;
+        return [center + r * Math.cos(angle), center + r * Math.sin(angle)];
+      }
+
+      let rings = '';
+      [0.25, 0.5, 0.75, 1].forEach(f => {
+        const pts = labels.map((_, i) => pointFor(i, 10 * f).join(',')).join(' ');
+        rings += `<polygon points="${pts}" fill="none" stroke="#D8D3C4" stroke-width="1" stroke-dasharray="3,3"/>`;
+      });
+
+      let axes = '';
+      let labelEls = '';
+      labels.forEach((label, i) => {
+        const [x, y] = pointFor(i, 10);
+        axes += `<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" stroke="#D8D3C4" stroke-width="1"/>`;
+        const [lx, ly] = pointFor(i, 12.5);
+        labelEls += `<text x="${lx}" y="${ly}" font-size="10" fill="#5C6B67" text-anchor="middle" dominant-baseline="middle">${label}</text>`;
+      });
+
+      const dataPts = labels.map((label, i) => pointFor(i, scores[label]).join(',')).join(' ');
+      const dots = labels.map((label, i) => {
+        const [x, y] = pointFor(i, scores[label]);
+        return `<circle cx="${x}" cy="${y}" r="4.5" fill="#2F6F63"/>`;
+      }).join('');
+
+      return `<svg viewBox="0 0 ${size} ${size}" style="width:100%; max-width:320px;">
+        ${rings}${axes}
+        <polygon points="${dataPts}" fill="#2F6F63" fill-opacity="0.18" stroke="#2F6F63" stroke-width="2"/>
+        ${dots}${labelEls}
+      </svg>`;
+    }
+
+    async function loadProfile(email) {
+      const { data: assessments } = await supabaseClient
+        .from('assessments')
+        .select('*')
+        .eq('client_email', email)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      const box = document.getElementById('profile-box');
+      if (!assessments || !assessments.length) {
+        box.innerHTML = `
+          <p class="small" style="margin-bottom:12px;">You haven't taken your starting assessment yet.</p>
+          <a href="assessment.html" class="btn btn-primary btn-sm">Take assessment</a>
+        `;
+        return;
+      }
+
+      const a = assessments[0];
+      const chartHtml = drawRadarChart({
+        'Strength': a.strength_score,
+        'Aerobic': a.aerobic_score,
+        'Balance': a.balance_score,
+        'Mobility': a.mobility_score,
+        'Mental Clarity': a.mental_clarity_score,
+        'Low Stress': a.stress_score,
+        'Connection': a.relational_score,
+      });
+
+      const takenDate = new Date(a.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+
+      box.innerHTML = `
+        <div style="text-align:center;">${chartHtml}</div>
+        <p class="small center" style="margin:8px 0 14px;">Last taken ${takenDate}</p>
+        <div class="center"><a href="assessment.html" class="btn btn-sm">Retake assessment</a></div>
+      `;
+    }
+
+    async function checkMembership(email) {
+      if (email === ADMIN_EMAIL) {
+        clientHasMembership = true;
+        document.getElementById('gated-tools').style.display = 'block';
+        document.getElementById('membership-required').style.display = 'none';
+        return;
+      }
+
+      const { data: memberships } = await supabaseClient
+        .from('memberships')
+        .select('*')
+        .eq('client_email', email)
+        .eq('status', 'active')
+        .order('tier', { ascending: false })
+        .limit(1);
+
+      const active = memberships && memberships.length
+        ? memberships[0]
+        : null;
+
+      const hasValidMembership = active && (
+        !active.expires_at || new Date(active.expires_at) > new Date()
+      );
+      clientHasMembership = !!hasValidMembership;
+
+      if (hasValidMembership) {
+        document.getElementById('gated-tools').style.display = 'block';
+        document.getElementById('membership-required').style.display = 'none';
+      } else {
+        document.getElementById('gated-tools').style.display = 'none';
+        document.getElementById('membership-required').style.display = 'block';
+      }
+    }
+
+    document.getElementById('logout-link').addEventListener('click', async function (e) {
+      e.preventDefault();
+      await supabaseClient.auth.signOut();
+      window.location.href = 'portal-login.html';
+    });
+
+    // ---- Dashboard tabs: show one job at a time instead of one long scroll ----
+    function activateTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabName);
+      });
+      document.querySelectorAll('.tab-panel').forEach(panel => {
+        panel.style.display = panel.dataset.tabPanel === tabName ? 'block' : 'none';
+      });
+    }
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+    });
+
+    // Real: load the 3 most recent blog posts
+    async function loadBlogPreview() {
+      const { data: posts, error } = await supabaseClient
+        .from('posts')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      const container = document.getElementById('blog-list');
+      if (error || !posts || !posts.length) {
+        container.innerHTML = '<p class="small">No posts published yet — check back soon.</p>';
+        return;
+      }
+      container.innerHTML = posts.map(p => `
+        <a href="post.html?id=${p.id}" style="text-decoration:none; color:inherit;">
+          <div class="card">
+            <p class="blog-tag">${p.tag}</p>
+            <p class="blog-title">${p.title}</p>
+          </div>
+        </a>
+      `).join('');
+    }
+    loadBlogPreview();
+
+    // ---- Square payments ----
+    const SQUARE_APP_ID = "sq0idp-gjwHru8DqZHZoRvhSHirjw"; // production
+    const SUPABASE_FUNCTION_URL = SUPABASE_URL + "/functions/v1/process-payment";
+
+    // Don't let clients pick a date that's already passed
+    document.getElementById('appt-date').min = new Date().toISOString().split('T')[0];
+
+    // Sarah's real weekly availability (24-hour time, [startHour, endHour])
+    const AVAILABILITY = {
+      0: [],                    // Sunday - closed
+      1: [[5, 9], [16, 21]],    // Monday
+      2: [[5, 9], [16, 21]],    // Tuesday
+      3: [[5, 9], [16, 21]],    // Wednesday
+      4: [[5, 9], [16, 21]],    // Thursday
+      5: [[5, 9], [16, 21]],    // Friday
+      6: [[7, 14]],             // Saturday
+    };
+    const SESSION_MINUTES = 45;
+
+    function generateSlotsForDate(dateStr) {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const dayOfWeek = new Date(y, m - 1, d).getDay();
+      const windows = AVAILABILITY[dayOfWeek] || [];
+      const slots = [];
+      windows.forEach(([startHour, endHour]) => {
+        let current = new Date(y, m - 1, d, startHour, 0);
+        const end = new Date(y, m - 1, d, endHour, 0);
+        while (current.getTime() + SESSION_MINUTES * 60000 <= end.getTime()) {
+          slots.push(new Date(current));
+          current = new Date(current.getTime() + SESSION_MINUTES * 60000);
+        }
+      });
+      return slots;
+    }
+
+    let selectedSlotISO = null;
+    let rescheduleApptId = null; // set when rescheduling an existing appointment
+    let selectedLocation = 'Virtual';
+
+    document.getElementById('location-virtual').addEventListener('click', function () {
+      selectedLocation = 'Virtual';
+      this.classList.add('selected-choice');
+      document.getElementById('location-in-person').classList.remove('selected-choice');
+    });
+    document.getElementById('location-in-person').addEventListener('click', function () {
+      selectedLocation = 'In-person';
+      this.classList.add('selected-choice');
+      document.getElementById('location-virtual').classList.remove('selected-choice');
+    });
+
+    async function renderSlotsForDate(dateStr) {
+      const picker = document.getElementById('slot-picker');
+      const submitBtn = document.getElementById('appt-submit');
+      selectedSlotISO = null;
+      submitBtn.disabled = true;
+      picker.innerHTML = '<p class="small">Loading available times...</p>';
+
+      const allSlots = generateSlotsForDate(dateStr);
+      if (!allSlots.length) {
+        picker.innerHTML = '<p class="small">Sarah isn\'t available on this day. Please pick another date.</p>';
+        return;
+      }
+
+      let busyPeriods = [];
+      try {
+        const authToken = await getAuthToken();
+        const response = await fetch(SUPABASE_URL + '/functions/v1/get-availability', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_PUBLISHABLE_KEY,
+            'Authorization': 'Bearer ' + authToken,
+          },
+          body: JSON.stringify({ date: dateStr }),
+        });
+        const payload = await response.json();
+        busyPeriods = (payload.busyPeriods || []).map(p => ({
+          start: new Date(p.start).getTime(),
+          end: new Date(p.start).getTime() + (p.durationMinutes || 45) * 60000,
+        }));
+      } catch (e) {
+        console.error('Could not load availability:', e);
+      }
+
+      const thisSlotDuration = SESSION_MINUTES * 60000;
+      const openSlots = allSlots.filter(slot => {
+        const slotStart = slot.getTime();
+        const slotEnd = slotStart + thisSlotDuration;
+        return !busyPeriods.some(p => slotStart < p.end && p.start < slotEnd);
+      });
+
+      if (!openSlots.length) {
+        picker.innerHTML = '<p class="small">No open times left on this day. Please pick another date.</p>';
+        return;
+      }
+
+      picker.innerHTML = '<div class="slot-grid"></div>';
+      const grid = picker.querySelector('.slot-grid');
+      openSlots.forEach(slot => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'slot-btn';
+        btn.textContent = slot.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          selectedSlotISO = slot.toISOString();
+          submitBtn.disabled = false;
+        });
+        grid.appendChild(btn);
+      });
+    }
+
+    document.getElementById('appt-date').addEventListener('change', function () {
+      if (this.value) renderSlotsForDate(this.value);
+    });
+
+    // Real: load this client's next upcoming appointment
+    async function loadNextAppointment(email) {
+      const { data: appts } = await supabaseClient
+        .from('appointments')
+        .select('*')
+        .eq('client_email', email)
+        .eq('status', 'upcoming')
+        .gte('appointment_time', new Date().toISOString())
+        .order('appointment_time', { ascending: true })
+        .limit(1);
+
+      const el = document.getElementById('next-appt');
+      if (!appts || !appts.length) {
+        el.innerHTML = '<p class="value">Nothing booked yet</p>';
+        return;
+      }
+      const when = new Date(appts[0].appointment_time).toLocaleString([], {
+        weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+      });
+      el.innerHTML = `<p class="value">${when}</p><p class="small">Virtual session with Sarah</p>`;
+    }
+
+    // Real: load and render this client's full upcoming appointments list
+    async function loadMyAppointments(email) {
+      const { data: appts, error } = await supabaseClient
+        .from('appointments')
+        .select('*')
+        .eq('client_email', email)
+        .eq('status', 'upcoming')
+        .gte('appointment_time', new Date().toISOString())
+        .order('appointment_time', { ascending: true });
+
+      const listEl = document.getElementById('my-appointments-list');
+      if (error) { listEl.innerHTML = '<p class="small">Could not load your appointments.</p>'; return; }
+      if (!appts.length) { listEl.innerHTML = '<p class="small">Nothing booked yet.</p>'; return; }
+
+      listEl.innerHTML = appts.map(a => {
+        const when = new Date(a.appointment_time).toLocaleString([], {
+          weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+        });
+        return `
+          <div class="appt-row">
+            <span style="font-size:14px;">${when} &middot; <span class="small">${a.location || 'Virtual'}</span></span>
+            <span>
+              <button class="btn btn-sm reschedule-btn" data-id="${a.id}" data-location="${a.location || 'Virtual'}">Reschedule</button>
+              <button class="btn btn-sm cancel-btn" data-id="${a.id}" data-time="${a.appointment_time}">Cancel</button>
+            </span>
+          </div>
+        `;
+      }).join('');
+
+      document.querySelectorAll('.cancel-btn').forEach(btn => {
+        btn.addEventListener('click', async function () {
+          if (!confirm('Cancel this appointment?')) return;
+          const apptTime = this.dataset.time;
+          await supabaseClient.from('appointments').update({ status: 'cancelled' }).eq('id', this.dataset.id);
+
+          try {
+            const authToken = await getAuthToken();
+            await fetch(SUPABASE_URL + '/functions/v1/send-booking-email', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': SUPABASE_PUBLISHABLE_KEY,
+                'Authorization': 'Bearer ' + authToken,
+              },
+              body: JSON.stringify({
+                clientEmail: email,
+                appointmentTime: apptTime,
+                type: 'cancelled',
+              }),
+            });
+          } catch (emailErr) {
+            console.error('Cancellation email failed:', emailErr);
+          }
+
+          loadMyAppointments(email);
+          loadNextAppointment(email);
+        });
+      });
+
+      document.querySelectorAll('.reschedule-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+          rescheduleApptId = this.dataset.id;
+          selectedLocation = this.dataset.location === 'In-person' ? 'In-person' : 'Virtual';
+          if (selectedLocation === 'In-person') {
+            document.getElementById('location-in-person').classList.add('selected-choice');
+            document.getElementById('location-virtual').classList.remove('selected-choice');
+          } else {
+            document.getElementById('location-virtual').classList.add('selected-choice');
+            document.getElementById('location-in-person').classList.remove('selected-choice');
+          }
+          activateTab('book');
+          document.getElementById('booking-section').style.display = 'block';
+          document.querySelector('#booking-section h2').textContent = 'Reschedule your session';
+          document.getElementById('appt-submit').textContent = 'Confirm new time';
+          document.getElementById('booking-section').scrollIntoView({ behavior: 'smooth' });
+        });
+      });
+    }
+
+    document.getElementById('open-booking').addEventListener('click', function () {
+      selectedLocation = 'Virtual';
+      document.getElementById('location-virtual').classList.add('selected-choice');
+      document.getElementById('location-in-person').classList.remove('selected-choice');
+      if (!clientHasMembership) {
+        window.location.href = 'membership.html';
+        return;
+      }
+      rescheduleApptId = null;
+      activateTab('book');
+      document.querySelector('#booking-section h2').textContent = 'Book a session';
+      document.getElementById('appt-submit').textContent = 'Confirm booking';
+      document.getElementById('booking-section').style.display = 'block';
+      document.getElementById('booking-section').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    document.getElementById('appt-submit').addEventListener('click', async function () {
+      const errorEl = document.getElementById('appt-error');
+      const successEl = document.getElementById('appt-success');
+      errorEl.style.display = 'none';
+      successEl.style.display = 'none';
+
+      if (!selectedSlotISO) {
+        errorEl.textContent = 'Please pick an available time.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      const { data: sessionData } = await supabaseClient.auth.getSession();
+      const email = sessionData.session.user.email;
+      const notes = document.getElementById('appt-notes').value.trim();
+
+      let error;
+      if (rescheduleApptId) {
+        ({ error } = await supabaseClient
+          .from('appointments')
+          .update({ appointment_time: selectedSlotISO, notes: notes, location: selectedLocation })
+          .eq('id', rescheduleApptId));
+      } else {
+        ({ error } = await supabaseClient.from('appointments').insert({
+          client_email: email,
+          appointment_time: selectedSlotISO,
+          notes: notes,
+          location: selectedLocation,
+        }));
+      }
+
+      if (error) {
+        errorEl.textContent = error.message;
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      try {
+        const authToken = await getAuthToken();
+        await fetch(SUPABASE_URL + '/functions/v1/send-booking-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_PUBLISHABLE_KEY,
+            'Authorization': 'Bearer ' + authToken,
+          },
+          body: JSON.stringify({
+            clientEmail: email,
+            appointmentTime: selectedSlotISO,
+            notes: notes,
+            type: 'booked',
+            location: selectedLocation,
+          }),
+        });
+      } catch (emailErr) {
+        console.error('Email send failed:', emailErr);
+      }
+
+      successEl.textContent = "Booked! You'll get your Google Meet link by email shortly.";
+      successEl.style.display = 'block';
+      rescheduleApptId = null;
+      loadNextAppointment(email);
+      loadMyAppointments(email);
+    });
+
+    document.getElementById('open-billing').addEventListener('click', function () {
+      document.getElementById('pay-section').style.display = 'block';
+      document.getElementById('pay-section').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    let squareCard;
+    async function initSquare() {
+      const payments = window.Square.payments(SQUARE_APP_ID, SQUARE_LOCATION_ID_FOR_JS);
+      squareCard = await payments.card({
+        style: {
+          input: {
+            fontSize: '14px',
+            color: '#1E2B29',
+          },
+          '.input-container': {
+            borderColor: '#E2DED5',
+            borderRadius: '10px',
+          },
+          '.input-container.is-focus': {
+            borderColor: '#2F6F63',
+          },
+          '.message-text': {
+            color: '#B3453B',
+          },
+        },
+      });
+      await squareCard.attach('#card-container');
+    }
+    const SQUARE_LOCATION_ID_FOR_JS = "L5KMCJ2K8M3AX";
+    initSquare();
+
+    document.getElementById('card-button').addEventListener('click', async function () {
+      const errorEl = document.getElementById('pay-error');
+      const successEl = document.getElementById('pay-success');
+      errorEl.style.display = 'none';
+      successEl.style.display = 'none';
+
+      const btn = this;
+      btn.disabled = true;
+      btn.textContent = 'Processing...';
+
+      try {
+        const result = await squareCard.tokenize();
+        if (result.status !== 'OK') {
+          throw new Error('Card details could not be verified. Please check and try again.');
+        }
+
+        const amountCents = parseInt(document.getElementById('pay-amount').value, 10);
+        const { data: sessionData } = await supabaseClient.auth.getSession();
+
+        const response = await fetch(SUPABASE_FUNCTION_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + sessionData.session.access_token,
+          },
+          body: JSON.stringify({
+            sourceId: result.token,
+            amountCents: amountCents,
+            note: 'Tenfold Method payment',
+            clientEmail: sessionData.session.user.email,
+          }),
+        });
+
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error?.message || 'Payment failed. Please try again.');
+
+        successEl.textContent = 'Payment successful — thank you!';
+        successEl.style.display = 'block';
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Pay now';
+      }
+    });
+
+    // ---- Daily workout button handlers (WEEKLY_SPLIT defined earlier) ----
+    document.querySelectorAll('.workout-choice').forEach(function (button) {
+      button.addEventListener('click', async function () {
+        const errorEl = document.getElementById('workout-error');
+        const resultEl = document.getElementById('workout-result');
+        errorEl.style.display = 'none';
+        resultEl.innerHTML = '';
+
+        const equipment = this.dataset.equipment;
+        const allButtons = document.querySelectorAll('.workout-choice');
+        allButtons.forEach(b => b.disabled = true);
+        this.textContent = 'Building your workout...';
+
+        try {
+          const authToken = await getAuthToken();
+          const { data: sessionForWorkout } = await supabaseClient.auth.getSession();
+          const workoutClientEmail = sessionForWorkout.session ? sessionForWorkout.session.user.email : null;
+          const response = await fetch(SUPABASE_URL + '/functions/v1/get-workout', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': SUPABASE_PUBLISHABLE_KEY,
+              'Authorization': 'Bearer ' + authToken,
+            },
+            body: JSON.stringify({ equipment, focus: todayFocus, clientEmail: workoutClientEmail }),
+          });
+          const payload = await response.json();
+          if (!response.ok) throw new Error(payload.error?.message || 'Could not build a workout right now.');
+
+          const w = payload.workout;
+          resultEl.innerHTML = `
+            <div class="recipe-card" style="margin-top:6px;">
+              <p class="blog-title" style="margin-bottom:10px;">${w.focus} &middot; ${equipment}</p>
+              ${w.supersets.map((ss, i) => `
+                <p class="small" style="font-weight:600; color:var(--text-primary); margin:10px 0 4px;">Superset ${i + 1} &middot; 3 sets</p>
+                ${ss.exercises.map(ex => `
+                  <div style="margin-bottom:6px;">
+                    <p style="font-size:13px; font-weight:600; margin:0;">${ex.name} — ${ex.reps} reps</p>
+                    <p class="small" style="margin:0;">${ex.note}</p>
+                  </div>
+                `).join('')}
+              `).join('')}
+            </div>
+          `;
+        } catch (err) {
+          errorEl.textContent = err.message;
+          errorEl.style.display = 'block';
+        } finally {
+          allButtons.forEach(b => b.disabled = false);
+          this.textContent = equipment;
+        }
+      });
+    });
+
+    // ---- Workout logging + streak tracker ----
+    let selectedLogChoice = null; // 'suggested' or 'other'
+
+    function todayDateStr() {
+      const d = new Date();
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+
+    document.getElementById('log-choice-suggested').addEventListener('click', function () {
+      selectedLogChoice = 'suggested';
+      this.classList.add('selected-choice');
+      document.getElementById('log-choice-other').classList.remove('selected-choice');
+      document.getElementById('log-custom-workout').style.display = 'none';
+    });
+    document.getElementById('log-choice-other').addEventListener('click', function () {
+      selectedLogChoice = 'other';
+      this.classList.add('selected-choice');
+      document.getElementById('log-choice-suggested').classList.remove('selected-choice');
+      document.getElementById('log-custom-workout').style.display = 'block';
+    });
+
+    async function calculateStreak(email, latestLogDates) {
+      // latestLogDates: array of 'YYYY-MM-DD' strings, most recent first
+      const dateSet = new Set(latestLogDates);
+      let streak = 0;
+      let cursor = new Date();
+
+      // If today isn't logged yet, start counting from yesterday instead,
+      // so the streak still reflects consecutive prior days.
+      if (!dateSet.has(todayDateStr())) {
+        cursor.setDate(cursor.getDate() - 1);
+      }
+
+      while (true) {
+        const dStr = cursor.getFullYear() + '-' + String(cursor.getMonth() + 1).padStart(2, '0') + '-' + String(cursor.getDate()).padStart(2, '0');
+        if (dateSet.has(dStr)) {
+          streak++;
+          cursor.setDate(cursor.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+      return streak;
+    }
+
+    async function initWorkoutLog(email) {
+      const { data: logs, error } = await supabaseClient
+        .from('workout_logs')
+        .select('log_date')
+        .eq('client_email', email)
+        .order('log_date', { ascending: false })
+        .limit(120);
+
+      if (error) return;
+
+      const dates = logs.map(l => l.log_date);
+      const streak = await calculateStreak(email, dates);
+      document.getElementById('streak-count').textContent = streak;
+
+      if (dates.includes(todayDateStr())) {
+        document.getElementById('already-logged').style.display = 'block';
+        document.getElementById('log-form-wrap').style.display = 'none';
+      }
+    }
+
+    document.getElementById('log-submit').addEventListener('click', async function () {
+      const errorEl = document.getElementById('log-error');
+      errorEl.style.display = 'none';
+
+      const feeling = document.getElementById('log-feeling').value;
+      const difficulty = document.getElementById('log-difficulty').value;
+      const customText = document.getElementById('log-custom-workout').value.trim();
+
+      if (!selectedLogChoice) {
+        errorEl.textContent = 'Please select what you did today.';
+        errorEl.style.display = 'block';
+        return;
+      }
+      if (selectedLogChoice === 'other' && !customText) {
+        errorEl.textContent = 'Please describe the workout you did.';
+        errorEl.style.display = 'block';
+        return;
+      }
+      if (!feeling || !difficulty) {
+        errorEl.textContent = 'Please rate how you felt and how difficult it was.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      const workoutDescription = selectedLogChoice === 'suggested'
+        ? "Today's suggested workout"
+        : customText;
+
+      const { data: sessionData } = await supabaseClient.auth.getSession();
+      const email = sessionData.session.user.email;
+
+      const btn = this;
+      btn.disabled = true;
+      btn.textContent = 'Logging...';
+
+      const { error } = await supabaseClient.from('workout_logs').insert({
+        client_email: email,
+        log_date: todayDateStr(),
+        workout_description: workoutDescription,
+        feeling_rating: parseInt(feeling, 10),
+        difficulty_rating: parseInt(difficulty, 10),
+      });
+
+      btn.disabled = false;
+      btn.textContent = 'Log workout';
+
+      if (error) {
+        errorEl.textContent = error.message;
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      document.getElementById('already-logged').style.display = 'block';
+      document.getElementById('log-form-wrap').style.display = 'none';
+      initWorkoutLog(email);
+    });
+
+    // ---- Fridge to recipes (Claude API) ----
+    document.getElementById('get-recipes-btn').addEventListener('click', async function () {
+      const errorEl = document.getElementById('recipe-error');
+      const resultsEl = document.getElementById('recipe-results');
+      const btn = this;
+      errorEl.style.display = 'none';
+
+      const ingredients = document.getElementById('fridge-input').value.trim();
+      if (!ingredients) {
+        errorEl.textContent = 'Please list at least one ingredient.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Thinking...';
+      resultsEl.innerHTML = '';
+
+      try {
+        const authToken = await getAuthToken();
+        const response = await fetch(SUPABASE_URL + '/functions/v1/get-recipes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_PUBLISHABLE_KEY,
+            'Authorization': 'Bearer ' + authToken,
+          },
+          body: JSON.stringify({ ingredients }),
+        });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error?.message || 'Could not get recipes right now.');
+
+        resultsEl.innerHTML = payload.recipes.map(r => `
+          <div class="recipe-card">
+            <p class="blog-title" style="margin-bottom:2px;">${r.title}</p>
+            <p class="small">${r.description}</p>
+          </div>
+        `).join('');
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Get recipes';
+      }
+    });
+
+    // ---- Favorite restaurants (Claude API + saved to database) ----
+    document.getElementById('show-add-restaurant').addEventListener('click', function () {
+      const form = document.getElementById('restaurant-add-form');
+      form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    });
+
+    async function loadRestaurants(email) {
+      const listEl = document.getElementById('restaurant-list');
+      const { data, error } = await supabaseClient
+        .from('restaurant_favorites')
+        .select('*')
+        .eq('client_email', email)
+        .order('created_at', { ascending: false });
+
+      if (error) { listEl.innerHTML = '<p class="small">Could not load your restaurants.</p>'; return; }
+      if (!data.length) { listEl.innerHTML = '<p class="small">No favorites saved yet.</p>'; return; }
+
+      listEl.innerHTML = data.map(r => `
+        <div class="restaurant-entry">
+          <p class="blog-title" style="margin-bottom:4px;">${r.restaurant_name} &middot; ${r.meal_description}</p>
+          <div class="macro-row">
+            <span>${r.calories ?? '?'} cal</span>
+            <span>${r.protein_g ?? '?'}g protein</span>
+            <span>${r.carbs_g ?? '?'}g carbs</span>
+            <span>${r.fat_g ?? '?'}g fat</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    document.getElementById('add-restaurant-btn').addEventListener('click', async function () {
+      const errorEl = document.getElementById('restaurant-error');
+      const btn = this;
+      errorEl.style.display = 'none';
+
+      const restaurantName = document.getElementById('restaurant-name').value.trim();
+      const mealDescription = document.getElementById('meal-description').value.trim();
+      if (!restaurantName || !mealDescription) {
+        errorEl.textContent = 'Please fill in both the restaurant and the meal.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Estimating...';
+
+      try {
+        const authToken = await getAuthToken();
+        const response = await fetch(SUPABASE_URL + '/functions/v1/get-restaurant-macros', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_PUBLISHABLE_KEY,
+            'Authorization': 'Bearer ' + authToken,
+          },
+          body: JSON.stringify({ restaurantName, mealDescription }),
+        });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error?.message || 'Could not estimate macros right now.');
+
+        const { data: sessionData } = await supabaseClient.auth.getSession();
+        const email = sessionData.session.user.email;
+        const m = payload.macros;
+
+        const { error } = await supabaseClient.from('restaurant_favorites').insert({
+          client_email: email,
+          restaurant_name: restaurantName,
+          meal_description: mealDescription,
+          calories: m.calories,
+          protein_g: m.protein_g,
+          carbs_g: m.carbs_g,
+          fat_g: m.fat_g,
+        });
+        if (error) throw new Error(error.message);
+
+        document.getElementById('restaurant-name').value = '';
+        document.getElementById('meal-description').value = '';
+        document.getElementById('restaurant-add-form').style.display = 'none';
+        loadRestaurants(email);
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Get estimated macros & save';
+      }
+    });
+
+    // NOTE: Still placeholder for now — coming in later build steps:
+    // - Real appointment data instead of the sample shown above
+  </script>
+
+</body>
+</html>

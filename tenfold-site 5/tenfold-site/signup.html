@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Join Tenfold — Create Your Account</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="wrap">
+      <a href="index.html" class="logo" style="text-decoration:none; color:inherit;">Tenfold</a>
+    </div>
+  </header>
+
+  <main class="wrap" style="max-width:760px; padding-top:28px;">
+
+    <div class="join-grid">
+
+      <!-- Persistent plan summary: stays visible through both steps -->
+      <div class="join-summary">
+        <div class="confirmed-plan" id="confirmed-plan">
+          <p class="confirmed-label">You're joining</p>
+          <div class="tier-head"><h2 style="margin:0; font-size:18px;" id="confirmed-name"></h2><span class="tier-price" id="confirmed-price"></span></div>
+          <ul class="tier-list" id="confirmed-features"></ul>
+          <div class="order-summary">
+            <span id="order-summary-label"></span>
+            <span class="os-total" id="order-summary-total"></span>
+          </div>
+          <button type="button" class="change-plan-link" id="change-plan-link">Not the right fit? Compare other plans</button>
+        </div>
+
+        <div id="compare-plans" style="display:none;">
+          <div class="tier-card">
+            <div class="tier-head"><h2 style="margin:0; font-size:15px;">1. Foundation</h2><span class="tier-price" style="font-size:15px;">$20/mo</span></div>
+            <button class="btn btn-sm choose-instead" data-tier="1">Choose this instead</button>
+          </div>
+          <div class="tier-card">
+            <div class="tier-head"><h2 style="margin:0; font-size:15px;">2. Guided</h2><span class="tier-price" style="font-size:15px;">$100/mo</span></div>
+            <button class="btn btn-sm choose-instead" data-tier="2">Choose this instead</button>
+          </div>
+          <div class="tier-card">
+            <div class="tier-head"><h2 style="margin:0; font-size:15px;">3. Virtual Intensive</h2><span class="tier-price" style="font-size:15px;">$1,000/12wks</span></div>
+            <button class="btn btn-sm choose-instead" data-tier="3">Choose this instead</button>
+          </div>
+          <p class="small">Looking for in-person coaching? <a href="pricing.html" style="color:var(--accent);">See those packages</a> — they start with a consultation.</p>
+        </div>
+      </div>
+
+      <!-- Two-step form: account, then payment. No page navigation between them. -->
+      <div class="join-form">
+        <p class="step-indicator" id="step-indicator">Step 1 of 2 &middot; Create your account</p>
+
+        <div class="tool-box" id="account-step">
+          <div class="field">
+            <label for="su-name">Name</label>
+            <input type="text" id="su-name" required />
+          </div>
+          <div class="field">
+            <label for="su-email">Email</label>
+            <input type="email" id="su-email" required />
+          </div>
+          <div class="field">
+            <label for="su-phone">Phone number</label>
+            <input type="tel" id="su-phone" required />
+          </div>
+          <div class="field">
+            <label for="su-priority">What is your top priority right now?</label>
+            <select id="su-priority" style="width:100%; padding:10px 12px; border-radius:var(--radius); border:1px solid var(--border); font-family:var(--font-body); font-size:14px;">
+              <option value="">Select one</option>
+              <option value="Physical health">Physical health</option>
+              <option value="Improving my fitness">Improving my fitness</option>
+              <option value="Losing weight">Losing weight</option>
+              <option value="Planning for the future">Planning for the future</option>
+              <option value="Mental health">Mental health</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="su-password">Create a password</label>
+            <input type="password" id="su-password" required minlength="6" placeholder="At least 6 characters" />
+          </div>
+          <p class="form-error" id="signup-error"></p>
+          <button class="btn btn-primary btn-sm" id="signup-submit">Continue to payment</button>
+        </div>
+
+        <div class="tool-box" id="payment-step" style="display:none;">
+          <div id="card-container" style="margin-bottom:14px;"></div>
+          <p class="form-error" id="checkout-error"></p>
+          <p class="small" id="checkout-success" style="display:none; color:var(--accent);"></p>
+          <button id="confirm-purchase" class="btn btn-primary">Start my membership</button>
+          <p class="trust-line">🔒 Secure payment via Square &middot; Cancel or change your plan anytime.</p>
+        </div>
+
+        <p class="small center" style="margin-top:16px;">Already have an account? <a href="portal-login.html" style="color:var(--accent);">Log in</a></p>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>Tenfold &nbsp;&middot;&nbsp; In person &amp; virtual coaching</footer>
+
+  <script src="https://web.squarecdn.com/v1/square.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-client.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const tier = params.get('tier') || '1';
+
+    const TIER_INFO = {
+      '1': { name: 'Foundation', price: '$20/mo', total: '$20/month, billed monthly', kind: 'subscription',
+             features: ['Client portal access', 'Daily workout (6-day split)', 'Fridge-to-recipe &amp; restaurant macro tools'] },
+      '2': { name: 'Guided', price: '$100/mo', total: '$100/month, billed monthly', kind: 'subscription',
+             features: ['Everything in Foundation', 'Custom 4-week workout plan', '2 virtual check-ins per month'] },
+      '3': { name: 'Virtual Intensive', price: '$1,000 / 12 weeks', total: '$1,000 one-time, covers 12 weeks', kind: 'package',
+             features: ['Everything in Foundation &amp; Guided', '1 virtual training session/week (12 total)', 'Full nutrition planning'] },
+    };
+
+    const info = TIER_INFO[tier] || TIER_INFO['1'];
+    document.getElementById('confirmed-name').textContent = info.name;
+    document.getElementById('confirmed-price').textContent = info.price;
+    document.getElementById('confirmed-features').innerHTML = info.features.map(f => '<li>' + f + '</li>').join('');
+    document.getElementById('order-summary-label').textContent = info.name;
+    document.getElementById('order-summary-total').textContent = info.total;
+    document.getElementById('confirm-purchase').textContent =
+      info.kind === 'subscription' ? 'Start my membership' : 'Confirm my package';
+
+    document.getElementById('change-plan-link').addEventListener('click', function () {
+      const compare = document.getElementById('compare-plans');
+      compare.style.display = compare.style.display === 'none' ? 'block' : 'none';
+    });
+    document.querySelectorAll('.choose-instead').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        window.location.href = 'signup.html?tier=' + this.dataset.tier;
+      });
+    });
+
+    // ---- Step 1: create the account ----
+    document.getElementById('signup-submit').addEventListener('click', async function () {
+      const errorEl = document.getElementById('signup-error');
+      errorEl.style.display = 'none';
+
+      const name = document.getElementById('su-name').value.trim();
+      const email = document.getElementById('su-email').value.trim();
+      const phone = document.getElementById('su-phone').value.trim();
+      const priority = document.getElementById('su-priority').value;
+      const password = document.getElementById('su-password').value;
+
+      if (!name || !email || !phone || !priority || !password) {
+        errorEl.textContent = 'Please fill in every field above.';
+        errorEl.style.display = 'block';
+        return;
+      }
+      if (password.length < 6) {
+        errorEl.textContent = 'Password must be at least 6 characters.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      const btn = this;
+      btn.disabled = true;
+      btn.textContent = 'Creating your account...';
+
+      const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({ email, password });
+
+      if (signUpError) {
+        errorEl.textContent = signUpError.message;
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Continue to payment';
+        return;
+      }
+
+      // Save their contact info for you to see, and for later use in scheduling
+      await supabaseClient.from('client_profiles').upsert({ email, name, phone, priority });
+
+      // If email confirmation is off, this now gives us a real session immediately.
+      if (!signUpData.session) {
+        const { error: loginError } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (loginError) {
+          errorEl.textContent = "Account created, but automatic login didn't work. Please check your email or try logging in.";
+          errorEl.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Continue to payment';
+          return;
+        }
+      }
+
+      clientEmail = email;
+      document.getElementById('step-indicator').textContent = 'Step 2 of 2 · Payment';
+      document.getElementById('account-step').style.display = 'none';
+      document.getElementById('payment-step').style.display = 'block';
+      document.getElementById('payment-step').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+
+    // ---- Step 2: payment (same Square + Edge Function pattern as membership.html) ----
+    const SQUARE_APP_ID = "sq0idp-gjwHru8DqZHZoRvhSHirjw"; // production
+    let squareCard, clientEmail;
+
+    async function initSquare() {
+      const payments = window.Square.payments(SQUARE_APP_ID, "L5KMCJ2K8M3AX");
+      squareCard = await payments.card({
+        style: {
+          input: { fontSize: '14px', color: '#1E2B29' },
+          '.input-container': { borderColor: '#E2DED5', borderRadius: '10px' },
+          '.input-container.is-focus': { borderColor: '#2F6F63' },
+          '.message-text': { color: '#B3453B' },
+        },
+      });
+      await squareCard.attach('#card-container');
+    }
+    initSquare();
+
+    document.getElementById('confirm-purchase').addEventListener('click', async function () {
+      const errorEl = document.getElementById('checkout-error');
+      const successEl = document.getElementById('checkout-success');
+      errorEl.style.display = 'none';
+      successEl.style.display = 'none';
+      const btn = this;
+      btn.disabled = true;
+      btn.textContent = 'Processing...';
+
+      try {
+        const result = await squareCard.tokenize();
+        if (result.status !== 'OK') throw new Error('Card details could not be verified.');
+
+        const { data: sessionData } = await supabaseClient.auth.getSession();
+        const authToken = sessionData.session ? sessionData.session.access_token : SUPABASE_PUBLISHABLE_KEY;
+
+        const functionName = info.kind === 'subscription' ? 'start-membership' : 'purchase-package';
+        const response = await fetch(SUPABASE_URL + '/functions/v1/' + functionName, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_PUBLISHABLE_KEY,
+            'Authorization': 'Bearer ' + authToken,
+          },
+          body: JSON.stringify({
+            sourceId: result.token,
+            tier: parseInt(tier, 10),
+            clientEmail: clientEmail,
+          }),
+        });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error?.message || payload.error?.detail || 'Purchase failed.');
+
+        successEl.textContent = "Payment complete! Let's build your starting profile...";
+        successEl.style.display = 'block';
+        setTimeout(() => { window.location.href = 'assessment.html?tier=' + tier; }, 1500);
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = info.kind === 'subscription' ? 'Start my membership' : 'Confirm my package';
+      }
+    });
+  </script>
+
+</body>
+</html>
