@@ -26,12 +26,14 @@
       <nav class="primary-nav" id="primary-nav">
         <a href="framework.html">The Framework</a>
         <a href="about.html">About</a>
+        <a href="sample-workout.html">Free workout</a>
         <a href="blog.html">Blog</a>
         <a href="pricing.html">Pricing</a>
         <a class="instagram-link" href="https://www.instagram.com/tenfold_health/" aria-label="Instagram" target="_blank" rel="noopener">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1"/></svg>
         </a>
-        <a class="pill-link" href="portal-login.html">Client portal</a>
+        <a class="portal-link" href="portal-login.html">Client portal</a>
+        <a class="pill-link" href="signup.html?tier=1">Start for $20/mo</a>
       </nav>
     </div>
   </header>
@@ -46,7 +48,9 @@
   </section>
 
   <main class="wrap" style="max-width:600px;">
-    <div style="padding:24px 0 8px;">
+    <p class="small" id="sliding-note" style="display:none; background:var(--accent-bg); border:1px solid var(--border); padding:14px 16px; margin:24px 0 0;">You came here from the sliding scale. Mention it on the call and we will set a rate that works. Nothing about this changes the program you get.</p>
+
+    <div style="padding:24px 0 8px;"></div>
 
     <div class="tool-box" id="contact-form-wrap">
       <div class="field">
@@ -280,6 +284,11 @@
     });
   </script>
 
+  <script>
+    if (new URLSearchParams(window.location.search).get('topic') === 'sliding-scale') {
+      document.getElementById('sliding-note').style.display = 'block';
+    }
+  </script>
   <script src="js/nav-toggle.js" defer></script>
 </body>
 </html>

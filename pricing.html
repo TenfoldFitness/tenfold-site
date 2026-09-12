@@ -6,15 +6,20 @@
   <title>Pricing — Tenfold</title>
   <link rel="stylesheet" href="css/styles.css" />
   <style>
-    .price-card { background: var(--surface-1); border: 1px solid var(--border); padding: 22px; margin-bottom: 2px; }
-    .price-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
-    .price-value { font-size: 15px; font-weight: 600; color: var(--accent); }
-    .price-contact { font-size: 12px; color: var(--text-muted); font-style: italic; }
-
-    .track-desc { font-size:13px; color:var(--text-secondary); margin:16px 0 16px; }
-    .track-tiers .price-card { margin-bottom: 6px; }
-    .track-tiers .price-card:last-child { margin-bottom: 0; }
-    #pricing-tab-nav { margin-top: 28px; }
+    .price-card { background: var(--surface-1); border: 1px solid var(--border); padding: 20px; margin-bottom: 8px; position: relative; }
+    .price-card.featured { border-color: var(--accent); background: var(--surface-2); }
+    .price-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 4px; }
+    .price-value { font-size: 16px; font-weight: 600; color: var(--accent); white-space: nowrap; }
+    .price-unit { display: block; font-size: 11px; font-weight: 400; color: var(--text-muted); text-align: right; }
+    .price-badge { display: inline-block; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+      background: var(--accent); color: #fff; padding: 3px 8px; margin-bottom: 10px; }
+    .track-head { margin: 34px 0 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .track-head h2 { font-size: 15px; margin: 0 0 3px; }
+    .track-head p { font-size: 13px; color: var(--text-secondary); margin: 0; }
+    .price-feats { list-style: none; padding: 0; margin: 10px 0 14px; }
+    .price-feats li { font-size: 13px; color: var(--text-secondary); padding-left: 16px; position: relative; margin-bottom: 3px; }
+    .price-feats li::before { content: "–"; position: absolute; left: 0; color: var(--accent); }
+    .sliding-box { background: var(--accent-bg); border: 1px solid var(--border); padding: 20px; margin: 24px 0; }
   </style>
 </head>
 <body>
@@ -28,12 +33,14 @@
       <nav class="primary-nav" id="primary-nav">
         <a href="framework.html">The Framework</a>
         <a href="about.html">About</a>
+        <a href="sample-workout.html">Free workout</a>
         <a href="blog.html">Blog</a>
         <a href="pricing.html" class="current">Pricing</a>
         <a class="instagram-link" href="https://www.instagram.com/tenfold_health/" aria-label="Instagram" target="_blank" rel="noopener">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1"/></svg>
         </a>
-        <a class="pill-link" href="portal-login.html">Client portal</a>
+        <a class="portal-link" href="portal-login.html">Client portal</a>
+        <a class="pill-link" href="signup.html?tier=1">Start for $20/mo</a>
       </nav>
     </div>
   </header>
@@ -43,95 +50,130 @@
     <div class="wrap" style="max-width:600px;">
       <p class="section-label"><span class="ten-mark ten-mark-gold">10</span>PRICING</p>
       <h1>Coaching packages</h1>
-      <p>Every package builds on the one before it. Start where you are, and grow from there.</p>
+      <p>Start at $20 a month and move up whenever you want. Every price on this page is listed, and every package builds on the one before it.</p>
     </div>
   </section>
 
-  <main class="wrap" style="max-width:600px;">
-    <div class="card" style="margin:24px 0;">
-      <p class="small" style="margin:0;">Coaching and personal training have become an exclusive service, often out of reach for the people who need it most. I believe everyone deserves the chance to live a healthy, safe, and motivated life, regardless of income. That's why I offer sliding-scale pricing for individuals with limited financial means.</p>
-    </div>
+  <main class="wrap" style="max-width:640px;">
 
-    <div class="price-card">
-      <div class="price-head"><h2 style="margin:0; font-size:16px;">Free Consultation</h2><span class="price-value">$0</span></div>
-      <p class="small" style="margin:0 0 12px;">15-minute virtual intro call, no cost, no pressure</p>
+    <div class="price-card" style="margin-top:24px; background:var(--surface-2);">
+      <div class="price-head"><h2 style="margin:0; font-size:16px;">Free consultation</h2><span class="price-value">$0</span></div>
+      <p class="small" style="margin:0 0 12px;">15 minutes, virtual. No cost, no pressure, no obligation to book anything after.</p>
       <a href="consultation.html" class="btn btn-sm">Book now</a>
     </div>
 
-    <nav class="tab-nav" id="pricing-tab-nav">
-      <button type="button" class="tab-btn active" data-tab="self-guided">1&nbsp;&middot;&nbsp;Self-Guided</button>
-      <button type="button" class="tab-btn" data-tab="virtual">2&nbsp;&middot;&nbsp;Virtual Coaching</button>
-      <button type="button" class="tab-btn" data-tab="inperson">3&nbsp;&middot;&nbsp;In-Person Coaching</button>
-    </nav>
-
-    <div class="tab-panel" data-tab-panel="self-guided">
-      <p class="track-desc">Portal access and daily tools you use on your own, no coaching calls required.</p>
-      <div class="track-tiers">
-        <div class="price-card">
-          <div class="price-head"><h2 style="margin:0; font-size:16px;">Foundation</h2><span class="price-value">$20/mo</span></div>
-          <p class="small" style="margin:0 0 12px;">Portal access, daily coaching-guided workouts, fridge &amp; restaurant tools</p>
-          <a href="signup.html?tier=1" class="btn btn-primary btn-sm">Sign up</a>
-        </div>
-      </div>
+    <!-- ===== TRACK 1: SELF-GUIDED ===== -->
+    <div class="track-head">
+      <h2>Self-guided</h2>
+      <p>Portal access and daily tools you use on your own. No coaching calls required.</p>
     </div>
 
-    <div class="tab-panel" data-tab-panel="virtual" style="display:none;">
-      <p class="track-desc">Everything in Foundation, plus real coaching check-ins over video.</p>
-      <div class="track-tiers">
-        <div class="price-card">
-          <div class="price-head"><h2 style="margin:0; font-size:16px;">Guided</h2><span class="price-value">$100/mo</span></div>
-          <p class="small" style="margin:0 0 12px;">A custom 4-week plan and 2 virtual coaching check-ins per month</p>
-          <a href="signup.html?tier=2" class="btn btn-primary btn-sm">Sign up</a>
-        </div>
-        <div class="price-card">
-          <div class="price-head"><h2 style="margin:0; font-size:16px;">Virtual Intensive</h2><span class="price-value">$1,000 / 12 wks</span></div>
-          <p class="small" style="margin:0 0 12px;">1 virtual coaching session per week (12 total) and full nutrition planning</p>
-          <a href="signup.html?tier=3" class="btn btn-primary btn-sm">Sign up</a>
-        </div>
+    <div class="price-card featured">
+      <span class="price-badge">Start here</span>
+      <div class="price-head">
+        <h2 style="margin:0; font-size:16px;">Foundation</h2>
+        <span class="price-value">$20<span style="font-size:12px;">/mo</span></span>
       </div>
+      <ul class="price-feats">
+        <li>Full client portal access</li>
+        <li>The Maximum Strength and Size program, six-day split, day by day</li>
+        <li>Every lift at three tiers so you train around a limitation instead of stopping</li>
+        <li>Fridge-to-recipe and restaurant macro tools</li>
+        <li>Session check-in and check-out log, so the record is yours</li>
+      </ul>
+      <a href="signup.html?tier=1" class="btn btn-primary btn-sm">Start for $20/mo</a>
+      <p class="small" style="margin:10px 0 0; color:var(--text-muted);">Cancel anytime. No contract, no cancellation fee.</p>
     </div>
 
-    <div class="tab-panel" data-tab-panel="inperson" style="display:none;">
-      <p class="track-desc">Everything above, plus hands-on sessions with Sarah. Custom pricing based on frequency &mdash; let's talk it through.</p>
-      <div class="track-tiers">
-        <div class="price-card">
-          <div class="price-head"><h2 style="margin:0; font-size:16px;">Starter &middot; 1x/week</h2><span class="price-contact">Contact for pricing</span></div>
-          <p class="small" style="margin:0 0 12px;">In-person coaching once a week (12 sessions)</p>
-          <a href="consultation.html?tier=4" class="btn btn-sm">Book a consultation</a>
-        </div>
-        <div class="price-card">
-          <div class="price-head"><h2 style="margin:0; font-size:16px;">Standard &middot; 2x/week</h2><span class="price-contact">Contact for pricing</span></div>
-          <p class="small" style="margin:0 0 12px;">In-person coaching twice a week (24 sessions)</p>
-          <a href="consultation.html?tier=5" class="btn btn-sm">Book a consultation</a>
-        </div>
-        <div class="price-card">
-          <div class="price-head"><h2 style="margin:0; font-size:16px;">Elite &middot; 3x/week</h2><span class="price-contact">Contact for pricing</span></div>
-          <p class="small" style="margin:0 0 12px;">In-person coaching three times a week (36 sessions)</p>
-          <a href="consultation.html?tier=6" class="btn btn-sm">Book a consultation</a>
-        </div>
-      </div>
+    <!-- ===== TRACK 2: VIRTUAL ===== -->
+    <div class="track-head">
+      <h2>Virtual coaching</h2>
+      <p>Everything in Foundation, plus coaching with me over video.</p>
     </div>
 
-    <div class="center" style="padding: 20px 0 40px;">
-      <p class="small" style="margin-bottom:14px;">Curious which package fits? Let's talk it through first.</p>
-      <a href="consultation.html" class="btn btn-primary">Book a free consultation</a>
+    <div class="price-card">
+      <div class="price-head">
+        <h2 style="margin:0; font-size:16px;">Guided</h2>
+        <span class="price-value">$100<span style="font-size:12px;">/mo</span></span>
+      </div>
+      <ul class="price-feats">
+        <li>Everything in Foundation</li>
+        <li>A custom four-week plan written for you</li>
+        <li>Two virtual coaching check-ins a month</li>
+      </ul>
+      <a href="signup.html?tier=2" class="btn btn-primary btn-sm">Choose Guided</a>
+    </div>
+
+    <div class="price-card">
+      <div class="price-head">
+        <h2 style="margin:0; font-size:16px;">Virtual Intensive</h2>
+        <span class="price-value">$1,000<span class="price-unit">12 weeks &middot; about $83 a session</span></span>
+      </div>
+      <ul class="price-feats">
+        <li>Everything in Foundation and Guided</li>
+        <li>One virtual coaching session a week, twelve in total</li>
+        <li>Full nutrition planning</li>
+      </ul>
+      <a href="signup.html?tier=3" class="btn btn-primary btn-sm">Choose Virtual Intensive</a>
+    </div>
+
+    <!-- ===== TRACK 3: IN PERSON ===== -->
+    <div class="track-head">
+      <h2>In-person coaching</h2>
+      <p>Everything above, plus hands-on sessions with me in Pawtucket. Each package runs twelve weeks.</p>
+    </div>
+
+    <div class="price-card">
+      <div class="price-head">
+        <h2 style="margin:0; font-size:16px;">Starter &middot; 1x a week</h2>
+        <span class="price-value">$850<span class="price-unit">12 weeks &middot; about $71 a session</span></span>
+      </div>
+      <ul class="price-feats">
+        <li>Everything above</li>
+        <li>Twelve in-person sessions</li>
+      </ul>
+      <a href="signup.html?tier=4" class="btn btn-primary btn-sm">Choose Starter</a>
+    </div>
+
+    <div class="price-card">
+      <div class="price-head">
+        <h2 style="margin:0; font-size:16px;">Standard &middot; 2x a week</h2>
+        <span class="price-value">$1,600<span class="price-unit">12 weeks &middot; about $67 a session</span></span>
+      </div>
+      <ul class="price-feats">
+        <li>Everything above</li>
+        <li>Twenty-four in-person sessions</li>
+      </ul>
+      <a href="signup.html?tier=5" class="btn btn-primary btn-sm">Choose Standard</a>
+    </div>
+
+    <div class="price-card">
+      <div class="price-head">
+        <h2 style="margin:0; font-size:16px;">Elite &middot; 3x a week</h2>
+        <span class="price-value">$2,200<span class="price-unit">12 weeks &middot; about $61 a session</span></span>
+      </div>
+      <ul class="price-feats">
+        <li>Everything above</li>
+        <li>Thirty-six in-person sessions</li>
+      </ul>
+      <a href="signup.html?tier=6" class="btn btn-primary btn-sm">Choose Elite</a>
+    </div>
+
+    <!-- ===== SLIDING SCALE ===== -->
+    <div class="sliding-box">
+      <p style="font-weight:600; margin:0 0 6px;">Sliding scale</p>
+      <p class="small" style="margin:0 0 12px;">Coaching and personal training have become an exclusive service, often out of reach for the people who need it most. I believe everyone deserves the chance to live a healthy, safe, and motivated life, regardless of income. If any price on this page is the reason you are not starting, tell me on a call and we will set a rate that works.</p>
+      <a href="consultation.html?topic=sliding-scale" class="btn btn-sm">Ask about sliding scale</a>
+    </div>
+
+    <div class="center" style="padding: 8px 0 40px;">
+      <p class="small" style="margin-bottom:14px;">Not sure which one? Start at $20 and move up whenever you want. Every package builds on the one before it.</p>
+      <a href="signup.html?tier=1" class="btn btn-primary">Start for $20/mo</a>
     </div>
   </main>
 
   <footer>Tenfold &nbsp;&middot;&nbsp; In person &amp; virtual coaching</footer>
 
-  <script>
-    document.querySelectorAll('#pricing-tab-nav .tab-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        document.querySelectorAll('#pricing-tab-nav .tab-btn').forEach(function (b) {
-          b.classList.toggle('active', b === btn);
-        });
-        document.querySelectorAll('.tab-panel').forEach(function (panel) {
-          panel.style.display = panel.dataset.tabPanel === btn.dataset.tab ? 'block' : 'none';
-        });
-      });
-    });
-  </script>
 
   <script src="js/nav-toggle.js" defer></script>
 </body>

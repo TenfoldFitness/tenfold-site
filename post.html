@@ -59,12 +59,14 @@
       <nav class="primary-nav" id="primary-nav">
         <a href="framework.html">The Framework</a>
         <a href="about.html">About</a>
+        <a href="sample-workout.html">Free workout</a>
         <a href="blog.html" class="current">Blog</a>
         <a href="pricing.html">Pricing</a>
         <a class="instagram-link" href="https://www.instagram.com/tenfold_health/" aria-label="Instagram" target="_blank" rel="noopener">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1"/></svg>
         </a>
-        <a class="pill-link" href="portal-login.html">Client portal</a>
+        <a class="portal-link" href="portal-login.html">Client portal</a>
+        <a class="pill-link" href="signup.html?tier=1">Start for $20/mo</a>
       </nav>
     </div>
   </header>
@@ -150,8 +152,9 @@
         contentEl.innerHTML = getPreviewHtml(post.content) + `
           <div class="card center" style="margin-top:20px;">
             <h2 style="margin-bottom:6px; font-size:18px;">Continue reading with a membership</h2>
-            <p class="small" style="margin-bottom:14px;">Full articles are available to Tenfold Method members, starting at $20/month.</p>
-            <a href="membership.html" class="btn btn-primary btn-sm">View memberships</a>
+            <p class="small" style="margin-bottom:14px;">Full articles come with Tenfold Method membership, $20 a month, cancel anytime. You also get the full training program and the nutrition tools.</p>
+            <a href="signup.html?tier=1" class="btn btn-primary btn-sm">Start for $20/mo</a>
+            <p class="small" style="margin:12px 0 0;">Already a member? <a href="portal-login.html" style="color:var(--accent);">Log in</a>. Or <a href="sample-workout.html" style="color:var(--accent);">try a free session</a> first.</p>
           </div>
         `;
       }
