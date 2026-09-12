@@ -44,7 +44,19 @@
             <div class="tier-head"><h2 style="margin:0; font-size:15px;">3. Virtual Intensive</h2><span class="tier-price" style="font-size:15px;">$1,000/12wks</span></div>
             <button class="btn btn-sm choose-instead" data-tier="3">Choose this instead</button>
           </div>
-          <p class="small">Looking for in-person coaching? <a href="pricing.html" style="color:var(--accent);">See those packages</a> — they start with a consultation.</p>
+          <div class="tier-card">
+            <div class="tier-head"><h2 style="margin:0; font-size:15px;">4. In-Person Starter</h2><span class="tier-price" style="font-size:15px;">$850/12wks</span></div>
+            <button class="btn btn-sm choose-instead" data-tier="4">Choose this instead</button>
+          </div>
+          <div class="tier-card">
+            <div class="tier-head"><h2 style="margin:0; font-size:15px;">5. In-Person Standard</h2><span class="tier-price" style="font-size:15px;">$1,600/12wks</span></div>
+            <button class="btn btn-sm choose-instead" data-tier="5">Choose this instead</button>
+          </div>
+          <div class="tier-card">
+            <div class="tier-head"><h2 style="margin:0; font-size:15px;">6. In-Person Elite</h2><span class="tier-price" style="font-size:15px;">$2,200/12wks</span></div>
+            <button class="btn btn-sm choose-instead" data-tier="6">Choose this instead</button>
+          </div>
+          <p class="small">Every price is listed on the <a href="pricing.html" style="color:var(--accent);">pricing page</a>. If cost is the reason you are not starting, <a href="consultation.html?topic=sliding-scale" style="color:var(--accent);">ask about the sliding scale</a>.</p>
         </div>
       </div>
 
@@ -114,6 +126,12 @@
              features: ['Everything in Foundation', 'Custom 4-week workout plan', '2 virtual check-ins per month'] },
       '3': { name: 'Virtual Intensive', price: '$1,000 / 12 weeks', total: '$1,000 one-time, covers 12 weeks', kind: 'package',
              features: ['Everything in Foundation &amp; Guided', '1 virtual training session/week (12 total)', 'Full nutrition planning'] },
+      '4': { name: 'In-Person Starter', price: '$850 / 12 weeks', total: '$850 one-time, covers 12 weeks', kind: 'package',
+             features: ['Everything above', '1x/week in-person training (12 sessions)', 'About $71 a session'] },
+      '5': { name: 'In-Person Standard', price: '$1,600 / 12 weeks', total: '$1,600 one-time, covers 12 weeks', kind: 'package',
+             features: ['Everything above', '2x/week in-person training (24 sessions)', 'About $67 a session'] },
+      '6': { name: 'In-Person Elite', price: '$2,200 / 12 weeks', total: '$2,200 one-time, covers 12 weeks', kind: 'package',
+             features: ['Everything above', '3x/week in-person training (36 sessions)', 'About $61 a session'] },
     };
 
     const info = TIER_INFO[tier] || TIER_INFO['1'];
