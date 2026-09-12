@@ -38,13 +38,21 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { name, email, phone, priority, tierInterest } = await req.json();
+    const body = await req.json();
+    const { email, tierInterest } = body;
 
-    if (!name || !email || !phone || !priority) {
-      return new Response(JSON.stringify({ error: "Missing required info." }), {
+    // Email is the only genuinely required field. The consultation form sends
+    // name, phone and priority; the free-session page (sample-workout.html)
+    // sends an email alone on purpose, because every extra field costs leads.
+    if (!email) {
+      return new Response(JSON.stringify({ error: "An email address is required." }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const name = body.name || "(free session, no name given)";
+    const phone = body.phone || "";
+    const priority = body.priority || "Not given";
 
     const { data, error } = await supabaseAdmin.from("leads").insert({
       name, email, phone, priority,
