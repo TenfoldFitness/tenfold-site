@@ -15,7 +15,7 @@ const SQUARE_API_BASE = SQUARE_ENV === "production"
 
 const TIER_PRICES_CENTS = {
   3: 100000, // Virtual Intensive - $1,000
-  4: 120000, // In-Person Starter - $1,200
+  4: 85000, // In-Person Starter - $850
   5: 160000, // In-Person Standard - $1,600
   6: 220000, // In-Person Elite - $2,200
 };
