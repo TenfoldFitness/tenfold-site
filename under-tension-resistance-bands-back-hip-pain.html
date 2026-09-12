@@ -259,6 +259,88 @@
     color: var(--clay);
   }
 
+  /* Site bar: lets a reader get back to Tenfold instead of dead-ending here */
+  .site-bar{
+    border-bottom: 1px solid var(--line);
+    background: var(--paper-deep);
+  }
+  .site-bar .bar-inner{
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .site-bar .mark{
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 19px;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .site-bar nav{
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    font-size: 13px;
+  }
+  .site-bar nav a{
+    color: var(--ink-soft);
+    text-decoration: none;
+  }
+  .site-bar nav a:hover{ color: var(--ink); }
+  .site-bar nav a.bar-cta{
+    color: var(--paper);
+    background: var(--moss);
+    padding: 7px 14px;
+    font-weight: 500;
+  }
+  .site-bar nav a.bar-cta:hover{ color: var(--paper); background: var(--ink); }
+
+  .free-flag{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--paper);
+    background: var(--clay);
+    padding: 4px 10px;
+    display: inline-block;
+    margin-bottom: 18px;
+  }
+
+  .end-card{
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--clay);
+    background: var(--paper-deep);
+    padding: 30px 28px;
+    margin: 44px 0 0;
+  }
+  .end-card h2{
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 1.5rem;
+    margin: 0 0 10px;
+  }
+  .end-card p{ margin: 0 0 18px; color: var(--ink-soft); }
+  .end-card .actions{ display: flex; flex-wrap: wrap; gap: 10px; }
+  .end-card a.primary,
+  .end-card a.secondary{
+    font-size: 14px;
+    font-weight: 500;
+    padding: 11px 18px;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .end-card a.primary{ background: var(--moss); color: var(--paper); }
+  .end-card a.primary:hover{ background: var(--ink); }
+  .end-card a.secondary{ border: 1px solid var(--moss); color: var(--moss); }
+  .end-card a.secondary:hover{ background: var(--moss); color: var(--paper); }
+  .end-card .fine{ font-size: 12px; margin: 14px 0 0; }
+
   footer{
     padding: 40px 0 80px;
   }
@@ -272,9 +354,22 @@
 </head>
 <body>
 
+<header class="site-bar">
+  <div class="bar-inner">
+    <a class="mark" href="index.html">Tenfold</a>
+    <nav>
+      <a href="blog.html">Blog</a>
+      <a href="sample-workout.html">Free workout</a>
+      <a href="pricing.html">Pricing</a>
+      <a class="bar-cta" href="signup.html?tier=1">Start for $20/mo</a>
+    </nav>
+  </div>
+</header>
+
 <div class="wrap">
 
   <section class="hero">
+    <span class="free-flag">Free to read</span>
     <span class="eyebrow">Rehab Science · Resistance Training</span>
     <h1>Under Tension</h1>
     <p class="sub">What the research actually says about training your way out of back and hip pain, and where that evidence runs out.</p>
@@ -392,7 +487,18 @@
       <li>Almost none of this research tested resistance bands specifically. One case study did use bands directly and found real gains in a client with chronic low back pain,<sup><a href="#fn22">22</a></sup> but most of what is above comes from broader resistance training and stretching studies, and band based routines borrow those findings rather than being tested directly.</li>
     </ul>
     <p class="callout">None of this replaces a clinician. Anyone starting a program for back or hip pain should get a licensed clinician's input on exercise selection, intensity, and how fast to progress.</p>
-    <p>If your back or hip has been holding you back and you are not sure where a band fits into the picture, that is exactly the kind of question I like sitting down with people over. <span class="cta-line">Feel free to schedule a session and we can build something that actually fits your body and your life.</span></p>
+    <p>If your back or hip has been holding you back and you are not sure where a band fits into the picture, that is exactly the kind of question I like sitting down with people over. <span class="cta-line">We can build something that actually fits your body and your life.</span></p>
+
+    <div class="end-card">
+      <h2>This one is free. The rest are not.</h2>
+      <p>I publish this article in full because the research belongs to everyone. The training programs are where the work is. Tenfold membership is $20 a month and includes the full Maximum Strength and Size program written at three tiers, the nutrition tools, a session log, and every other article on the blog. Cancel anytime.</p>
+      <div class="actions">
+        <a class="primary" href="signup.html?tier=1">Start for $20/mo</a>
+        <a class="secondary" href="sample-workout.html">Try a free session first</a>
+        <a class="secondary" href="consultation.html">Book a free 15-minute call</a>
+      </div>
+      <p class="fine">Tenfold is skills coaching and physical training. It is not therapy and it is not medical care.</p>
+    </div>
   </section>
 
   <footer>
