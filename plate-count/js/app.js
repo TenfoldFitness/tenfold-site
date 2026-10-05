@@ -924,16 +924,53 @@ function renderTrend(){
   var save=function(){ var v=num($("wtIn").value); if(v==null) return; cur().weight=v; persistDay(S.date); renderTrend(); toast("Weight saved"); };
   $("wtSave").onclick=save; $("wtIn").onkeydown=function(e){ if(e.key==="Enter"){ e.preventDefault(); save(); } };
   $("periodBtn").onclick=function(){ var dd=cur(); dd.period=!dd.period; persistDay(S.date); renderTrend(); };
-  $("signOut").onclick=function(){ if(DEV) return; supabaseClient.auth.signOut().then(function(){ location.href="../portal-login.html"; }); };
+  $("signOut").onclick=function(){ if(DEV) return; supabaseClient.auth.signOut().then(function(){ location.reload(); }); };
   var dot=$("syncdot"); $("syncNote").textContent=dot.title||"";
 }
 
 /* ================= boot ================= */
+/* Sign-in lives inside the app, so an installed (home-screen) copy stays inside its own window and
+   its own saved login. The session is stored on the device and refreshed automatically, so you
+   sign in once and every launch opens straight to Plate Count. */
+function showLogin(){
+  return new Promise(function(resolve){
+    document.body.classList.add("loggedout");
+    document.body.style.visibility="visible";
+    var box=document.createElement("div"); box.className="loginwrap"; box.id="loginBox";
+    box.innerHTML="<div class='card' style='margin-top:56px'>"+
+      "<div class='eyebrow'>Tenfold Method</div><h1 class='h2' style='font-size:30px;margin:2px 0 6px'>Plate Count</h1>"+
+      "<p class='muted' style='margin:0 0 16px'>Sign in with your Tenfold portal login. You'll stay signed in on this device.</p>"+
+      "<form id='lf' novalidate>"+
+      "<label class='sr' for='le'>Email</label><input class='field' id='le' type='email' inputmode='email' autocomplete='username' autocapitalize='off' autocorrect='off' placeholder='Email' style='margin-bottom:10px'>"+
+      "<label class='sr' for='lp'>Password</label><input class='field' id='lp' type='password' autocomplete='current-password' placeholder='Password' style='margin-bottom:10px'>"+
+      "<p class='err' id='lerr' role='alert' hidden></p>"+
+      "<button class='btn' id='lgo' type='submit'>Sign in</button></form>"+
+      "<p class='foot' style='margin-top:18px'><a href='../reset-password.html'>Forgot password?</a> &nbsp;·&nbsp; <a href='../membership.html'>Not a member yet?</a></p></div>";
+    document.body.appendChild(box);
+    var f=$("lf"), err=$("lerr"), go=$("lgo");
+    f.onsubmit=function(e){
+      e.preventDefault();
+      var em=$("le").value.trim().toLowerCase(), pw=$("lp").value;
+      if(!em||!pw){ err.textContent="Enter your email and password."; err.hidden=false; return; }
+      err.hidden=true; go.disabled=true; go.textContent="Signing in…";
+      supabaseClient.auth.signInWithPassword({email:em,password:pw}).then(function(r){
+        if(r.error) throw r.error;
+        box.remove(); document.body.classList.remove("loggedout");
+        resolve(checkAccess());
+      }).catch(function(ex){
+        go.disabled=false; go.textContent="Sign in";
+        err.textContent=/invalid/i.test(ex.message||"")?"That email or password didn’t match. Try again.":(navigator.onLine?"Couldn’t sign in: "+(ex.message||"unknown error"):"You appear to be offline.");
+        err.hidden=false;
+      });
+    };
+    setTimeout(function(){ try{ $("le").focus(); }catch(e){} },80);
+  });
+}
 function checkAccess(){
   if(DEV) return Promise.resolve({uid:"dev",email:"dev@local"});
   return supabaseClient.auth.getSession().then(function(r){
     var s=r.data&&r.data.session;
-    if(!s){ location.replace("../portal-login.html"); return null; }
+    if(!s) return showLogin();
     var id=s.user.id, email=s.user.email, ck="pc_member_"+id;
     if(email===ADMIN_EMAIL) return {uid:id,email:email};
     return supabaseClient.from("memberships").select("*").eq("client_email",email).eq("status","active").order("tier",{ascending:false}).limit(1).then(function(m){
