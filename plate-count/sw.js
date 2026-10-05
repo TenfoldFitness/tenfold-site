@@ -1,5 +1,5 @@
 /* Plate Count service worker — app shell works offline; data calls always go to the network. */
-var VERSION = "pc-v1";
+var VERSION = "pc-v2";
 var SHELL = [
   "index.html","css/plate.css","js/app.js","foods.js","programs.js",
   "manifest.webmanifest","icons/icon-192.png","icons/icon-512.png","icons/icon-180.png","../js/supabase-client.js"
