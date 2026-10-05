@@ -1,0 +1,17 @@
+{
+  "name": "Plate Count — Tenfold Method",
+  "short_name": "Plate Count",
+  "description": "Log your food and training for the Tenfold Method.",
+  "id": "/plate-count/",
+  "start_url": "/plate-count/index.html?source=pwa",
+  "scope": "/plate-count/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FAF9F6",
+  "theme_color": "#1E4A40",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

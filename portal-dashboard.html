@@ -10,10 +10,10 @@
 
   <header class="site-header">
     <div class="wrap">
-      <a href="index.html" class="logo" style="text-decoration:none; color:inherit;">Tenfold</a>
+      <a class='logo' href='/' style='text-decoration:none; color:inherit;'>Tenfold</a>
       <nav class="primary-nav">
         <span style="color:var(--text-primary); font-weight:500;">Dashboard</span>
-        <a href="admin-dashboard.html" id="admin-link" style="display:none;">Admin dashboard</a>
+        <a href='/admin-dashboard' id='admin-link' style='display:none;'>Admin dashboard</a>
         <a href="#" id="logout-link">Log out</a>
       </nav>
     </div>
@@ -46,6 +46,17 @@
       </div>
     </section>
 
+    <section style="border-top:none; padding-top:0;">
+      <div class="card" id="plate-count-card" style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:220px;">
+          <p class="label">Plate Count</p>
+          <p class="value" style="margin-bottom:4px;">Log your meals and training in one place.</p>
+          <p class="small" style="margin:0;">Works offline. Add it to your phone's home screen to use it like an app.</p>
+        </div>
+        <a href="plate-count/index.html" class="btn btn-primary btn-sm">Open Plate Count</a>
+      </div>
+    </section>
+
     <section id="pay-section" style="display:none;">
       <h2>Pay for a session or package</h2>
       <div class="tool-box">
@@ -67,7 +78,7 @@
     <section id="blog">
       <div class="section-head">
         <h2 style="margin:0;">Latest from the blog</h2>
-        <a href="blog.html" class="link">View all</a>
+        <a class='link' href='/blog'>View all</a>
       </div>
       <div class="grid" id="blog-list">
         <div class="card">
@@ -105,7 +116,7 @@
       <div class="card center">
         <h2 style="margin-bottom:6px;">Unlock the daily workout &amp; nutrition tools</h2>
         <p class="small" style="margin-bottom:14px;">These tools are part of Tenfold Method's paid membership tiers, starting at $20/month.</p>
-        <a href="membership.html" class="btn btn-primary btn-sm">View memberships</a>
+        <a class='btn btn-primary btn-sm' href='/membership'>View memberships</a>
       </div>
     </div>
 
