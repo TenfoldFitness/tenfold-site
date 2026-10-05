@@ -40,7 +40,8 @@ window.addEventListener("unhandledrejection",function(ev){ console.error(ev.reas
 var S = {
   date: todayKey(), tab: "fuel",
   days: {}, normalized: {},
-  profile: {targets:Object.assign({},DEF_TARGETS), programStart:"2026-09-14", programIdx:0, plyoLevel:0, custom:[], updatedAt:0},
+  /* programStart is set to the client's own first day (see start()); it is never a shared default. */
+  profile: {targets:Object.assign({},DEF_TARGETS), programStart:"", programIdx:0, plyoLevel:0, custom:[], updatedAt:0},
   openEx: null, dirty:{days:{},profile:false}, pulled:false, syncOff:false
 };
 
@@ -100,6 +101,8 @@ function mergeProfile(p,force){
   if(/^\d{4}-\d{2}-\d{2}$/.test(p.programStart)) d.programStart=p.programStart;
   if(typeof p.programIdx==="number") d.programIdx=p.programIdx;
   if(typeof p.plyoLevel==="number") d.plyoLevel=p.plyoLevel;
+  if(typeof p.onboarded==="boolean") d.onboarded=p.onboarded;
+  if(p.goal==="lose"||p.goal==="maintain"||p.goal==="build") d.goal=p.goal;
   d.updatedAt=+p.updatedAt||0;
   unionCustom(p.custom);
 }
@@ -226,7 +229,8 @@ function maybeAdvance(){
   var prevIdx=S.profile.programIdx, prevT=Object.assign({},S.profile.targets);
   var from=cp.phase, to=PROGRAMS[pos.idx].phase;
   S.profile.programIdx=pos.idx;
-  var retarget=to.targets&&!sameTargets(from.targets,to.targets);
+  /* A client who set their own goal keeps their own targets; phase targets only auto-apply to legacy profiles. */
+  var retarget=!S.profile.goal&&to.targets&&!sameTargets(from.targets,to.targets);
   if(retarget) S.profile.targets={k:to.targets.k,p:to.targets.p,c:to.targets.c,f:to.targets.f};
   persistProfile(); softRender();
   toast("Moved to "+PROGRAMS[pos.idx].name+(retarget?" — targets now "+S.profile.targets.k+" kcal":""),"Undo",function(){
@@ -337,7 +341,7 @@ TABS.forEach(function(id){
 /* ================= FUEL ================= */
 function statusMsg(t,burn){
   var target=S.profile.targets.k, net=t.k-burn.kcal, diff=net-target, pLeft=S.profile.targets.p-t.p;
-  var block=(program().phase&&program().phase.block)||"build";
+  var block=S.profile.goal==="lose"?"cut":((program().phase&&program().phase.block)||"build");
   var dt=diff===0?"On target":(diff>0?"+"+r0(diff)+" kcal over":"−"+r0(-diff)+" kcal under");
   if(t.k===0) return {cls:"mid",msg:"Nothing logged yet. Today's target is "+target+" kcal and "+S.profile.targets.p+" g protein."};
   var pm=pLeft>12?r0(pLeft)+" g of protein left to cover.":"Protein is covered.";
@@ -801,7 +805,10 @@ function openPhaseSheet(){
   if(p.levels) body+="<p class='eyebrow' style='margin:18px 0 8px'>Level</p><div class='chips'>"+p.levels.map(function(L,i){ return "<button class='chip' data-l='"+i+"' aria-pressed='"+(i===S.profile.plyoLevel)+"'>"+esc(L.name)+" · "+L.s+"×"+esc(L.r)+"</button>"; }).join("")+"</div>";
   if(p.days.length>=7) body+="<p class='eyebrow' style='margin:18px 0 8px'>Workout for "+esc(prettyDate(S.date,{weekday:"long"}))+"</p><div class='chips'>"+p.days.map(function(x,i){
     return "<button class='chip' data-w='"+i+"' aria-pressed='"+(i===wd)+"'>"+esc(x.d+" · "+x.title)+"</button>"; }).join("")+"</div>";
-  if(p.phase&&p.phase.targets){ var T=p.phase.targets;
+  if(S.profile.goal){ var MT=S.profile.targets;
+    body+="<p class='eyebrow' style='margin:18px 0 8px'>Your daily targets</p><div class='tgt4'><div><b>"+MT.k+"</b><span>kcal</span></div><div><b>"+MT.p+"</b><span>protein</span></div><div><b>"+MT.c+"</b><span>carbs</span></div><div><b>"+MT.f+"</b><span>fat</span></div></div>"+
+      "<button class='btn ghost sm' id='recalc' style='margin-top:10px'>Update weight &amp; targets</button>";
+  } else if(p.phase&&p.phase.targets){ var T=p.phase.targets;
     body+="<p class='eyebrow' style='margin:18px 0 8px'>Daily targets</p><div class='tgt4'><div><b>"+T.k+"</b><span>kcal</span></div><div><b>"+T.p+"</b><span>protein</span></div><div><b>"+T.c+"</b><span>carbs</span></div><div><b>"+T.f+"</b><span>fat</span></div></div>"+
       "<button class='btn ghost sm' id='useT' style='margin-top:10px' "+(sameTargets(T,S.profile.targets)?"disabled":"")+">"+(sameTargets(T,S.profile.targets)?"In use":"Use these targets")+"</button>"; }
   body+="<p class='eyebrow' style='margin:18px 0 8px'>Program start date</p><input class='field' type='date' id='pstart' value='"+esc(S.profile.programStart)+"'>";
@@ -810,6 +817,7 @@ function openPhaseSheet(){
   B.querySelectorAll("[data-p]").forEach(function(b){ b.onclick=function(){ S.profile.programIdx=+b.dataset.p; S.openEx=null; persistProfile(); closeSheet(); }; });
   B.querySelectorAll("[data-l]").forEach(function(b){ b.onclick=function(){ S.profile.plyoLevel=+b.dataset.l; persistProfile(); closeSheet(); }; });
   B.querySelectorAll("[data-w]").forEach(function(b){ b.onclick=function(){ var dd=cur(); dd.wd=(+b.dataset.w===wdIndex(S.date))?null:+b.dataset.w; persistDay(S.date); S.openEx=null; closeSheet(); }; });
+  var rc=$("recalc"); if(rc) rc.onclick=function(){ openOnboarding(false); };
   var ut=$("useT"); if(ut) ut.onclick=function(){ var T=p.phase.targets; S.profile.targets={k:T.k,p:T.p,c:T.c,f:T.f}; persistProfile(); closeSheet(); toast("Targets updated"); };
   $("pstart").onchange=function(){
     if(!/^\d{4}-\d{2}-\d{2}$/.test(this.value)) return; S.profile.programStart=this.value;
@@ -918,14 +926,66 @@ function renderTrend(){
   if(bl.length){ h+="<div class='card'><h3 class='h2' style='font-size:18px'>Cycle-matched baseline</h3><p class='muted small'>Average weight in the same phase of each cycle — the fair way to see real change.</p><table style='width:100%;border-collapse:collapse;font-size:14px'><tbody>"+bl.map(function(r,i){ var dl=i?r.avg-bl[i-1].avg:null; return "<tr><td style='padding:8px 0;border-top:1px solid var(--border)'>"+esc(prettyDate(r.start,{month:"short",day:"numeric"}))+"</td><td style='text-align:right;border-top:1px solid var(--border)'>"+r1(r.avg)+" lb</td><td style='text-align:right;border-top:1px solid var(--border);color:"+(dl==null?"inherit":(dl>=0?"var(--good)":"var(--warn)"))+"'>"+(dl==null?"—":(dl>=0?"+":"")+r1(dl))+"</td></tr>"; }).join("")+"</tbody></table></div>"; }
   h+="<div class='card chartcard'><h3 class='h2' style='font-size:18px'>Calories vs target</h3><p class='cap'>Faded bars fell more than 10% short of target.</p>"+barChart(keys,kc,T.k,"var(--m-kcal)")+"</div>"+
      "<div class='card chartcard'><h3 class='h2' style='font-size:18px'>Protein vs target</h3><p class='cap'>Hitting protein is the most protective habit while building. Over is fine.</p>"+barChart(keys,pr,T.p,"var(--m-pro)")+"</div>"+
-     "<div class='card'><h3 class='h2' style='font-size:18px'>Daily targets</h3><div class='tgt4'><div><b>"+T.k+"</b><span>kcal</span></div><div><b>"+T.p+"</b><span>protein</span></div><div><b>"+T.c+"</b><span>carbs</span></div><div><b>"+T.f+"</b><span>fat</span></div></div><p class='muted small' style='margin:10px 0 0'>Set by your phase. Change them from the phase button on Train.</p></div>"+
+     "<div class='card'><h3 class='h2' style='font-size:18px'>Daily targets</h3><div class='tgt4'><div><b>"+T.k+"</b><span>kcal</span></div><div><b>"+T.p+"</b><span>protein</span></div><div><b>"+T.c+"</b><span>carbs</span></div><div><b>"+T.f+"</b><span>fat</span></div></div><p class='muted small' style='margin:10px 0 0'>"+(S.profile.goal?"Set from your weight and goal. Update your weight any time and recalculate.":"Set by your phase. Change them from the phase button on Train.")+"</p>"+(S.profile.goal?"<button class='btn ghost sm' id='recalcT' style='margin-top:10px'>Update weight &amp; targets</button>":"")+"</div>"+
      "<p class='foot' id='syncNote'></p><p class='foot'><button class='linkbtn' id='signOut'>Sign out</button></p>";
   $("panel-trend").innerHTML=h;
   var save=function(){ var v=num($("wtIn").value); if(v==null) return; cur().weight=v; persistDay(S.date); renderTrend(); toast("Weight saved"); };
   $("wtSave").onclick=save; $("wtIn").onkeydown=function(e){ if(e.key==="Enter"){ e.preventDefault(); save(); } };
+  var rct=$("recalcT"); if(rct) rct.onclick=function(){ openOnboarding(false); };
   $("periodBtn").onclick=function(){ var dd=cur(); dd.period=!dd.period; persistDay(S.date); renderTrend(); };
   $("signOut").onclick=function(){ if(DEV) return; supabaseClient.auth.signOut().then(function(){ location.reload(); }); };
   var dot=$("syncdot"); $("syncNote").textContent=dot.title||"";
+}
+
+/* ================= welcome: weight + goal -> daily targets ================= */
+/* Starting estimates from bodyweight alone (calories per lb of bodyweight, protein per lb, 27% of
+   calories from fat, the rest carbs). A coach can fine-tune these. */
+var GOALS={
+  lose:    {label:"Lose weight",  mult:12,   protein:0.9, blurb:"A moderate deficit that keeps protein high so you lose fat, not muscle."},
+  maintain:{label:"Maintain",     mult:14.5, protein:0.8, blurb:"Roughly your maintenance calories."},
+  build:   {label:"Build muscle", mult:16,   protein:1.0, blurb:"A small surplus with plenty of protein."}
+};
+function calcTargets(w,goal){
+  var g=GOALS[goal]||GOALS.lose;
+  var k=Math.max(1400,Math.min(3500,Math.round(w*g.mult/10)*10));
+  var p=Math.round(w*g.protein/5)*5, f=Math.round(k*0.27/9/5)*5;
+  var c=Math.max(0,Math.round((k-p*4-f*9)/4/5)*5);
+  return {k:k,p:p,c:c,f:f};
+}
+function openOnboarding(first){
+  var goal=S.profile.goal||"lose", w=lastWeightLb()&&S.days&&Object.keys(S.days).some(function(k){ return S.days[k]&&S.days[k].weight!=null; })?lastWeightLb():"";
+  var body="<p class='muted' style='margin:0 0 14px'>"+(first?"Welcome! Let’s set your daily targets so Plate Count can guide your food each day.":"Update your weight and Plate Count will recalculate your daily targets.")+"</p>"+
+    "<label class='eyebrow' for='ow' style='display:block;margin-bottom:6px'>Your weight today (lb)</label>"+
+    "<input class='field' id='ow' type='number' inputmode='decimal' step='0.1' placeholder='e.g. 165' value='"+esc(w)+"' style='margin-bottom:14px'>"+
+    "<p class='eyebrow' style='margin:0 0 8px'>Your goal</p><div class='chips' id='og'>"+Object.keys(GOALS).map(function(k){
+      return "<button class='chip' type='button' data-g='"+k+"' aria-pressed='"+(k===goal)+"'>"+GOALS[k].label+"</button>"; }).join("")+"</div>"+
+    "<p class='muted small' id='oblurb' style='margin:8px 0 0'></p><div id='oprev'></div>"+
+    "<p class='muted small' style='margin:14px 0 0'>These are starting estimates, not medical advice. Your coach can fine-tune them, and you can update them any time.</p>";
+  openSheet(first?"Welcome to Plate Count":"Update weight & targets",body,
+    "<button class='btn ghost' id='oskip' style='flex:0 0 36%'>"+(first?"Later":"Cancel")+"</button><button class='btn' id='osave'>Set my targets</button>");
+  var inp=$("ow");
+  function calc(){
+    var wt=num(inp.value), T=wt&&wt>=70&&wt<=600?calcTargets(wt,goal):null;
+    $("oblurb").textContent=GOALS[goal].blurb;
+    $("oprev").innerHTML=T?"<div class='tgt4' style='margin-top:14px'><div><b>"+T.k+"</b><span>kcal</span></div><div><b>"+T.p+"</b><span>protein</span></div><div><b>"+T.c+"</b><span>carbs</span></div><div><b>"+T.f+"</b><span>fat</span></div></div>":"";
+    $("osave").disabled=!T; return T;
+  }
+  $("og").querySelectorAll(".chip").forEach(function(b){ b.onclick=function(){
+    goal=b.dataset.g; $("og").querySelectorAll(".chip").forEach(function(o){ o.setAttribute("aria-pressed",o===b?"true":"false"); }); calc(); }; });
+  inp.oninput=calc; calc();
+  setTimeout(function(){ try{ inp.focus(); }catch(e){} },80);
+  $("oskip").onclick=closeSheet;
+  $("osave").onclick=function(){
+    var T=calc(), wt=num(inp.value); if(!T) return;
+    S.profile.targets=T; S.profile.goal=goal; S.profile.onboarded=true;
+    var td=todayKey(); day(td).weight=wt; persistDay(td);
+    persistProfile(); closeSheet(); toast("Targets set: "+T.k+" kcal · "+T.p+" g protein");
+  };
+}
+function maybeOnboard(){
+  var legacy=S.profile.onboarded===undefined&&Object.keys(S.days).some(function(k){ return k<todayKey()&&hasActivity(k); });
+  if(S.profile.onboarded===true||legacy) return;
+  if($("scrim").hidden) openOnboarding(true);
 }
 
 /* ================= boot ================= */
@@ -989,7 +1049,9 @@ function checkAccess(){
 function start(u){
   uid=u.uid; userEmail=u.email; lsLoad();
   document.body.style.visibility="visible";
-  maybeAdvance(); renderAll(); pull();
+  if(!S.profile.programStart) S.profile.programStart=todayKey();   /* a new client's Week 1 starts the day they begin */
+  maybeAdvance(); renderAll();
+  pull().then(function(){ if(!S.profile.programStart) S.profile.programStart=todayKey(); maybeAdvance(); maybeOnboard(); });
   if("serviceWorker" in navigator&&!DEV) navigator.serviceWorker.register("sw.js").catch(function(){});
 }
 checkAccess().then(function(u){ if(u) start(u); }).catch(function(e){ document.body.style.visibility="visible"; showErr(e); });
