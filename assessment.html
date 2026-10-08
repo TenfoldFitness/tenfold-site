@@ -10,11 +10,12 @@
     .assess-q label { display:block; font-weight:600; font-size:14px; margin-bottom:6px; }
     .assess-q .hint { font-size:12px; color:var(--text-muted); margin-bottom:10px; }
     .assess-q input[type="number"] { width:120px; }
-    .rating-row { display:flex; gap:6px; }
+    .rating-row { display:flex; gap:8px; flex-wrap:wrap; }
     .rating-btn {
-      width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border);
+      width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border);
       background: var(--surface-2); cursor: pointer; font-size: 13px;
     }
+    .scale-ends { display:flex; justify-content:space-between; max-width:288px; font-size:12px; color:var(--text-muted); margin-top:6px; }
     .rating-btn.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
   </style>
 </head>
@@ -61,7 +62,7 @@
           <button type="button" class="rating-btn" data-val="8">4</button>
           <button type="button" class="rating-btn" data-val="10">5</button>
         </div>
-        <p class="hint">1 = need a lot of help getting up, 5 = completely effortless</p>
+        <p class="scale-ends"><span>1 = need a lot of help</span><span>5 = effortless</span></p>
       </div>
 
       <div class="assess-q" id="assess-q-mental">
@@ -73,17 +74,19 @@
           <button type="button" class="rating-btn" data-val="8">4</button>
           <button type="button" class="rating-btn" data-val="10">5</button>
         </div>
+        <p class="scale-ends"><span>1 = foggy, hard to focus</span><span>5 = clear and sharp</span></p>
       </div>
 
       <div class="assess-q" id="assess-q-stress">
-        <label>How would you rate your current stress levels?</label>
+        <label>How calm or stressed have you felt lately?</label>
         <div class="rating-row" data-target="q-stress">
-          <button type="button" class="rating-btn" data-val="2">1 (very high)</button>
+          <button type="button" class="rating-btn" data-val="2">1</button>
           <button type="button" class="rating-btn" data-val="4">2</button>
           <button type="button" class="rating-btn" data-val="6">3</button>
           <button type="button" class="rating-btn" data-val="8">4</button>
-          <button type="button" class="rating-btn" data-val="10">5 (very low)</button>
+          <button type="button" class="rating-btn" data-val="10">5</button>
         </div>
+        <p class="scale-ends"><span>1 = very stressed</span><span>5 = very calm</span></p>
       </div>
 
       <div class="assess-q" id="assess-q-relational">
@@ -95,6 +98,7 @@
           <button type="button" class="rating-btn" data-val="8">4</button>
           <button type="button" class="rating-btn" data-val="10">5</button>
         </div>
+        <p class="scale-ends"><span>1 = not connected</span><span>5 = very connected</span></p>
       </div>
 
       <p class="form-error" id="assess-error"></p>
@@ -104,6 +108,7 @@
     <div class="tool-box" id="assess-results" style="display:none;">
       <h2 style="font-size:18px; margin-bottom:14px;">Your profile</h2>
       <div id="radar-container" style="text-align:center; margin-bottom:16px;"></div>
+      <p id="results-summary" style="margin-bottom:16px;"></p>
       <p class="small" style="margin-bottom:16px;">This isn't a medical or diagnostic test, just a starting snapshot to help build your plan. I'll check back in periodically so you can see how it shifts over time.</p>
       <p class="form-error" id="continue-error" style="display:none;"></p>
       <button class="btn btn-primary btn-sm" id="continue-btn">Continue</button>
@@ -151,12 +156,14 @@
         btn.addEventListener('click', () => {
           row.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('selected'));
           btn.classList.add('selected');
+          row.querySelectorAll('.rating-btn').forEach(b => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
           updateProgress();
+          saveDraft();
         });
       });
     });
     ['q-squats', 'q-aerobic', 'q-balance'].forEach(id => {
-      document.getElementById(id).addEventListener('input', updateProgress);
+      document.getElementById(id).addEventListener('input', function () { updateProgress(); saveDraft(); });
     });
 
     function scoreFromCount(value, thresholds) {
@@ -208,11 +215,55 @@
         return `<circle cx="${x}" cy="${y}" r="4.5" fill="#2F6F63"/>`;
       }).join('');
 
-      return `<svg viewBox="0 0 ${size} ${size}" style="width:100%; max-width:340px;">
+      const altText = labels.map(l => l + ': ' + scores[l] + ' out of 10').join(', ');
+      return `<svg viewBox="0 0 ${size} ${size}" style="width:100%; max-width:340px;" role="img" aria-label="Your starting profile. ${altText}.">
         ${rings}${axes}
         <polygon points="${dataPts}" fill="#2F6F63" fill-opacity="0.18" stroke="#2F6F63" stroke-width="2"/>
         ${dots}${labelEls}
       </svg>`;
+    }
+
+    const DRAFT_KEY = 'tenfold_assessment_draft';
+    function saveDraft() {
+      try {
+        const d = {};
+        ['q-squats', 'q-aerobic', 'q-balance'].forEach(id => { d[id] = document.getElementById(id).value; });
+        ['q-mobility', 'q-mental', 'q-stress', 'q-relational'].forEach(id => { d[id] = getSelectedRating(id); });
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+      } catch (e) { /* storage unavailable: the form still works without drafts */ }
+    }
+    function restoreDraft() {
+      try {
+        const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
+        if (!d) return;
+        ['q-squats', 'q-aerobic', 'q-balance'].forEach(id => { if (d[id] != null) document.getElementById(id).value = d[id]; });
+        ['q-mobility', 'q-mental', 'q-stress', 'q-relational'].forEach(id => {
+          if (d[id] == null) return;
+          const row = document.querySelector('.rating-row[data-target="' + id + '"]');
+          row.querySelectorAll('.rating-btn').forEach(b => {
+            const on = parseInt(b.dataset.val, 10) === d[id];
+            b.classList.toggle('selected', on);
+            b.setAttribute('aria-pressed', on ? 'true' : 'false');
+          });
+        });
+        updateProgress();
+      } catch (e) { /* ignore a damaged draft */ }
+    }
+    function clearDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch (e) {} }
+
+    function summarize(scores) {
+      const entries = Object.entries(scores);
+      const max = Math.max(...entries.map(e => e[1]));
+      const min = Math.min(...entries.map(e => e[1]));
+      const tail = ' Your plan will be shaped around what you tell me matters most to you.';
+      if (max === min) {
+        return 'Your scores are even across the board, which gives us a balanced place to start.' + tail;
+      }
+      const top = entries.filter(e => e[1] === max).map(e => e[0].toLowerCase());
+      const low = entries.filter(e => e[1] === min).map(e => e[0].toLowerCase());
+      const list = a => a.length <= 2 ? a.join(' and ') : a.slice(0, 2).join(', ') + ' and more';
+      return 'Your strongest ' + (top.length > 1 ? 'areas right now are ' : 'area right now is ') + list(top) + '. ' +
+        'A good place to begin building is ' + list(low) + '.' + tail;
     }
 
     let latestScores = null;
@@ -262,11 +313,15 @@
         'Balance': balanceScore,
         'Mobility': mobility,
         'Mental Clarity': mental,
-        'Low Stress': stress,
+        'Calm': stress,
         'Connection': relational,
       });
 
       document.getElementById('radar-container').innerHTML = chartHtml;
+      document.getElementById('results-summary').textContent = summarize({
+        'Strength': strengthScore, 'Aerobic': aerobicScore, 'Balance': balanceScore, 'Mobility': mobility,
+        'Mental clarity': mental, 'Calm': stress, 'Connection': relational,
+      });
       document.getElementById('assess-form').style.display = 'none';
       document.getElementById('assess-results').style.display = 'block';
     });
@@ -284,7 +339,8 @@
       });
 
       if (error) {
-        errorEl.textContent = "Your results couldn't be saved just now (" + error.message + "). They're still on this screen — check your connection and try again.";
+        console.error(error);
+        errorEl.textContent = "We couldn't save your results just now. They're still on this screen, so check your connection and tap Try again. If it keeps happening, it's on our side, not yours.";
         errorEl.style.display = 'block';
         btn.disabled = false;
         btn.textContent = 'Try again';
@@ -292,6 +348,7 @@
       }
 
       btn.textContent = 'Saved';
+      clearDraft();
 
       if (tier === '2' || tier === '3') {
         window.location.href = 'schedule-checkin.html?tier=' + tier;
@@ -299,6 +356,7 @@
         window.location.href = 'portal-dashboard.html';
       }
     });
+      restoreDraft();
   </script>
 
 </body>
