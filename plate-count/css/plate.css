@@ -255,3 +255,9 @@ body.loggedout .app,body.loggedout .tabs{display:none}
 .toast button{min-height:44px;padding:0 14px;font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--gold)}
 .foot{font-size:12px;color:var(--text-3);text-align:center;margin:26px 0 0;line-height:1.6}
 .foot a{color:inherit}
+/* Entitlement note and read-only state */
+.entbar{margin:10px 0 0;padding:10px 14px;border-radius:var(--r-sm);font-size:13.5px;line-height:1.5;background:var(--accent-bg);color:var(--text)}
+.entbar[hidden]{display:none}
+.entbar a{color:var(--accent-deep);font-weight:600}
+body.ro .addbtn,body.ro .plus,body.ro .tick,body.ro #wtSave,body.ro .numfield{pointer-events:none;opacity:.5}
+.chip:disabled{opacity:.5;cursor:not-allowed}
