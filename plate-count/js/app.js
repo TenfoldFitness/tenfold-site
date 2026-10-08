@@ -10,6 +10,7 @@ var FOODS = window.FOODS || [];
 var MEALS = ["Breakfast","Lunch","Dinner","Snacks"];
 var DEF_TARGETS = {k:2100,p:140,c:258,f:56};
 var uid = null, userEmail = "";
+var ENT = null;   /* what this client is entitled to see; null = no limits (dev) */
 
 /* ================= tiny helpers ================= */
 function $(id){ return document.getElementById(id); }
@@ -121,9 +122,11 @@ function unionCustom(list){
 }
 var flushTimer=0, retryTimer=0, retryDelay=0;
 function persistDay(k){
+  if(roBlocked()) return;
   var d=day(k); d.updatedAt=Date.now(); S.dirty.days[k]=true; lsSave(); queueFlush();
 }
 function persistProfile(){
+  if(roBlocked()) return;
   S.profile.updatedAt=Date.now(); S.dirty.profile=true; lsSave(); queueFlush();
 }
 function pendingCount(){ return Object.keys(S.dirty.days).length+(S.dirty.profile?1:0); }
@@ -231,7 +234,7 @@ if(syncPill) syncPill.onclick=function(){
 
 /* ================= programs ================= */
 var PROGRAMS=[];
-(window.PHASES||[]).forEach(function(ph){ PROGRAMS.push({id:ph.id,name:ph.name,sub:ph.sub,note:ph.note,phase:ph,metric:{label:"Weight",ph:"lb"},days:(window.DAYS||[])}); });
+(window.PHASES||[]).forEach(function(ph){ PROGRAMS.push({id:ph.id,name:ph.name,sub:ph.sub,note:ph.note,phase:ph,metric:{label:"Weight",ph:"lb"},days:((ph.id==="ph1"?window.DAYS:(window.DAYS_V2||window.DAYS))||[])}); });
 PROGRAMS.push({
   id:"plyo1",name:"Plyo 1",note:"Warm up first with a complete dynamic or hurdle warm-up. 20 to 30 seconds rest between sets.",
   metric:{label:"Box / load",ph:"in or lb"},levels:[{name:"Level 1",s:2,r:"3"},{name:"Level 2",s:2,r:"5"}],
@@ -256,7 +259,7 @@ var DEF_FOCUS={ph1:"h",ph2:"h",ph3:"s",ph4:"h",ph5:"s",ph6:"s"};
 function program(){ return PROGRAMS[S.profile.programIdx]||PROGRAMS[0]; }
 
 /* Phase and week are COMPUTED from one fixed start date. */
-function programPos(dateKey){
+function programPosRaw(dateKey){
   var elapsed=Math.max(0,daysBetween(S.profile.programStart,dateKey)), weeksIn=Math.floor(elapsed/7), acc=0, last=0;
   for(var i=0;i<PROGRAMS.length;i++){
     if(!PROGRAMS[i].phase) break; last=i;
@@ -265,6 +268,73 @@ function programPos(dateKey){
     acc+=wk;
   }
   var w=PROGRAMS[last].phase.weeks||4; return {idx:last,week:w,weeks:w,done:true};
+}
+/* ---- Entitlements ---- */
+function phaseCount(){ var n=0; for(var i=0;i<PROGRAMS.length;i++) if(PROGRAMS[i].phase) n++; return n; }
+function isLockedProgram(i){ return !!(ENT&&PROGRAMS[i]&&PROGRAMS[i].phase&&i>=ENT.allowed); }
+function lastUnlockedIdx(){ return Math.max(0,Math.min(phaseCount(),ENT?ENT.allowed:phaseCount())-1); }
+function fmtDate(ms){ return new Date(ms).toLocaleDateString(undefined,{month:"short",day:"numeric"}); }
+function programPos(dateKey){
+  var r=programPosRaw(dateKey);
+  if(ENT&&r.idx>=ENT.allowed){
+    var idx=lastUnlockedIdx(), w=PROGRAMS[idx].phase.weeks||4;
+    return {idx:idx,week:w,weeks:w,done:false,held:true};
+  }
+  return r;
+}
+function unlockNote(){
+  if(!ENT) return "";
+  if(ENT.readOnly) return "<p class='muted small' style='margin:8px 0 0'>Your membership has ended. You can still read everything you had, but you can’t log new days.</p>";
+  if(ENT.nextUnlock) return "<p class='muted small' style='margin:8px 0 0'>Phase "+(ENT.allowed+1)+" unlocks on "+fmtDate(ENT.nextUnlock)+(ENT.kind==="subscription"?" if you keep your membership":"")+".</p>";
+  return "";
+}
+var roToastAt=0;
+function roBlocked(){
+  if(!(ENT&&ENT.readOnly)) return false;
+  if(Date.now()-roToastAt>4000){ roToastAt=Date.now(); toast("Your membership has ended, so Plate Count is read-only."); }
+  return true;
+}
+function renderEntBar(){
+  var el=$("entbar");
+  if(!el){ el=document.createElement("div"); el.id="entbar"; el.className="entbar"; el.hidden=true; var m=document.querySelector("main"); if(m) m.insertAdjacentElement("afterbegin",el); else return; }
+  var msg="", pos=programPos(todayKey());
+  if(ENT&&ENT.readOnly){
+    msg="<b>Read-only.</b> Your membership has ended. Everything you logged is still here. <a href='../membership.html'>Renew to keep logging</a>.";
+  } else if(ENT&&ENT.nextUnlock&&pos.held){
+    msg="You’ve finished your unlocked weeks. Phase "+(ENT.allowed+1)+" unlocks on "+fmtDate(ENT.nextUnlock)+(ENT.kind==="subscription"?" if you keep your membership":"")+".";
+  } else if(pos.done&&!pos.held&&(!ENT||ENT.allowed>=phaseCount())){
+    msg="You’ve finished all six phases. The next cycle of workouts is being written. Keep logging in the meantime.";
+  }
+  el.innerHTML=msg; el.hidden=!msg;
+}
+/* ---- Move the rest of this week one day later ---- */
+function weekShiftOK(k){
+  if(wdIndex(k)===0||k>todayKey()) return false;          /* nothing earlier this week to have missed */
+  var end=shiftKey(mondayOf(k),6);
+  for(var d=k; d<=end; d=shiftKey(d,1)) if(hasActivity(d)) return false;   /* never move days that already have entries */
+  return true;
+}
+function shiftOption(){
+  if(!weekShiftOK(S.date)) return "";
+  var prevName=prettyDate(shiftKey(S.date,-1),{weekday:"long"});
+  return "<p class='eyebrow' style='margin:18px 0 8px'>Missed a day?</p>"+
+    "<button class='btn ghost sm' id='shiftWeek'>Move the rest of this week one day later</button>"+
+    "<p class='muted small' style='margin:8px 0 0'>Did "+esc(prevName)+"’s workout on "+esc(prettyDate(S.date,{weekday:"long"}))+"? This moves every workout from here to Sunday back a day, so Sunday’s rest day is used. You can undo it.</p>";
+}
+function shiftWeekFrom(k){
+  if(!weekShiftOK(k)) return;
+  var end=shiftKey(mondayOf(k),6), old={}, undo=[];
+  for(var d=shiftKey(k,-1); d<=end; d=shiftKey(d,1)) old[d]=workoutIdx(d);
+  for(var d2=k; d2<=end; d2=shiftKey(d2,1)){
+    var src=old[shiftKey(d2,-1)], dd=day(d2);
+    undo.push([d2,dd.wd]);
+    dd.wd=(src===wdIndex(d2))?null:src;
+    persistDay(d2);
+  }
+  S.openEx=null; closeSheet();
+  toast("Moved the rest of this week one day later","Undo",function(){
+    undo.forEach(function(u){ day(u[0]).wd=u[1]; persistDay(u[0]); }); renderAll();
+  });
 }
 function sameTargets(a,b){ return a&&b&&a.k===b.k&&a.p===b.p&&a.c===b.c&&a.f===b.f; }
 function maybeAdvance(){
@@ -286,6 +356,7 @@ function workoutIdx(k){ var d=day(k); return d.wd!=null?d.wd:wdIndex(k); }
 /* ================= toast, sheet, rest timer ================= */
 var toastTimer=0;
 function toast(msg,label,fn){
+  if(ENT&&ENT.readOnly&&/saved|logged|added|set\b|updated|removed/i.test(msg)){ msg="Your membership has ended, so Plate Count is read-only."; label=null; }
   if(lsBroken&&/saved|logged|added|set\b/i.test(msg)){ msg="Couldn’t save on this device. Storage may be full or blocked."; label=null; }
   var t=$("toast"); clearTimeout(toastTimer);
   t.innerHTML="<span>"+esc(msg)+"</span>"+(label?"<button type='button' id='toastBtn'>"+esc(label)+"</button>":"");
@@ -369,7 +440,7 @@ var TABS=["fuel","train","trend"];
 function renderActive(){
   if(S.tab==="fuel") safe(renderFuel); else if(S.tab==="train") safe(renderTrain); else safe(renderTrend);
 }
-function renderAll(){ safe(renderWeek); renderActive(); }
+function renderAll(){ safe(renderWeek); renderActive(); safe(renderEntBar); }
 /* A background sync must never rebuild a screen out from under a field you are typing in. */
 var softQueued=false;
 function typing(){ var a=document.activeElement; return !!(a&&a.tagName==="INPUT"&&a.closest&&a.closest("main"))||!$("scrim").hidden; }
@@ -683,7 +754,7 @@ function buildPrevIndex(){
     var d=S.days[k]; if(!d||!d.sets) return;
     Object.keys(d.sets).forEach(function(sk){
       var v=d.sets[sk]; if(!v||(v.w==null&&v.reps==null)) return;
-      var p=sk.split("|"); if(p.length<3) return; var pre=p[0]+"|"+p[1]+"|";
+      var p=sk.split("|"); if(p.length<3) return; var pre=p[1]+"|";
       if(!idx[pre]) idx[pre]={date:k,sets:[]};
       if(idx[pre].date===k) idx[pre].sets.push({i:+p[2],w:v.w,reps:v.reps});
     });
@@ -703,6 +774,7 @@ function buildItems(p,d,wd,rdate){
     if(sch&&e.t){
       var tier=sch[e.t]||sch.iso, k=(e.t==="main"&&focus==="s"&&tier.s)?tier.s:tier.h;
       it.warm=k.w; it.s=k.s; it.r=k.r; it.rest=k.rest; it.tech=k.tech; it.t=e.t;
+      if(e.s) it.s=e.s; if(e.r) it.r=e.r; it.bw=!!e.bw;
     } else {
       var sp; if(p.levels){ var L=p.levels[S.profile.plyoLevel]||p.levels[0]; sp=parseSpec(L.s+"x"+L.r); } else sp=parseSpec(e.s+"x"+e.r);
       it.s=sp.s; it.r=sp.reps.every(function(r){ return r===sp.reps[0]; })?String(sp.reps[0]):sp.reps.join(", ");
@@ -757,17 +829,17 @@ function renderTrain(){
       "<span class='ex-t'><div class='ex-name'>"+esc(it.n)+"</div><div class='ex-meta'>"+it.s+" × "+esc(it.r)+(it.rest?" · rest "+esc(it.rest):"")+"</div></span>"+
       "<span class='pips' aria-hidden='true'>"+Array.apply(null,Array(it.s)).map(function(_,i){ return "<i class='"+(i<cnt?"on":"")+"'></i>"; }).join("")+"</span></button>";
     if(isOpen){
-      var prev=(prevIdx||{})[it.key+"|"], pmap={}; if(prev) prev.sets.forEach(function(x){ pmap[x.i]=x; });
+      var prev=(prevIdx||{})[it.key.slice(it.key.indexOf("|")+1)+"|"], pmap={}; if(prev) prev.sets.forEach(function(x){ pmap[x.i]=x; });
       var pr=(day(rd).pairs||{})[it.key];
       h+="<div class='ex-body'>"+(pr?"<p class='lastline' style='margin-bottom:10px'><b>Paired</b><span>"+esc(pr.n)+"</span></p>":"")+
         (it.cue?"<p class='cue'>"+esc(it.cue)+"</p>":"")+(it.tech?"<p class='tech'>"+esc(it.tech)+"</p>":"")+
         (it.warm&&it.warm!=="0"?"<p class='small muted' style='margin:0 0 8px'>"+esc(it.warm)+" warm-up set"+(it.warm==="1"?"":"s")+" first</p>":"")+
         (prev?"<div class='lastline'><b>Last</b><span>"+esc(prettyDate(prev.date,{month:"short",day:"numeric"}))+"</span><span>"+prev.sets.map(function(x){ return (x.w!=null?x.w:"?")+"×"+(x.reps!=null?x.reps:"?"); }).join(", ")+"</span></div>":"")+
-        "<div class='sethd'><span></span><span>"+esc((p.metric||{}).label||"Weight")+"</span><span>Reps</span><span></span></div>";
+        "<div class='sethd'><span></span><span>"+esc(it.bw?"Added weight":((p.metric||{}).label||"Weight"))+"</span><span>Reps</span><span></span></div>";
       for(var si=0;si<it.s;si++){
         var key=it.key+"|"+si, v=sets[key]||{}, g=ghost(it,si,pmap,sets);
         h+="<div class='setrow"+(v.done?" done":"")+"' data-key='"+esc(key)+"' data-ix='"+ix+"'><span class='i'>"+(si+1)+"</span>"+
-          "<input class='numfield"+(g.w!=null?" ghost":"")+"' type='number' inputmode='decimal' enterkeyhint='next' data-f='w' placeholder='"+(g.w!=null?g.w:esc((p.metric||{}).ph||"lb"))+"' value='"+(v.w!=null?v.w:"")+"' aria-label='"+esc(it.n)+" set "+(si+1)+" weight'>"+
+          "<input class='numfield"+(g.w!=null?" ghost":"")+"' type='number' inputmode='decimal' enterkeyhint='next' data-f='w' placeholder='"+(g.w!=null?g.w:(it.bw?"BW":esc((p.metric||{}).ph||"lb")))+"' value='"+(v.w!=null?v.w:"")+"' aria-label='"+esc(it.n)+" set "+(si+1)+" weight'>"+
           "<input class='numfield"+(g.reps!=null?" ghost":"")+"' type='number' inputmode='numeric' enterkeyhint='done' data-f='reps' placeholder='"+(g.reps!=null?g.reps:esc(String(it.r).split("-")[0]))+"' value='"+(v.reps!=null?v.reps:"")+"' aria-label='"+esc(it.n)+" set "+(si+1)+" reps'>"+
           "<button class='tick' aria-pressed='"+!!v.done+"' aria-label='Mark set "+(si+1)+" done'>"+CHECK+"</button></div>";
       }
@@ -819,7 +891,7 @@ function wireTrain(panel,rd,items,sets,wd){
     tick.onclick=function(){
       var r=rec();
       if(r.done){ r.done=false; persistDay(rd); setUI(row); return; }
-      var pm={}, prev=(prevIdx||{})[it.key+"|"]; if(prev) prev.sets.forEach(function(x){ pm[x.i]=x; });
+      var pm={}, prev=(prevIdx||{})[it.key.slice(it.key.indexOf("|")+1)+"|"]; if(prev) prev.sets.forEach(function(x){ pm[x.i]=x; });
       var si=+key.split("|").pop(), g=ghost(it,si,pm,sets);
       if(r.w==null&&g.w!=null) r.w=g.w; if(r.reps==null&&g.reps!=null) r.reps=g.reps;
       r.done=true; persistDay(rd); startRest(parseRest(it.rest));
@@ -845,11 +917,14 @@ function openSwap(it,rd){
 function openPhaseSheet(){
   var p=program(), pos=programPos(todayKey()), wd=workoutIdx(S.date), curP=PROGRAMS[pos.idx];
   var body="<p class='eyebrow' style='margin-bottom:8px'>Program</p><div class='chips'>"+PROGRAMS.map(function(x,i){
-    return "<button class='chip' data-p='"+i+"' aria-pressed='"+(i===S.profile.programIdx)+"'>"+esc(x.name)+(x===curP?" · now":"")+"</button>"; }).join("")+"</div>"+
+    var lock=isLockedProgram(i);
+    return "<button class='chip' data-p='"+i+"' aria-pressed='"+(i===S.profile.programIdx)+"'"+(lock?" disabled title='Not unlocked yet'":"")+">"+esc(x.name)+(x===curP?" · now":"")+(lock?" · locked":"")+"</button>"; }).join("")+"</div>"+
+    unlockNote()+
     "<p class='muted small' style='margin:8px 0 0'>You’re in "+esc(curP.name)+", week "+pos.week+" of "+pos.weeks+". Picking another program lets you browse it without changing that.</p>";
   if(p.levels) body+="<p class='eyebrow' style='margin:18px 0 8px'>Level</p><div class='chips'>"+p.levels.map(function(L,i){ return "<button class='chip' data-l='"+i+"' aria-pressed='"+(i===S.profile.plyoLevel)+"'>"+esc(L.name)+" · "+L.s+"×"+esc(L.r)+"</button>"; }).join("")+"</div>";
   if(p.days.length>=7) body+="<p class='eyebrow' style='margin:18px 0 8px'>Workout for "+esc(prettyDate(S.date,{weekday:"long"}))+"</p><div class='chips'>"+p.days.map(function(x,i){
     return "<button class='chip' data-w='"+i+"' aria-pressed='"+(i===wd)+"'>"+esc(x.d+" · "+x.title)+"</button>"; }).join("")+"</div>";
+  body+=shiftOption();
   if(S.profile.goal){ var MT=S.profile.targets;
     body+="<p class='eyebrow' style='margin:18px 0 8px'>Your daily targets</p><div class='tgt4'><div><b>"+MT.k+"</b><span>kcal</span></div><div><b>"+MT.p+"</b><span>protein</span></div><div><b>"+MT.c+"</b><span>carbs</span></div><div><b>"+MT.f+"</b><span>fat</span></div></div>"+
       "<button class='btn ghost sm' id='recalc' style='margin-top:10px'>Update weight &amp; targets</button>";
@@ -859,10 +934,11 @@ function openPhaseSheet(){
   body+="<p class='eyebrow' style='margin:18px 0 8px'>Program start date</p><input class='field' type='date' id='pstart' value='"+esc(S.profile.programStart)+"'>";
   openSheet("Phase & workout",body);
   var B=$("shBody");
-  B.querySelectorAll("[data-p]").forEach(function(b){ b.onclick=function(){ S.profile.programIdx=+b.dataset.p; S.openEx=null; persistProfile(); closeSheet(); }; });
+  B.querySelectorAll("[data-p]").forEach(function(b){ b.onclick=function(){ if(isLockedProgram(+b.dataset.p)) return; S.profile.programIdx=+b.dataset.p; S.openEx=null; persistProfile(); closeSheet(); }; });
   B.querySelectorAll("[data-l]").forEach(function(b){ b.onclick=function(){ S.profile.plyoLevel=+b.dataset.l; persistProfile(); closeSheet(); }; });
   B.querySelectorAll("[data-w]").forEach(function(b){ b.onclick=function(){ var dd=cur(); dd.wd=(+b.dataset.w===wdIndex(S.date))?null:+b.dataset.w; persistDay(S.date); S.openEx=null; closeSheet(); }; });
   var rc=$("recalc"); if(rc) rc.onclick=function(){ openOnboarding(false); };
+  var shw=$("shiftWeek"); if(shw) shw.onclick=function(){ shiftWeekFrom(S.date); };
   var ut=$("useT"); if(ut) ut.onclick=function(){ var T=p.phase.targets; S.profile.targets={k:T.k,p:T.p,c:T.c,f:T.f}; persistProfile(); closeSheet(); toast("Targets updated"); };
   $("pstart").onchange=function(){
     if(!/^\d{4}-\d{2}-\d{2}$/.test(this.value)) return; S.profile.programStart=this.value;
@@ -1071,28 +1147,61 @@ function showLogin(){
     setTimeout(function(){ try{ $("le").focus(); }catch(e){} },80);
   });
 }
+/* Which phases a client may open depends on what they bought. Pure date arithmetic on the membership row. */
+var RULES_START=Date.parse("2026-10-09");   /* memberships that began before this keep full access */
+var WEEK_MS=7*864e5;
+function monthsSince(startMs,nowMs){
+  var a=new Date(startMs), b=new Date(nowMs), m=(b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth());
+  if(b.getDate()<a.getDate()) m--;
+  return Math.max(0,m);
+}
+function addMonthsMs(startMs,n){ var d=new Date(startMs); d.setMonth(d.getMonth()+n); return d.getTime(); }
+function entFromMembership(m){
+  var total=phaseCount(), now=Date.now();
+  var started=Date.parse(m.started_at||"")||0, exp=m.expires_at?Date.parse(m.expires_at):null;
+  var active=m.status==="active"&&(!exp||exp>now);
+  if(!started||started<RULES_START) return {kind:"legacy",allowed:total,readOnly:!active,nextUnlock:null};
+  if(exp){   /* one-time package */
+    var pkg=Math.max(1,Math.min(total,Math.floor(Math.round((exp-started)/WEEK_MS)/4)));
+    var allowed=active?Math.min(pkg,1+Math.floor((now-started)/(4*WEEK_MS))):pkg;
+    return {kind:"package",allowed:allowed,readOnly:!active,nextUnlock:(active&&allowed<pkg)?started+allowed*4*WEEK_MS:null};
+  }
+  var months=monthsSince(started,now), allowedSub=Math.min(total,1+months);   /* monthly membership */
+  return {kind:"subscription",allowed:allowedSub,readOnly:!active,nextUnlock:(active&&allowedSub<total)?addMonthsMs(started,allowedSub):null};
+}
+function pickMembership(rows){
+  var now=Date.now();
+  var act=rows.filter(function(r){ return r.status==="active"&&(!r.expires_at||Date.parse(r.expires_at)>now); });
+  var pool=act.length?act:rows;
+  return pool.slice().sort(function(a,b){ return (b.tier||0)-(a.tier||0)||(Date.parse(b.started_at||"")||0)-(Date.parse(a.started_at||"")||0); })[0];
+}
 function checkAccess(){
-  if(DEV) return Promise.resolve({uid:"dev",email:"dev@local"});
+  if(DEV) return Promise.resolve({uid:"dev",email:"dev@local",ent:null});
   return supabaseClient.auth.getSession().then(function(r){
     var s=r.data&&r.data.session;
     if(!s) return showLogin();
-    var id=s.user.id, email=s.user.email, ck="pc_member_"+id;
-    if(email===ADMIN_EMAIL) return {uid:id,email:email};
-    return supabaseClient.from("memberships").select("*").eq("client_email",email).eq("status","active").order("tier",{ascending:false}).limit(1).then(function(m){
+    var id=s.user.id, email=s.user.email, ck="pc_member_"+id, ek="pc_ent_"+id;
+    if(email===ADMIN_EMAIL) return {uid:id,email:email,ent:null};
+    return supabaseClient.from("memberships").select("*").eq("client_email",email).order("started_at",{ascending:false}).limit(10).then(function(m){
       if(m.error) throw m.error;
-      var a=m.data&&m.data.length?m.data[0]:null, ok=a&&(!a.expires_at||new Date(a.expires_at)>new Date());
-      if(!ok){ location.replace("../membership.html"); return null; }
-      try{ localStorage.setItem(ck,String(Date.now())); }catch(e){}
-      return {uid:id,email:email};
+      var rows=m.data||[];
+      if(!rows.length){ location.replace("../membership.html"); return null; }
+      var pick=pickMembership(rows);
+      try{ localStorage.setItem(ck,String(Date.now())); localStorage.setItem(ek,JSON.stringify(pick)); }catch(e){}
+      return {uid:id,email:email,ent:entFromMembership(pick)};
     }).catch(function(){
       var t=+localStorage.getItem(ck)||0;
-      if(Date.now()-t<14*864e5) return {uid:id,email:email};   /* offline: trust a recent check */
+      if(Date.now()-t<14*864e5){   /* offline: use the last membership we saw, and work out the dates fresh */
+        var cached=null; try{ cached=JSON.parse(localStorage.getItem(ek)||"null"); }catch(e){}
+        return {uid:id,email:email,ent:cached?entFromMembership(cached):null};
+      }
       location.replace("../membership.html"); return null;
     });
   });
 }
 function start(u){
-  uid=u.uid; userEmail=u.email; lsLoad();
+  uid=u.uid; userEmail=u.email; ENT=u.ent||null; if(ENT&&ENT.readOnly) document.body.classList.add("ro"); lsLoad();
+  if(isLockedProgram(S.profile.programIdx)) S.profile.programIdx=lastUnlockedIdx();
   document.body.style.visibility="visible";
   if(!S.profile.programStart) S.profile.programStart=todayKey();   /* a new client's Week 1 starts the day they begin */
   maybeAdvance(); renderAll();
