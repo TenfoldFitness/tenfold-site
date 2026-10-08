@@ -201,3 +201,133 @@ window.DAYS = [
 
 {d:"Sun", title:"Rest", rest:"Full rest. An easy walk is fine if you want to move, but nothing structured."}
 ];
+
+/* ---------------------------------------------------------------------------------------------
+   Phases 2 to 6 follow this weekly split. Phase 1 keeps the original DAYS above, exactly as written.
+     Mon Chest, Tue Quads, Wed Back, Thu Hamstrings and calves, Fri Shoulders, Sat Arms, Sun off.
+   Pull-ups are bodyweight (bw:true) and appear twice a week: Back day and Arms day (as a chin-up).
+   An exercise's own s and r override the phase scheme, which is how the bodyweight rep range is set.
+   --------------------------------------------------------------------------------------------- */
+window.DAYS_V2 = [
+JSON.parse(JSON.stringify(window.DAYS[0])),   // Monday: its own copy, so extra options never touch Phase 1
+
+{d:"Tue", title:"Quads",
+ bands:["Banded glute bridge 2x20","Band lateral walk 2x15 each way","Bodyweight squats 1x20"],
+ bosu:["Bosu single-leg stand 3x30 sec each leg","Bosu split squat hold 2x20 sec each leg"],
+ cardio:WALK, cardioSwap:BIKE,
+ ex:[
+  {L:"A",n:"Low Bar Back Squat",t:"main",cue:"Warm up thoroughly, belt on for working sets. Depth consistent set to set, or the numbers mean nothing.",
+   sw:["High Bar Back Squat","Front Squat","Smith Machine Back Squat","Belt Squat"]},
+  {L:"B",n:"Reverse Hack Squat",t:"main",cue:"Chest against the pad, feet low and close so the knees travel forward. Controlled lowering to full depth, drive through the whole foot.",
+   sw:["Hack Squat","Belt Squat","Heels-Elevated Goblet Squat (no machine at your weekday gym, do this instead)"]},
+  {L:"C",n:"Leg Press",t:"sec",cue:"Foot height matters. Mid-platform, push through the heel, brief pause at the bottom.",
+   sw:["Machine Leg Press","Heels-Elevated Goblet Squat (no leg press at your weekday gym, do this instead)","Belt Squat"]},
+  {L:"D",n:"Hack Squat",t:"sec",cue:"Feet a little lower and narrower than you would on a press so the quads stay loaded at the bottom.",
+   sw:["Front Squat","Goblet Squat","DB Sumo Squat"]},
+  {L:"E",n:"Leg Extension",t:"iso",cue:"Pause and squeeze at the top. Toes slightly out biases the inner quad.",
+   sw:["Sissy Squat"]},
+  {L:"F",n:"Bulgarian Split Squat",t:"iso",cue:"Rear foot elevated. Short stride loads the quad, long stride loads the glute.",
+   sw:["Forward Lunge","Reverse Lunge","Walking Lunge","Weighted Step-Up","Step-up"]},
+  {L:"G",n:"Weighted Plank Hold",t:"core",cue:"30 to 45 seconds a set. Add weight each set and find the heaviest you can hold.",
+   sw:["Bosu Plank","Ab Wheel Rollout"]}
+ ]},
+
+{d:"Wed", title:"Back",
+ bands:["Band pull-aparts 2x20","Band lat pulldown 2x15","Band face pulls 2x15"],
+ cardio:WALK, cardioSwap:BIKE,
+ ex:[
+  {L:"A",n:"Deadlift",t:"main",cue:"Reset every rep. Speed off the floor tells you whether the weight is right. Belt on for the working sets.",
+   sw:["Trap Bar Deadlift","Rack Pull"]},
+  {L:"B",n:"Pull-up (bodyweight)",t:"main",bw:true,r:"6-10",cue:"Bodyweight only. Full hang to chin over the bar, controlled lowering. Stop one or two reps before form breaks. When you hit the top of the range on every set, slow the lowering to three seconds before anything else.",
+   sw:["Incline Pulldown","Neutral Grip Lat Pulldown","Assisted Pull-up"]},
+  {L:"C",n:"Low Cable Row",t:"sec",cue:"Sit up high, on a plate or box, so you pull upward. Lean forward into every rep for the stretch, then come upright at the contraction.",
+   sw:["Chest-Supported Row","Seated Machine Row"]},
+  {L:"D",n:"Bent-Over Dumbbell Row",t:"sec",cue:"Torso angle fixed across every set. Drive the elbows back, not down.",
+   sw:["Single Arm Dumbbell Row","Barbell Row"]},
+  {L:"E",n:"Hammer Strength Pulldown",t:"sec",cue:"Hold the support bars rather than the handles, parallel grip. It puts the pull on the back instead of the biceps.",
+   sw:["Close Grip Pulldown","Straight Arm Pulldown"]},
+  {L:"F",n:"High Cable Reverse Fly",t:"iso",cue:"Stop just before the handles cross so tension never leaves.",
+   sw:["Reverse Pec Deck","Bent-Over Rear Delt Raise"]},
+  {L:"G",n:"Cable Face Pull",t:"iso",cue:"High elbows, external rotation at the end of the pull.",
+   sw:["Band Face Pull"]},
+  {L:"H",n:"Hanging Leg Raise",t:"core",cue:"Curl the pelvis up. Do not just swing the legs.",
+   sw:["Roman Chair Leg Raise","Windshield Wiper"]}
+ ]},
+
+{d:"Thu", title:"Hamstrings & Calves",
+ bands:["Banded glute bridge 2x20","Band monster walk 2x15","Bodyweight good mornings 1x15"],
+ cardio:WALK, cardioSwap:BIKE,
+ ex:[
+  {L:"A",n:"Elevated Romanian Deadlift",t:"main",cue:"Stand on plates or a platform for extra stretch. Lower to mid-shin, then pull through the glutes and squeeze at the top.",
+   sw:["Stiff Leg Deadlift","Dumbbell RDL","Barbell Good Morning"]},
+  {L:"B",n:"Lying Leg Curl",t:"main",cue:"Two seconds down on every rep. Hips stay on the pad.",
+   sw:["Seated Leg Curl","Glute-Hamstring Raise","Banded Leg Curl"]},
+  {L:"C",n:"Seated Leg Curl",t:"sec",cue:"A different hip angle than the lying curl, so it reaches the hamstring differently. Slow on the way back.",
+   sw:["Lying Leg Curl","Banded Leg Curl"]},
+  {L:"D",n:"Single-Leg Romanian Deadlift",t:"sec",cue:"Balance and asymmetry work under load. Own it at bodyweight before you add a dumbbell.",
+   sw:["Barbell Hip Thrust","Glute-Hamstring Raise"]},
+  {L:"E",n:"Standing Calf Raise",t:"iso",cue:"Full stretch at the bottom, pause for a count, full squeeze at the top.",
+   sw:["Smith Machine Calf Raise","Single Leg Calf Raise"]},
+  {L:"F",n:"Seated Calf Raise",t:"iso",cue:"Pause at the top and at the bottom. Three to four seconds in the stretch.",
+   sw:["Standing Calf Raise","Donkey Calf Raise"]},
+  {L:"G",n:"Donkey Calf Raise",t:"iso",cue:"Deep stretch, slow lowering. Pause at the bottom of every rep.",
+   sw:["Single Leg Calf Raise"]},
+  {L:"H",n:"Cable Rope Crunch",t:"core",cue:"Kneeling. Round the spine down, do not hinge at the hips.",
+   sw:["Ab Crunch Machine","Decline Crunch"]}
+ ]},
+
+(function () { var f = JSON.parse(JSON.stringify(window.DAYS[3])); f.d = "Fri"; return f; })(),
+
+{d:"Sat", title:"Arms",
+ bands:["Band pushdowns 2x20","Band curls 2x20","Band pull-aparts 1x20"],
+ cardio:WALK, cardioSwap:BIKE,
+ ex:[
+  {L:"A",n:"Close Grip Bench Press",t:"main",cue:"Hands just inside shoulder width, elbows tucked. On the Smith, stop at parallel rather than going below.",
+   sw:["Weighted Dip","Smith Close Grip Press"]},
+  {L:"B",n:"Chin-up (bodyweight)",t:"main",bw:true,r:"6-10",cue:"Underhand, shoulder width, bodyweight only. This is your second pull-up day of the week, so keep a rep or two in reserve. Squeeze the biceps at the top and lower under control.",
+   sw:["Neutral Grip Pull-up","Underhand Lat Pulldown","Assisted Chin-up"]},
+  {L:"C",n:"EZ Bar Drag Curl",t:"sec",cue:"Drag the bar straight up the body. Squeeze the shoulder blades, let the elbows slide back, hold the top hard.",
+   sw:["Barbell Curl","Cable Curl"]},
+  {L:"D",n:"Overhead Cable Tricep Extension",t:"sec",cue:"The stretched position is where the long head grows.",
+   sw:["Overhead Dumbbell Extension","Lying Skull Crusher"]},
+  {L:"E",n:"Tricep Rope Pushdown",t:"iso",cue:"Elbows pinned. Keep the weight out in front rather than driving it into your legs.",
+   sw:["Straight Bar Pushdown","Banded Pushdown"]},
+  {L:"F",n:"Preacher Curl",t:"iso",cue:"Do not lock out at the bottom. Keep the tension on.",
+   sw:["Machine Preacher Curl","Incline Dumbbell Curl","Alternating Dumbbell Curl"]},
+  {L:"G",n:"Wrist Curl and Reverse Wrist Curl",t:"iso",cue:"One set of each, back to back. Grip carries over to everything else in the week.",
+   sw:["Farmer Carry"]},
+  {L:"H",n:"Cable Wood Chop",t:"core",cue:"Rotate from the trunk, not the arms.",
+   sw:["Russian DB Twist","Cable Side Crunch"]}
+ ]},
+
+{d:"Sun", title:"Rest", rest:"Full rest. An easy walk is fine if you want to move, but nothing structured."}
+];
+
+/* More options on each day, added to the swap lists of Phases 2 to 6 only. */
+(function () {
+  function addSw(day, name, list) {
+    (day.ex || []).forEach(function (e) {
+      if (e.n !== name) return;
+      e.sw = e.sw || [];
+      list.forEach(function (x) { if (x !== e.n && e.sw.indexOf(x) < 0) e.sw.push(x); });
+    });
+  }
+  var D = window.DAYS_V2;
+  addSw(D[0], "Incline Dumbbell Press", ["Incline Dumbbell Bench Press"]);
+  addSw(D[0], "Seated Machine Chest Press", ["Seated Hammer Chest Press", "Flat Machine Bench Press"]);
+  addSw(D[0], "Pec Deck Fly", ["Chest Fly"]);
+  addSw(D[2], "Incline Pulldown", []);
+  addSw(D[2], "Pull-up (bodyweight)", ["Medium Grip Lat Pulldown"]);
+  addSw(D[2], "Low Cable Row", ["Seated Cable Row"]);
+  addSw(D[2], "Hammer Strength Pulldown", ["Neutral Grip Lat Pulldown"]);
+  addSw(D[3], "Seated Leg Curl", ["Unilateral Standing Leg Curl"]);
+  addSw(D[3], "Lying Leg Curl", ["Unilateral Standing Leg Curl"]);
+  addSw(D[4], "Dumbbell Lateral Raise", ["Dumbbell Lateral Raises"]);
+  addSw(D[4], "Underhand Front Raise", ["Neutral Grip Dumbbell Front Raise"]);
+  addSw(D[4], "Seated Dumbbell Press", ["Smith Machine Overhead Press"]);
+  addSw(D[4], "Rear Delt Cable Fly", ["Rear Delt Row"]);
+  addSw(D[5], "EZ Bar Drag Curl", ["Cable Curl"]);
+  addSw(D[5], "Overhead Cable Tricep Extension", ["Cable Forward Tricep Extension"]);
+  addSw(D[5], "Tricep Rope Pushdown", ["Tricep Pressdown"]);
+  addSw(D[5], "Preacher Curl", ["Hammer Curl"]);
+})();
