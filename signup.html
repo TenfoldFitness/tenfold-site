@@ -135,6 +135,13 @@
     };
 
     const info = TIER_INFO[tier] || TIER_INFO['1'];
+
+    // Pre-fill the priority from the home-page quiz so the client doesn't answer the same question twice.
+    const FOCUS_TO_PRIORITY = { physical: 'Physical health', fitness: 'Improving my fitness', weight: 'Losing weight', mental: 'Mental health' };
+    const focusParam = params.get('focus');
+    if (focusParam && FOCUS_TO_PRIORITY[focusParam]) {
+      document.getElementById('su-priority').value = FOCUS_TO_PRIORITY[focusParam];
+    }
     document.getElementById('confirmed-name').textContent = info.name;
     document.getElementById('confirmed-price').textContent = info.price;
     document.getElementById('confirmed-features').innerHTML = info.features.map(f => '<li>' + f + '</li>').join('');
@@ -149,7 +156,7 @@
     });
     document.querySelectorAll('.choose-instead').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        window.location.href = 'signup.html?tier=' + this.dataset.tier;
+        window.location.href = 'signup.html?tier=' + this.dataset.tier + (focusParam ? '&focus=' + encodeURIComponent(focusParam) : '');
       });
     });
 
