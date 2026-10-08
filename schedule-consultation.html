@@ -195,7 +195,8 @@
       });
 
       if (error) {
-        errorEl.textContent = error.message;
+        console.error(error);
+        errorEl.textContent = "We couldn't book that time just now. Please check your connection and try again, or pick another time.";
         errorEl.style.display = 'block';
         btn.disabled = false;
         btn.textContent = 'Confirm consultation';
