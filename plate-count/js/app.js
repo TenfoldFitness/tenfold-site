@@ -79,8 +79,15 @@ function cur(){ return day(S.date); }
 
 /* ================= local save + cloud sync ================= */
 function lsKey(){ return "platecount2:"+uid; }
+var lsBroken=false;
 function lsSave(){
-  try{ localStorage.setItem(lsKey(),JSON.stringify({d:S.days,p:S.profile,dirty:S.dirty})); }catch(e){}
+  try{
+    localStorage.setItem(lsKey(),JSON.stringify({d:S.days,p:S.profile,dirty:S.dirty}));
+    if(lsBroken){ lsBroken=false; showSync(); }
+  }catch(e){
+    /* This device could not keep the entry. Say so plainly: the cloud copy may be the only copy. */
+    if(!lsBroken){ lsBroken=true; showSync(); toast("Couldn’t save on this device. Storage may be full or blocked."); }
+  }
 }
 function lsLoad(){
   try{
@@ -112,22 +119,43 @@ function unionCustom(list){
   list.forEach(function(c){ if(c&&typeof c.n==="string"&&!have[c.n.toLowerCase()]){ S.profile.custom.push(c); have[c.n.toLowerCase()]=1; } });
   S.profile.custom=S.profile.custom.slice(0,300);
 }
-var flushTimer=0;
+var flushTimer=0, retryTimer=0, retryDelay=0;
 function persistDay(k){
   var d=day(k); d.updatedAt=Date.now(); S.dirty.days[k]=true; lsSave(); queueFlush();
 }
 function persistProfile(){
   S.profile.updatedAt=Date.now(); S.dirty.profile=true; lsSave(); queueFlush();
 }
-function queueFlush(){ if(DEV||!uid) return; clearTimeout(flushTimer); flushTimer=setTimeout(flush,900); }
-function setSync(state,title){
-  var el=$("syncdot"); el.className="syncdot "+state; el.title=title||""; el.setAttribute("aria-label","Sync: "+(title||state));
-  var f=$("syncNote"); if(f) f.textContent=title||"";
+function pendingCount(){ return Object.keys(S.dirty.days).length+(S.dirty.profile?1:0); }
+function queueFlush(){
+  if(DEV||!uid) return;
+  if(S.syncOff){ setSync("off","Saved on this device (cloud backup isn’t set up yet)"); return; }
+  if(!navigator.onLine){ setSync("off","Offline — saved on this device"); return; }
+  setSync("busy","Saving…");
+  clearTimeout(flushTimer); flushTimer=setTimeout(flush,900);
+}
+/* The pill says, in words, whether what you just entered is saved. */
+var syncState={state:"busy",title:""};
+function setSync(state,title){ syncState={state:state,title:title||""}; showSync(); }
+function showSync(){
+  var state=lsBroken?"bad":syncState.state;
+  var title=lsBroken?"Couldn’t save on this device. Storage may be full or blocked.":syncState.title;
+  var el=$("syncdot"); el.className="syncdot "+state; el.title=title; el.setAttribute("aria-label","Save status: "+(title||state));
+  var f=$("syncNote"); if(f) f.textContent=title;
+  var t=$("synctext"), p=$("syncpill"), n=pendingCount(), txt;
+  if(state==="ok") txt="Saved";
+  else if(state==="busy") txt=/Sync/.test(title)?"Syncing…":(title?"Saving…":"");
+  else if(state==="bad") txt="Not saved";
+  else if(/Offline/.test(title)) txt=n?("Offline · "+n+" waiting"):"Offline · saved";
+  else txt=n?(n+" waiting to back up"):"Saved on device";
+  if(t) t.textContent=txt;
+  if(p){ p.className="syncpill "+state; p.title=title; }
 }
 function flush(){
-  if(DEV||!uid||S.syncOff||!S.pulled||!navigator.onLine) return Promise.resolve();
+  if(DEV||!uid||S.syncOff||!S.pulled) return Promise.resolve();
+  if(!navigator.onLine){ setSync("off","Offline — saved on this device"); return Promise.resolve(); }
   var keys=Object.keys(S.dirty.days), prof=S.dirty.profile;
-  if(!keys.length&&!prof) return Promise.resolve();
+  if(!keys.length&&!prof){ setSync("ok","Saved and backed up"); return Promise.resolve(); }
   setSync("busy","Saving…");
   var jobs=[];
   if(keys.length){
@@ -141,8 +169,13 @@ function flush(){
       if(r.error) throw r.error; S.dirty.profile=false;
     }));
   }
-  return Promise.all(jobs).then(function(){ lsSave(); setSync("ok","Synced"); }).catch(function(e){
-    console.warn("sync failed",e); setSync("off","Saved on this device — will sync when connected");
+  return Promise.all(jobs).then(function(){
+    retryDelay=0; clearTimeout(retryTimer); lsSave();
+    if(pendingCount()){ setSync("busy","Saving…"); queueFlush(); } else setSync("ok","Saved and backed up");
+  }).catch(function(e){
+    console.warn("sync failed",e); setSync("off","Saved on this device — will back up when connected");
+    /* keep trying quietly while online, backing off up to a minute */
+    clearTimeout(retryTimer); retryDelay=Math.min(60000,(retryDelay||2000)*2); retryTimer=setTimeout(flush,retryDelay);
   });
 }
 function setScore(v){ return (v&&v.w!=null?1:0)+(v&&v.reps!=null?1:0)+(v&&v.done?1:0); }
@@ -174,7 +207,7 @@ function pull(){
   ]).then(function(res){
     var dr=res[0], pr=res[1];
     var missing=function(e){ return e&&(e.code==="42P01"||e.code==="PGRST205"||/does not exist|schema cache/i.test(e.message||"")); };
-    if(missing(dr.error)||missing(pr.error)){ S.syncOff=true; S.pulled=true; setSync("off","Saved on this device (sync not set up yet)"); return; }
+    if(missing(dr.error)||missing(pr.error)){ S.syncOff=true; S.pulled=true; setSync("off","Saved on this device (cloud backup isn’t set up yet)"); return; }
     if(dr.error||pr.error) throw (dr.error||pr.error);
     (dr.data||[]).forEach(function(row){ if(row&&/^\d{4}-\d{2}-\d{2}$/.test(row.day)) acceptIncoming(row.day,row.data); });
     if(pr.data&&pr.data.data) mergeProfile(pr.data.data,false); else S.dirty.profile=true;
@@ -184,6 +217,17 @@ function pull(){
   });
 }
 window.addEventListener("online",function(){ (S.pulled?flush():pull()); });
+window.addEventListener("offline",function(){ if(!DEV&&uid) setSync("off","Offline — saved on this device"); });
+/* Tap the pill for the plain-words detail, and to back up right now */
+var syncPill=$("syncpill");
+if(syncPill) syncPill.onclick=function(){
+  var n=pendingCount();
+  if(lsBroken){ toast("This device couldn’t keep your latest entry. Free up some space or turn off private browsing, then try again."); return; }
+  if(S.syncOff){ toast("Everything is saved on this device. Cloud backup isn’t set up yet."); return; }
+  if(!navigator.onLine){ toast(n?"You’re offline. "+n+" change"+(n>1?"s":"")+" will back up when you’re online.":"You’re offline. Everything is saved on this device."); return; }
+  toast("Checking…");
+  (S.pulled?flush():pull()).then(function(){ toast(pendingCount()?"Not backed up yet. We’ll keep trying.":"All changes are saved and backed up."); });
+};
 
 /* ================= programs ================= */
 var PROGRAMS=[];
@@ -242,6 +286,7 @@ function workoutIdx(k){ var d=day(k); return d.wd!=null?d.wd:wdIndex(k); }
 /* ================= toast, sheet, rest timer ================= */
 var toastTimer=0;
 function toast(msg,label,fn){
+  if(lsBroken&&/saved|logged|added|set\b/i.test(msg)){ msg="Couldn’t save on this device. Storage may be full or blocked."; label=null; }
   var t=$("toast"); clearTimeout(toastTimer);
   t.innerHTML="<span>"+esc(msg)+"</span>"+(label?"<button type='button' id='toastBtn'>"+esc(label)+"</button>":"");
   t.hidden=false;
