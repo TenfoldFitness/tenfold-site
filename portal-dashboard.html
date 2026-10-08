@@ -23,8 +23,11 @@
 
     <div class="welcome" style="padding:28px 0 8px;">
       <h1 id="welcome-name">Welcome back</h1>
-      <p>Here's what's happening with your Tenfold Method account.</p>
+      <p id="welcome-note">Here's what's happening with your Tenfold Method account.</p>
     </div>
+
+    <!-- Honest status: says Saved only after it is true. Screen readers hear changes. -->
+    <p id="status-line" class="status-line" role="status" aria-live="polite"></p>
 
     <section style="border-top:none; padding-top:0;">
       <div class="grid dash-grid">
@@ -38,10 +41,9 @@
           <button class="btn btn-sm btn-primary" id="open-booking">Book now</button>
         </div>
         <div class="card">
-          <p class="label">Billing</p>
-          <p class="value">Package: 5 sessions</p>
-          <p class="small" style="margin-bottom:10px;">3 remaining &middot; Paid in full</p>
-          <button class="btn btn-sm" id="open-billing">View billing</button>
+          <p class="label">Payments</p>
+          <p class="value" style="margin-bottom:10px;">Pay for a session or package</p>
+          <button class="btn btn-sm" id="open-billing">Make a payment</button>
         </div>
       </div>
     </section>
@@ -87,31 +89,6 @@
       </div>
     </section>
 
-    <section>
-      <div class="section-head">
-        <h2 style="margin:0;">Nutrition &amp; habit tracker</h2>
-        <span class="link">Add today's entry</span>
-      </div>
-      <div class="tracker">
-        <div class="tracker-row tracker-head">
-          <span></span>
-          <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
-        </div>
-        <div class="tracker-row">
-          <span class="day-label">Meals logged</span>
-          <span class="dot-done">&#10003;</span><span class="dot-done">&#10003;</span><span class="dot-done">&#10003;</span><span class="dot-empty">&middot;</span><span class="dot-empty">&middot;</span><span class="dot-empty">&middot;</span><span class="dot-empty">&middot;</span>
-        </div>
-        <div class="tracker-row">
-          <span class="day-label">Water intake</span>
-          <span class="dot-done">&#10003;</span><span class="dot-done">&#10003;</span><span class="dot-empty">&middot;</span><span class="dot-empty">&middot;</span><span class="dot-empty">&middot;</span><span class="dot-empty">&middot;</span><span class="dot-empty">&middot;</span>
-        </div>
-        <div class="tracker-row">
-          <span class="day-label">Movement</span>
-          <span class="dot-done">&#10003;</span><span class="dot-empty">&middot;</span><span class="dot-done">&#10003;</span><span class="dot-empty">&middot;</span><span class="dot-empty">&middot;</span><span class="dot-empty">&middot;</span><span class="dot-empty">&middot;</span>
-        </div>
-      </div>
-    </section>
-
     <div id="membership-required" style="display:none; padding:24px 0;">
       <div class="card center">
         <h2 style="margin-bottom:6px;">Unlock the daily workout &amp; nutrition tools</h2>
@@ -122,14 +99,14 @@
 
     <div id="gated-tools" style="display:none;">
 
-    <nav class="tab-nav" id="dash-tab-nav">
-      <button type="button" class="tab-btn active" data-tab="today">Today</button>
-      <button type="button" class="tab-btn" data-tab="meals">Meals</button>
-      <button type="button" class="tab-btn" data-tab="book">Book &amp; Pay</button>
-      <button type="button" class="tab-btn" data-tab="progress">Progress</button>
+    <nav class="tab-nav" id="dash-tab-nav" role="tablist" aria-label="Dashboard sections">
+      <button type="button" class="tab-btn active" role="tab" id="tab-today" aria-controls="panel-today" aria-selected="true" data-tab="today">Today</button>
+      <button type="button" class="tab-btn" role="tab" id="tab-meals" aria-controls="panel-meals" aria-selected="false" tabindex="-1" data-tab="meals">Meals</button>
+      <button type="button" class="tab-btn" role="tab" id="tab-book" aria-controls="panel-book" aria-selected="false" tabindex="-1" data-tab="book">Book &amp; Pay</button>
+      <button type="button" class="tab-btn" role="tab" id="tab-progress" aria-controls="panel-progress" aria-selected="false" tabindex="-1" data-tab="progress">Progress</button>
     </nav>
 
-    <div class="tab-panel" data-tab-panel="today">
+    <div class="tab-panel" role="tabpanel" id="panel-today" aria-labelledby="tab-today" data-tab-panel="today">
     <section>
       <h2>Daily workout</h2>
       <div class="tool-box">
@@ -148,8 +125,9 @@
     <section>
       <h2>Log today's workout</h2>
       <div class="tool-box">
-        <div id="streak-display" style="margin-bottom:14px;">
-          <p class="value" style="font-size:20px; margin:0;">🔥 <span id="streak-count">0</span> day streak</p>
+        <div id="week-lookback" style="margin-bottom:14px;">
+          <p class="value" style="font-size:18px; margin:0;" id="week-lookback-text">Your week at a glance will show here.</p>
+          <p class="small" style="margin:4px 0 0;">Any day counts. There's nothing to keep up and nothing to lose.</p>
         </div>
 
         <div id="already-logged" style="display:none;">
@@ -197,7 +175,7 @@
     </section>
     </div>
 
-    <div class="tab-panel" data-tab-panel="meals" style="display:none;">
+    <div class="tab-panel" role="tabpanel" id="panel-meals" aria-labelledby="tab-meals" data-tab-panel="meals" style="display:none;">
     <section>
       <h2>What's in your fridge?</h2>
       <div class="tool-box">
@@ -231,7 +209,7 @@
     </section>
     </div>
 
-    <div class="tab-panel" data-tab-panel="book" style="display:none;">
+    <div class="tab-panel" role="tabpanel" id="panel-book" aria-labelledby="tab-book" data-tab-panel="book" style="display:none;">
     <section id="booking-section" style="display:none;">
       <h2>Book a session</h2>
       <div class="tool-box">
@@ -263,7 +241,7 @@
     </section>
     </div>
 
-    <div class="tab-panel" data-tab-panel="progress" style="display:none;">
+    <div class="tab-panel" role="tabpanel" id="panel-progress" aria-labelledby="tab-progress" data-tab-panel="progress" style="display:none;">
     <section>
       <h2>Your profile</h2>
       <div class="tool-box" id="profile-box">
@@ -339,7 +317,7 @@
       }
 
       document.body.style.visibility = 'visible';
-      document.getElementById('welcome-name').textContent = 'Welcome back, ' + email.split('@')[0];
+      loadWelcome(email);
       if (email === ADMIN_EMAIL) {
         document.getElementById('admin-link').style.display = 'inline';
       }
@@ -352,6 +330,54 @@
     });
 
     let clientHasMembership = false;
+
+    // ---- Status line: one honest place that says what is happening ----
+    // "Saved" is only ever shown after the server confirmed it.
+    let statusTimer = null;
+    function setStatus(message, kind) {
+      const el = document.getElementById('status-line');
+      el.textContent = message || '';
+      el.className = 'status-line' + (kind ? ' status-' + kind : '');
+      clearTimeout(statusTimer);
+      if (message && kind === 'saved') statusTimer = setTimeout(() => setStatus(''), 4000);
+    }
+    window.addEventListener('offline', () => setStatus("You're offline. Changes won't save until you're back online.", 'warn'));
+    window.addEventListener('online', () => setStatus('Back online.', 'saved'));
+
+    // In-page confirmation instead of the browser's pop-up. The safe choice is focused first,
+    // buttons are named for what they do, and Escape means "keep it".
+    function confirmAction(message, yesLabel, noLabel) {
+      return new Promise(resolve => {
+        const dlg = document.createElement('dialog');
+        dlg.setAttribute('aria-label', 'Please confirm');
+        dlg.style.cssText = 'border:1px solid var(--border); border-radius:var(--radius); padding:20px; max-width:360px; background:var(--surface-2); color:var(--text-primary);';
+        const p = document.createElement('p');
+        p.textContent = message;
+        p.style.cssText = 'margin:0 0 16px; color:var(--text-primary);';
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;';
+        const keep = document.createElement('button');
+        keep.type = 'button'; keep.className = 'btn btn-sm btn-primary'; keep.textContent = noLabel;
+        const yes = document.createElement('button');
+        yes.type = 'button'; yes.className = 'btn btn-sm'; yes.textContent = yesLabel;
+        row.append(yes, keep); dlg.append(p, row); document.body.appendChild(dlg);
+        const done = v => { dlg.close(); dlg.remove(); resolve(v); };
+        yes.addEventListener('click', () => done(true));
+        keep.addEventListener('click', () => done(false));
+        dlg.addEventListener('cancel', e => { e.preventDefault(); done(false); });
+        dlg.showModal(); keep.focus();
+      });
+    }
+
+    // Greet by name when we have it. Never show the start of an email address.
+    async function loadWelcome(email) {
+      let name = '';
+      try {
+        const { data } = await supabaseClient.from('client_profiles').select('name').eq('email', email).limit(1);
+        if (data && data.length && data[0].name) name = data[0].name.trim().split(/\s+/)[0];
+      } catch (e) { /* fall back to a plain greeting */ }
+      document.getElementById('welcome-name').textContent = name ? 'Welcome back, ' + name : 'Welcome back';
+    }
 
     async function getAuthToken() {
       const { data } = await supabaseClient.auth.getSession();
@@ -391,7 +417,8 @@
         return `<circle cx="${x}" cy="${y}" r="4.5" fill="#2F6F63"/>`;
       }).join('');
 
-      return `<svg viewBox="0 0 ${size} ${size}" style="width:100%; max-width:320px;">
+      const altText = labels.map(l => l + ': ' + scores[l] + ' out of 10').join(', ');
+      return `<svg viewBox="0 0 ${size} ${size}" style="width:100%; max-width:320px;" role="img" aria-label="Your starting profile. ${altText}.">
         ${rings}${axes}
         <polygon points="${dataPts}" fill="#2F6F63" fill-opacity="0.18" stroke="#2F6F63" stroke-width="2"/>
         ${dots}${labelEls}
@@ -404,7 +431,7 @@
         .select('*')
         .eq('client_email', email)
         .order('created_at', { ascending: false })
-        .limit(1);
+        .limit(2);
 
       const box = document.getElementById('profile-box');
       if (!assessments || !assessments.length) {
@@ -422,15 +449,41 @@
         'Balance': a.balance_score,
         'Mobility': a.mobility_score,
         'Mental Clarity': a.mental_clarity_score,
-        'Low Stress': a.stress_score,
+        'Calm': a.stress_score,
         'Connection': a.relational_score,
       });
 
       const takenDate = new Date(a.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
 
+      // Then and now: compare with the assessment before this one, in plain words.
+      // Neutral wording in both directions. Nothing here is a grade.
+      let thenNow = '';
+      if (assessments.length > 1) {
+        const prev = assessments[1];
+        const prevDate = new Date(prev.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+        const areas = [
+          ['Strength', 'strength_score'], ['Aerobic', 'aerobic_score'], ['Balance', 'balance_score'],
+          ['Mobility', 'mobility_score'], ['Mental clarity', 'mental_clarity_score'], ['Calm', 'stress_score'], ['Connection', 'relational_score'],
+        ];
+        const up = areas.filter(([, k]) => a[k] > prev[k]).map(([n]) => n.toLowerCase());
+        const down = areas.filter(([, k]) => a[k] < prev[k]).map(([n]) => n.toLowerCase());
+        const same = areas.length - up.length - down.length;
+        let lines = [];
+        if (up.length) lines.push('Higher than last time: ' + up.join(', ') + '.');
+        if (down.length) lines.push('A little lower than last time: ' + down.join(', ') + '. That is normal and useful to know.');
+        if (same) lines.push(same + (same === 1 ? ' area is' : ' areas are') + ' about the same.');
+        thenNow = `
+          <div class="card" style="margin:14px 0;">
+            <p class="label">Then and now</p>
+            <p class="small" style="margin:0 0 6px;">Compared with ${prevDate}:</p>
+            ${lines.map(l => '<p class="small" style="margin:0 0 4px; color:var(--text-primary);">' + l + '</p>').join('')}
+          </div>`;
+      }
+
       box.innerHTML = `
         <div style="text-align:center;">${chartHtml}</div>
         <p class="small center" style="margin:8px 0 14px;">Last taken ${takenDate}</p>
+        ${thenNow}
         <div class="center"><a href="assessment.html" class="btn btn-sm">Retake assessment</a></div>
       `;
     }
@@ -476,17 +529,39 @@
     });
 
     // ---- Dashboard tabs: show one job at a time instead of one long scroll ----
-    function activateTab(tabName) {
+    const TAB_NAMES = ['today', 'meals', 'book', 'progress'];
+    function activateTab(tabName, focusTab) {
+      if (!TAB_NAMES.includes(tabName)) tabName = 'today';
       document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.tab === tabName);
+        const on = btn.dataset.tab === tabName;
+        btn.classList.toggle('active', on);
+        btn.setAttribute('aria-selected', on ? 'true' : 'false');
+        btn.tabIndex = on ? 0 : -1;
+        if (on && focusTab) btn.focus();
       });
       document.querySelectorAll('.tab-panel').forEach(panel => {
         panel.style.display = panel.dataset.tabPanel === tabName ? 'block' : 'none';
       });
+      try { sessionStorage.setItem('tenfold_dash_tab', tabName); } catch (e) {}
+      if (history.replaceState) history.replaceState(null, '', '#' + tabName);
     }
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+      // Arrow keys move between tabs, as in any standard tab control
+      btn.addEventListener('keydown', e => {
+        const i = TAB_NAMES.indexOf(btn.dataset.tab);
+        if (e.key === 'ArrowRight') { e.preventDefault(); activateTab(TAB_NAMES[(i + 1) % TAB_NAMES.length], true); }
+        if (e.key === 'ArrowLeft') { e.preventDefault(); activateTab(TAB_NAMES[(i + TAB_NAMES.length - 1) % TAB_NAMES.length], true); }
+        if (e.key === 'Home') { e.preventDefault(); activateTab(TAB_NAMES[0], true); }
+        if (e.key === 'End') { e.preventDefault(); activateTab(TAB_NAMES[TAB_NAMES.length - 1], true); }
+      });
     });
+    // Open the tab named in the link (#book), else the one used last in this visit
+    (function () {
+      let start = location.hash.replace('#', '');
+      if (!TAB_NAMES.includes(start)) { try { start = sessionStorage.getItem('tenfold_dash_tab') || 'today'; } catch (e) { start = 'today'; } }
+      if (start !== 'today') activateTab(start);
+    })();
 
     // Real: load the 3 most recent blog posts
     async function loadBlogPreview() {
@@ -682,7 +757,8 @@
 
       document.querySelectorAll('.cancel-btn').forEach(btn => {
         btn.addEventListener('click', async function () {
-          if (!confirm('Cancel this appointment?')) return;
+          const sure = await confirmAction('Cancel this appointment? You can book another time afterwards.', 'Yes, cancel it', 'Keep it');
+          if (!sure) return;
           const apptTime = this.dataset.time;
           await supabaseClient.from('appointments').update({ status: 'cancelled' }).eq('id', this.dataset.id);
 
@@ -778,10 +854,13 @@
       }
 
       if (error) {
-        errorEl.textContent = error.message;
+        console.error(error);
+        errorEl.textContent = "We couldn't book that time just now. Please check your connection and try again, or pick another time.";
         errorEl.style.display = 'block';
+        setStatus("Couldn't book. Nothing was saved.", 'warn');
         return;
       }
+      setStatus('Booked and saved.', 'saved');
 
       try {
         const authToken = await getAuthToken();
@@ -943,7 +1022,7 @@
       });
     });
 
-    // ---- Workout logging + streak tracker ----
+    // ---- Workout logging + weekly look-back (no streaks) ----
     let selectedLogChoice = null; // 'suggested' or 'other'
 
     function todayDateStr() {
@@ -964,28 +1043,19 @@
       document.getElementById('log-custom-workout').style.display = 'block';
     });
 
-    async function calculateStreak(email, latestLogDates) {
-      // latestLogDates: array of 'YYYY-MM-DD' strings, most recent first
-      const dateSet = new Set(latestLogDates);
-      let streak = 0;
-      let cursor = new Date();
+    function dateStrDaysAgo(n) {
+      const d = new Date();
+      d.setDate(d.getDate() - n);
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
 
-      // If today isn't logged yet, start counting from yesterday instead,
-      // so the streak still reflects consecutive prior days.
-      if (!dateSet.has(todayDateStr())) {
-        cursor.setDate(cursor.getDate() - 1);
-      }
-
-      while (true) {
-        const dStr = cursor.getFullYear() + '-' + String(cursor.getMonth() + 1).padStart(2, '0') + '-' + String(cursor.getDate()).padStart(2, '0');
-        if (dateSet.has(dStr)) {
-          streak++;
-          cursor.setDate(cursor.getDate() - 1);
-        } else {
-          break;
-        }
-      }
-      return streak;
+    // A look back, not a streak: how many sessions in the last 7 days.
+    // No chain to break, no total to lose, and any day counts.
+    function weekLookbackText(dates) {
+      const last7 = new Set([0, 1, 2, 3, 4, 5, 6].map(dateStrDaysAgo));
+      const n = new Set(dates.filter(d => last7.has(d))).size;
+      if (n === 0) return 'No sessions logged this week yet.';
+      return n === 1 ? '1 session logged this week.' : n + ' sessions logged this week.';
     }
 
     async function initWorkoutLog(email) {
@@ -996,11 +1066,18 @@
         .order('log_date', { ascending: false })
         .limit(120);
 
-      if (error) return;
+      if (error) {
+        document.getElementById('week-lookback-text').textContent = "We couldn't load your recent sessions just now.";
+        return;
+      }
 
       const dates = logs.map(l => l.log_date);
-      const streak = await calculateStreak(email, dates);
-      document.getElementById('streak-count').textContent = streak;
+      document.getElementById('week-lookback-text').textContent = weekLookbackText(dates);
+
+      // Gentle welcome back after a few days away. Nothing to catch up on.
+      if (dates.length && !dates.slice(0, 1).some(d => [0, 1, 2].map(dateStrDaysAgo).includes(d))) {
+        document.getElementById('welcome-note').textContent = "Good to see you. There's nothing to catch up on. Pick up wherever feels right.";
+      }
 
       if (dates.includes(todayDateStr())) {
         document.getElementById('already-logged').style.display = 'block';
@@ -1041,7 +1118,8 @@
 
       const btn = this;
       btn.disabled = true;
-      btn.textContent = 'Logging...';
+      btn.textContent = 'Saving...';
+      setStatus('Saving your workout...', 'saving');
 
       const { error } = await supabaseClient.from('workout_logs').insert({
         client_email: email,
@@ -1055,11 +1133,14 @@
       btn.textContent = 'Log workout';
 
       if (error) {
-        errorEl.textContent = error.message;
+        console.error(error);
+        errorEl.textContent = "We couldn't save your workout just now. What you entered is still here, so check your connection and try again.";
         errorEl.style.display = 'block';
+        setStatus("Couldn't save. Your entry is still on this page.", 'warn');
         return;
       }
 
+      setStatus('Saved. Nice work today.', 'saved');
       document.getElementById('already-logged').style.display = 'block';
       document.getElementById('log-form-wrap').style.display = 'none';
       initWorkoutLog(email);
