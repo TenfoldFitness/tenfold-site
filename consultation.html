@@ -64,6 +64,7 @@
       <div class="field">
         <label for="lead-phone">Phone number</label>
         <input type="tel" id="lead-phone" required />
+        <p class="small" style="margin:4px 0 0;">So we can reach you about your consultation.</p>
       </div>
       <div class="field">
         <label for="lead-priority">What is your top priority right now?</label>
@@ -170,7 +171,8 @@
         document.getElementById('contact-form-wrap').style.display = 'none';
         document.getElementById('schedule-form-wrap').style.display = 'block';
       } catch (err) {
-        errorEl.textContent = err.message;
+        console.error(err);
+      errorEl.textContent = "We couldn't save your details just now. Please check your connection and try again.";
         errorEl.style.display = 'block';
         btn.disabled = false;
         btn.textContent = 'Continue to scheduling';
@@ -276,7 +278,8 @@
         successEl.textContent = "You're booked! Check your email for the confirmation and video call link.";
         successEl.style.display = 'block';
       } catch (err) {
-        errorEl.textContent = err.message;
+        console.error(err);
+      errorEl.textContent = "We couldn't book that time just now. Please check your connection and try again, or pick another time.";
         errorEl.style.display = 'block';
         btn.disabled = false;
         btn.textContent = 'Confirm free consultation';
