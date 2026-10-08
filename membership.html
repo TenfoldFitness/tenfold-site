@@ -113,6 +113,7 @@
   <script src="https://web.squarecdn.com/v1/square.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-client.js"></script>
+  <script src="js/checkout.js"></script>
   <script>
     const SQUARE_APP_ID = "sq0idp-gjwHru8DqZHZoRvhSHirjw"; // production
     let clientEmail = null;
@@ -209,49 +210,78 @@
       if (matchingBtn) matchingBtn.click();
     }
 
-    document.getElementById('confirm-purchase').addEventListener('click', async function () {
+    let purchaseDone = false;
+
+    function showNotice(message, isError) {
       const errorEl = document.getElementById('checkout-error');
       const successEl = document.getElementById('checkout-success');
-      errorEl.style.display = 'none';
-      successEl.style.display = 'none';
+      if (isError) {
+        successEl.style.display = 'none';
+        errorEl.textContent = message;
+        errorEl.style.display = 'block';
+      } else {
+        errorEl.style.display = 'none';
+        successEl.textContent = message;
+        successEl.style.display = 'block';
+      }
+    }
+
+    document.getElementById('confirm-purchase').addEventListener('click', async function () {
+      if (purchaseDone) return; // never charge twice from this page
       const btn = this;
+      const idleLabel = selectedKind === 'subscription' ? 'Start my membership' : 'Confirm my package';
+      document.getElementById('checkout-error').style.display = 'none';
+      document.getElementById('checkout-success').style.display = 'none';
+
+      if (!clientEmail) {
+        showNotice('Please log in again to continue. Your session may have expired.', true);
+        return;
+      }
+
       btn.disabled = true;
-      btn.textContent = 'Processing...';
+      btn.textContent = 'Processing payment... please keep this page open';
 
       try {
-        const result = await squareCard.tokenize();
-        if (result.status !== 'OK') throw new Error('Card details could not be verified.');
+        const tok = await squareCard.tokenize();
+        if (tok.status !== 'OK') {
+          showNotice(TenfoldCheckout.messages.cardUnverified, true);
+          btn.disabled = false; btn.textContent = idleLabel;
+          return;
+        }
 
         const { data: sessionData } = await supabaseClient.auth.getSession();
         const authToken = sessionData.session ? sessionData.session.access_token : SUPABASE_PUBLISHABLE_KEY;
 
-        const functionName = selectedKind === 'subscription' ? 'start-membership' : 'purchase-package';
-        const response = await fetch(SUPABASE_URL + '/functions/v1/' + functionName, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': SUPABASE_PUBLISHABLE_KEY,
-            'Authorization': 'Bearer ' + authToken,
-          },
-          body: JSON.stringify({
-            sourceId: result.token,
-            tier: selectedTier,
-            clientEmail: clientEmail,
-          }),
+        const outcome = await TenfoldCheckout.purchase({
+          kind: selectedKind, tier: selectedTier, email: clientEmail, sourceId: tok.token, authToken: authToken,
         });
-        const payload = await response.json();
-        if (!response.ok) throw new Error(payload.error?.message || payload.error?.detail || 'Purchase failed.');
-
         const nextUrl = 'assessment.html?tier=' + selectedTier;
-        successEl.textContent = "Payment complete! Let's build your starting profile...";
-        successEl.style.display = 'block';
-        setTimeout(() => { window.location.href = nextUrl; }, 1500);
+
+        if (outcome.state === 'ok') {
+          purchaseDone = true;
+          btn.textContent = 'Payment received';
+          showNotice("Payment complete! Let's build your starting profile...", false);
+          setTimeout(() => { window.location.href = nextUrl; }, 1500);
+        } else if (outcome.state === 'paid_pending') {
+          purchaseDone = true;
+          btn.textContent = 'Payment received';
+          showNotice(outcome.message, false);
+          const link = document.createElement('a');
+          link.href = nextUrl; link.className = 'btn btn-primary btn-sm'; link.textContent = 'Continue';
+          link.style.cssText = 'display:inline-block; margin-top:10px;';
+          document.getElementById('checkout-success').after(link);
+        } else if (outcome.state === 'unclear') {
+          // We cannot tell whether the card was charged, so do not offer another payment.
+          showNotice(outcome.message, true);
+          btn.textContent = 'Please check your email first';
+        } else {
+          showNotice(outcome.message || TenfoldCheckout.messages.unclear, true);
+          btn.disabled = false; btn.textContent = idleLabel;
+        }
       } catch (err) {
-        errorEl.textContent = err.message;
-        errorEl.style.display = 'block';
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Confirm';
+        console.error(err);
+        showNotice(TenfoldCheckout.messages.unclear, true);
+        btn.textContent = 'Please check your email first';
       }
     });
   </script>
