@@ -64,7 +64,7 @@
       if (error) {
         errorEl.textContent = error.message === 'Invalid login credentials'
           ? "That email and password don't match. Please try again."
-          : error.message;
+          : "We couldn't log you in just now. Please check your connection and try again.";
         errorEl.style.display = 'block';
         return;
       }
@@ -86,7 +86,7 @@
       });
       errorEl.style.display = 'block';
       errorEl.style.color = 'var(--accent)';
-      errorEl.textContent = error ? error.message : "Check your email for a password reset link.";
+      errorEl.textContent = error ? "We couldn't send that just now. Please check your connection and try again." : "If an account exists for that email, a reset link is on its way. Check your inbox and your spam folder.";
     });
   </script>
 
