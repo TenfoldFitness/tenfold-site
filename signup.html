@@ -90,7 +90,10 @@
           </div>
           <div class="field">
             <label for="su-password">Create a password</label>
-            <input type="password" id="su-password" required minlength="6" placeholder="At least 6 characters" />
+            <input type="password" id="su-password" required minlength="6" placeholder="At least 6 characters" autocomplete="new-password" />
+            <label style="display:flex; align-items:center; gap:8px; margin-top:8px; font-size:13px; cursor:pointer; min-height:24px;">
+              <input type="checkbox" id="su-show-password" style="width:auto; margin:0;" /> Show password
+            </label>
           </div>
           <p class="form-error" id="signup-error"></p>
           <button class="btn btn-primary btn-sm" id="signup-submit">Continue to payment</button>
@@ -160,6 +163,10 @@
       });
     });
 
+    document.getElementById('su-show-password').addEventListener('change', function () {
+      document.getElementById('su-password').type = this.checked ? 'text' : 'password';
+    });
+
     // ---- Step 1: create the account ----
     document.getElementById('signup-submit').addEventListener('click', async function () {
       const errorEl = document.getElementById('signup-error');
@@ -171,14 +178,23 @@
       const priority = document.getElementById('su-priority').value;
       const password = document.getElementById('su-password').value;
 
-      if (!name || !email || !phone || !priority || !password) {
-        errorEl.textContent = 'Please fill in every field above.';
+      // Say exactly what is missing, and take the person to it
+      const missing = [];
+      if (!name) missing.push(['su-name', 'your name']);
+      if (!email) missing.push(['su-email', 'your email']);
+      if (!phone) missing.push(['su-phone', 'a phone number']);
+      if (!priority) missing.push(['su-priority', 'your top priority']);
+      if (!password) missing.push(['su-password', 'a password']);
+      if (missing.length) {
+        errorEl.textContent = 'Please add ' + missing.map(m => m[1]).join(', ').replace(/, ([^,]*)$/, ' and $1') + '.';
         errorEl.style.display = 'block';
+        document.getElementById(missing[0][0]).focus();
         return;
       }
       if (password.length < 6) {
-        errorEl.textContent = 'Password must be at least 6 characters.';
+        errorEl.textContent = 'Your password needs at least 6 characters. You have ' + password.length + ' so far.';
         errorEl.style.display = 'block';
+        document.getElementById('su-password').focus();
         return;
       }
 
@@ -189,7 +205,10 @@
       const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({ email, password });
 
       if (signUpError) {
-        errorEl.textContent = signUpError.message;
+        console.error(signUpError);
+        errorEl.textContent = /already (registered|been registered)|already exists/i.test(signUpError.message || '')
+          ? 'That email already has an account. Log in below, or use a different email.'
+          : "We couldn't create your account just now. Please check your details and your connection, then try again.";
         errorEl.style.display = 'block';
         btn.disabled = false;
         btn.textContent = 'Continue to payment';
@@ -273,7 +292,11 @@
         successEl.style.display = 'block';
         setTimeout(() => { window.location.href = 'assessment.html?tier=' + tier; }, 1500);
       } catch (err) {
-        errorEl.textContent = err.message;
+        console.error(err);
+        // Card problems are the person's to fix; anything else is on our side and we say so.
+        errorEl.textContent = /card details/i.test(err.message || '')
+          ? 'We could not verify those card details. Please check the number, date and code, then try again.'
+          : "We couldn't confirm your payment just now. That's on our side, not yours. Please check your email for a receipt before trying again, and contact us if you're unsure.";
         errorEl.style.display = 'block';
       } finally {
         btn.disabled = false;
