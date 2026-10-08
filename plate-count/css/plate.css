@@ -45,10 +45,19 @@ button:disabled{cursor:default;opacity:.45}
   border-bottom:1px solid var(--border)}
 .tb-row{display:flex;align-items:center;gap:10px}
 .back{font-size:13px;color:var(--text-2);text-decoration:none;padding:6px 8px 6px 0;min-height:36px;display:inline-flex;align-items:center}
-.brand{font-family:var(--f-display);font-size:22px;font-weight:600;letter-spacing:-.01em;flex:1;line-height:1.1}
+.brand{font-family:var(--f-display);font-size:22px;font-weight:600;letter-spacing:-.01em;flex:1;line-height:1.1;min-width:0}
 .brand small{display:block;font:500 11px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);margin-top:1px}
 .syncdot{width:8px;height:8px;border-radius:50%;background:var(--border-strong);flex:none}
-.syncdot.ok{background:var(--good)} .syncdot.busy{background:var(--gold)} .syncdot.off{background:var(--warn)}
+.syncdot.ok{background:var(--good)} .syncdot.busy{background:var(--gold)} .syncdot.off{background:var(--warn)} .syncdot.bad{background:var(--warn)}
+/* Save status pill: words, not just a dot. Colour never carries the meaning alone. */
+.syncpill{--sp-warn:#94472F;display:inline-flex;align-items:center;gap:7px;min-height:36px;padding:0 12px;border-radius:999px;flex:none;background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);font:600 12.5px var(--f-body);white-space:nowrap}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .syncpill{--sp-warn:var(--warn)}}
+.syncpill.ok{background:var(--accent-bg);color:var(--accent-deep);border-color:transparent}
+.syncpill.off{background:var(--warn-bg);color:var(--sp-warn);border-color:transparent}
+.syncpill.bad{background:var(--warn-bg);color:var(--sp-warn);border:1.5px solid var(--sp-warn)}
+#synctext:empty{display:none}
+.syncpill:has(#synctext:empty){padding:0 8px;min-height:24px;border-color:transparent;background:transparent}
+@media (max-width:360px){.tb-row{gap:6px}.brand{font-size:19px}.brand small{letter-spacing:.04em;font-size:10.5px}.syncpill{padding:0 9px;gap:5px;font-size:12px}.back{padding-right:2px}}
 .week{display:grid;grid-template-columns:28px repeat(7,1fr) 28px;gap:4px;margin-top:8px;align-items:center}
 .wk-nav{height:44px;color:var(--text-3);font-size:18px;border-radius:8px}
 .wk-day{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;height:56px;border-radius:12px;
