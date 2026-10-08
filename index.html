@@ -47,7 +47,7 @@
         <p class="reassure-line">Cancel anytime. Or <a href="consultation.html" style="color:inherit; text-decoration:underline;">book a free 15-minute call</a> if you would rather talk first.</p>
         <div class="mark-line">
           <span class="ten-mark ten-mark-gold" style="font-size:24px;">10</span>
-          <span class="mark-label">Every plan touches all ten dimensions of a real life: body, mind, and everything between.</span>
+          <span class="mark-label">Every plan is built around three needs and six ideas: body, mind, and the people around you.</span>
         </div>
       </div>
     </section>
@@ -164,30 +164,31 @@
         <div class="quiz-box" id="quiz-box">
           <div class="quiz-q" data-q="1">
             <p class="label">1. What's your main focus right now?</p>
-            <div class="quiz-choices">
-              <span class="quiz-choice" data-val="physical">Physical health</span>
-              <span class="quiz-choice" data-val="fitness">Improving fitness</span>
-              <span class="quiz-choice" data-val="weight">Losing weight</span>
-              <span class="quiz-choice" data-val="mental">Mental health</span>
+            <div class="quiz-choices" role="group">
+              <button type="button" class="quiz-choice" data-val="physical" aria-pressed="false">Physical health</button>
+              <button type="button" class="quiz-choice" data-val="fitness" aria-pressed="false">Improving fitness</button>
+              <button type="button" class="quiz-choice" data-val="weight" aria-pressed="false">Losing weight</button>
+              <button type="button" class="quiz-choice" data-val="mental" aria-pressed="false">Mental health</button>
             </div>
           </div>
           <div class="quiz-q" data-q="2">
             <p class="label">2. How much support do you want?</p>
-            <div class="quiz-choices">
-              <span class="quiz-choice" data-val="self">Just the tools, self-guided</span>
-              <span class="quiz-choice" data-val="regular">Regular coaching check-ins</span>
-              <span class="quiz-choice" data-val="weekly">Hands-on, every week</span>
+            <div class="quiz-choices" role="group">
+              <button type="button" class="quiz-choice" data-val="self" aria-pressed="false">Just the tools, self-guided</button>
+              <button type="button" class="quiz-choice" data-val="regular" aria-pressed="false">Regular coaching check-ins</button>
+              <button type="button" class="quiz-choice" data-val="weekly" aria-pressed="false">Hands-on, every week</button>
             </div>
           </div>
           <div class="quiz-q" data-q="3">
             <p class="label">3. Virtual or in-person?</p>
-            <div class="quiz-choices">
-              <span class="quiz-choice" data-val="virtual">Virtual works great</span>
-              <span class="quiz-choice" data-val="inperson">I'd like in-person</span>
+            <div class="quiz-choices" role="group">
+              <button type="button" class="quiz-choice" data-val="virtual" aria-pressed="false">Virtual works great</button>
+              <button type="button" class="quiz-choice" data-val="inperson" aria-pressed="false">I'd like in-person</button>
             </div>
           </div>
 
           <div class="quiz-result" id="quiz-result">
+            <p id="quiz-focus" style="font-size:15px; font-weight:600; margin-bottom:10px;"></p>
             <p class="small" style="margin-bottom:6px;">Based on your answers, you'd likely thrive in:</p>
             <p id="quiz-tier-name" style="font-size:20px; font-weight:600; margin-bottom:6px; color:var(--accent);"></p>
             <p id="quiz-clarifier" class="small" style="display:none; margin-bottom:14px;"></p>
@@ -288,23 +289,23 @@
       <div class="wrap">
         <h2 class="center" style="margin-bottom:1.25rem;">Questions people ask before starting</h2>
         <div class="faq-item">
-          <div class="faq-q">Do I need any equipment? <span class="faq-arrow">&#9660;</span></div>
+          <button type="button" class="faq-q" aria-expanded="false">Do I need any equipment? <span class="faq-arrow" aria-hidden="true">&#9660;</span></button>
           <p class="faq-a">Not necessarily. Programs can be built around resistance bands, dumbbells, or just your bodyweight, whatever you have access to.</p>
         </div>
         <div class="faq-item">
-          <div class="faq-q">What if I'm not "in shape" yet? <span class="faq-arrow">&#9660;</span></div>
+          <button type="button" class="faq-q" aria-expanded="false">What if I'm not "in shape" yet? <span class="faq-arrow" aria-hidden="true">&#9660;</span></button>
           <p class="faq-a">That's exactly who this is for. Every plan starts from where you actually are, not where you think you should be.</p>
         </div>
         <div class="faq-item">
-          <div class="faq-q">Can I change or cancel my plan later? <span class="faq-arrow">&#9660;</span></div>
+          <button type="button" class="faq-q" aria-expanded="false">Can I change or cancel my plan later? <span class="faq-arrow" aria-hidden="true">&#9660;</span></button>
           <p class="faq-a">Yes. Monthly plans can be adjusted as your needs change, so you're never locked into something that no longer fits.</p>
         </div>
         <div class="faq-item">
-          <div class="faq-q">Is this therapy? <span class="faq-arrow">&#9660;</span></div>
+          <button type="button" class="faq-q" aria-expanded="false">Is this therapy? <span class="faq-arrow" aria-hidden="true">&#9660;</span></button>
           <p class="faq-a">No, and I want to be precise about that. Tenfold is skills coaching and physical training, not therapy and not medical care. The skills I teach come from motivational interviewing and DBT distress tolerance, and I hold an M.S.W. and an M.B.A. from Boston College with ten years of practice as a clinical social worker behind them. I am not currently licensed and I do not practise clinically here. If something you bring me belongs with a licensed provider, I will tell you so and help you find one.</p>
         </div>
         <div class="faq-item">
-          <div class="faq-q">What do I actually get for $20 a month? <span class="faq-arrow">&#9660;</span></div>
+          <button type="button" class="faq-q" aria-expanded="false">What do I actually get for $20 a month? <span class="faq-arrow" aria-hidden="true">&#9660;</span></button>
           <p class="faq-a">Portal access, the full Maximum Strength and Size program day by day with every lift written at three tiers, the fridge-to-recipe and restaurant macro tools, and a session log that keeps your own check-ins and check-outs. No coaching calls at this level. Cancel anytime, with no contract and no cancellation fee.</p>
         </div>
       </div>
@@ -336,7 +337,10 @@
 
     // FAQ accordion
     document.querySelectorAll('.faq-q').forEach(q => {
-      q.addEventListener('click', () => q.parentElement.classList.toggle('open'));
+      q.addEventListener('click', () => {
+        const open = q.parentElement.classList.toggle('open');
+        q.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
     });
 
     // Quiz logic
@@ -347,15 +351,24 @@
         choice.addEventListener('click', () => {
           qBlock.querySelectorAll('.quiz-choice').forEach(c => c.classList.remove('selected'));
           choice.classList.add('selected');
+          qBlock.querySelectorAll('.quiz-choice').forEach(c => c.setAttribute('aria-pressed', c === choice ? 'true' : 'false'));
           quizAnswers[qNum] = choice.dataset.val;
           maybeShowQuizResult();
         });
       });
     });
 
+    const FOCUS_INFO = {
+      physical: { line: 'You told us your main focus is physical health, so your plan starts with how your body moves and feels.' },
+      fitness:  { line: 'You told us your main focus is improving your fitness, so your plan starts with building strength and stamina you can feel.' },
+      weight:   { line: 'You told us your main focus is losing weight, so your plan starts with sustainable habits, not restriction.' },
+      mental:   { line: 'You told us your main focus is mental health, so your plan leans on the skills-coaching side of the method, with movement alongside it. Tenfold is skills coaching, not therapy.' },
+    };
+
     function maybeShowQuizResult() {
       if (!quizAnswers['1'] || !quizAnswers['2'] || !quizAnswers['3']) return;
 
+      const focus = quizAnswers['1'];
       const support = quizAnswers['2'];
       const setting = quizAnswers['3'];
       let tierLabel, ctaHref, ctaText, clarifier = '';
@@ -375,6 +388,8 @@
         clarifier = "That is one in-person session a week for twelve weeks, about $71 a session. Twice and three times a week are also priced on the pricing page. If you would rather talk it through first, book a free call.";
       }
 
+      document.getElementById('quiz-focus').textContent = FOCUS_INFO[focus].line;
+      ctaHref += (ctaHref.indexOf('?') === -1 ? '?' : '&') + 'focus=' + encodeURIComponent(focus);
       document.getElementById('quiz-tier-name').textContent = tierLabel;
       document.getElementById('quiz-cta').href = ctaHref;
       document.getElementById('quiz-cta').textContent = ctaText;
