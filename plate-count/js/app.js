@@ -111,6 +111,7 @@ function mergeProfile(p,force){
   if(typeof p.plyoLevel==="number") d.plyoLevel=p.plyoLevel;
   if(typeof p.onboarded==="boolean") d.onboarded=p.onboarded;
   if(p.goal==="lose"||p.goal==="maintain"||p.goal==="build") d.goal=p.goal;
+  ["goalWeight","bf","goalBfLo","goalBfHi"].forEach(function(f){ d[f]=(typeof p[f]==="number"&&isFinite(p[f]))?p[f]:null; });
   d.updatedAt=+p.updatedAt||0;
   unionCustom(p.custom);
 }
@@ -456,7 +457,8 @@ TABS.forEach(function(id){
 
 /* ================= FUEL ================= */
 function statusMsg(t,burn){
-  var target=S.profile.targets.k, net=t.k-burn.kcal, diff=net-target, pLeft=S.profile.targets.p-t.p;
+  /* Targets already include your training, so burn is never subtracted from the food budget. */
+  var target=S.profile.targets.k, net=t.k, diff=net-target, pLeft=S.profile.targets.p-t.p;
   var block=S.profile.goal==="lose"?"cut":((program().phase&&program().phase.block)||"build");
   var dt=diff===0?"On target":(diff>0?"+"+r0(diff)+" kcal over":"−"+r0(-diff)+" kcal under");
   if(t.k===0) return {cls:"mid",msg:"Nothing logged yet. Today's target is "+target+" kcal and "+S.profile.targets.p+" g protein."};
@@ -472,11 +474,11 @@ function statusMsg(t,burn){
 }
 function renderFuel(){
   var k=S.date, d=cur(), T=S.profile.targets, t=totals(k), burn=estBurn(k);
-  var net=t.k-burn.kcal, left=T.k-net, pct=T.k>0?Math.max(0,net)/T.k:0, C=2*Math.PI*56;
+  var net=t.k, left=T.k-net, pct=T.k>0?Math.max(0,net)/T.k:0, C=2*Math.PI*56;
   var st=statusMsg(t,burn), sub="";
   if(burn.kcal>1){
     var bp=[]; if(burn.cardioMin) bp.push(r0(burn.cardioMin)+" min cardio"); if(burn.sets) bp.push(burn.sets+" set"+(burn.sets===1?"":"s"));
-    sub="<span class='sub'>"+r0(t.k)+" eaten − ~"+r0(burn.kcal)+" burned ("+bp.join(" + ")+") = "+r0(net)+" net</span>";
+    sub="<span class='sub'>"+r0(t.k)+" eaten. Today's training (~"+r0(burn.kcal)+" kcal: "+bp.join(" + ")+") is already built into your target.</span>";
   }
   function mac(cls,label,v,tg){
     var p=tg>0?Math.min(100,v/tg*100):0;
@@ -1004,60 +1006,299 @@ function barChart(keys,vals,target,color){
   s+="<text x='"+L+"' y='"+(H-5)+"' font-size='9' fill='var(--text-3)'>"+keys[0].slice(5).replace("-","/")+"</text><text x='"+(W-R)+"' y='"+(H-5)+"' text-anchor='end' font-size='9' fill='var(--text-3)'>"+keys[keys.length-1].slice(5).replace("-","/")+"</text>";
   return s+"</svg>";
 }
-function weightChart(keys,wts){
-  var pts=[]; keys.forEach(function(k,i){ if(wts[i]!=null) pts.push({i:i,v:wts[i]}); });
-  if(pts.length<2) return "<p class='muted small' style='text-align:center;padding:20px 0;margin:0'>Log two weigh-ins and the trend line appears here.<br>Same time each morning works best.</p>";
-  var W=480,H=150,L=34,R=6,T=14,B=20,iw=W-L-R,ih=H-T-B, vs=pts.map(function(p){ return p.v; }), lo=Math.min.apply(null,vs), hi=Math.max.apply(null,vs), pv=Math.max((hi-lo)*.35,1.2); lo-=pv; hi+=pv;
+/* ---- progress helpers ---- */
+function blockNow(){ return S.profile.goal==="lose"?"cut":(S.profile.goal==="maintain"?"maintain":((program().phase&&program().phase.block)||"build")); }
+function mean(a){ var v=a.filter(function(x){ return x!=null; }); return v.length?v.reduce(function(s,x){ return s+x; },0)/v.length:null; }
+function fmtD(k){ return prettyDate(k,{month:"short",day:"numeric"}); }
+function sgn(n){ var v=r1(n); return (v>0?"+":v<0?"−":"")+Math.abs(v); }
+function rollAvg(wts){
+  return wts.map(function(w,i){ var win=[]; for(var j=Math.max(0,i-6);j<=i;j++) if(wts[j]!=null) win.push(wts[j]); return win.length?mean(win):null; });
+}
+/* Percent of bodyweight per week that counts as "on pace" for each phase. */
+function paceBand(){ var b=blockNow(); return b==="cut"?{lo:-1.0,hi:-0.3}:b==="maintain"?{lo:-0.15,hi:0.15}:{lo:0.15,hi:0.35}; }
+function bandCls(pct){
+  var b=blockNow(), r=paceBand();
+  if(pct>=r.lo&&pct<=r.hi) return "ok";
+  if(b==="cut") return pct<r.lo||pct>0.1?"warn":"mid";
+  if(b==="build") return pct>r.hi||pct<-0.05?"warn":"mid";
+  return "mid";
+}
+function paceInfo(){
+  var keys=lastKeys(28), pts=[]; keys.forEach(function(k,i){ var d=S.days[k]; if(d&&d.weight!=null) pts.push({x:i,y:d.weight}); });
+  var bl=baselines();
+  if(bl.length>=2){ var l2=bl.slice(-2), gap=daysBetween(l2[0].start,l2[1].start)/7; if(gap>=2) return {rate:(l2[1].avg-l2[0].avg)/gap,src:"cycle"}; }
+  if(pts.length<4||pts[pts.length-1].x-pts[0].x<10) return null;
+  var mx=mean(pts.map(function(p){ return p.x; })), my=mean(pts.map(function(p){ return p.y; })), nu=0, de=0;
+  pts.forEach(function(p){ nu+=(p.x-mx)*(p.y-my); de+=(p.x-mx)*(p.x-mx); });
+  return {rate:de?nu/de*7:0,src:"recent"};
+}
+function paceVerdict(p,cw){
+  var T=S.profile.targets, b=blockNow(), r=paceBand();
+  if(!p||!cw) return {cls:"mid",head:"Pace: not enough weigh-ins yet",msg:"Log 4 or more weigh-ins spread over about 10 days and this will tell you whether your weight is moving at the right speed."};
+  var pct=p.rate/cw*100, cls=bandCls(pct), rate=sgn(p.rate)+" lb a week", head, msg;
+  var a=r1(Math.abs(r.lo)/100*cw), z=r1(Math.abs(r.hi)/100*cw);
+  if(b==="build"){
+    if(cls==="ok"){ head="On pace: "+rate; msg="That sits inside the lean-gain range of about "+a+" to "+z+" lb a week, so most of the gain can be muscle. Keep eating to your "+T.k+" kcal and keep the lifts going up."; }
+    else if(pct>r.hi){ head="Gaining fast: "+rate; msg="A lean gain is closer to "+a+" to "+z+" lb a week. Faster than that is mostly fat. Hold to your "+T.k+" kcal, and if this is still true in two weeks, trim about 100 kcal."; }
+    else if(pct>=-0.05){ head="Slow: "+rate; msg="Slower than the planned build. Fine for a few weeks. If it stays flat, add about 100 kcal."; }
+    else { head="Dropping: "+rate; msg="Your weight is falling in a building phase. Check you are actually reaching "+T.k+" kcal on most days."; }
+  } else if(b==="cut"){
+    if(cls==="ok"){ head="On pace: "+rate; msg="Inside the "+z+" to "+a+" lb a week range that protects muscle. Stay the course."; }
+    else if(pct<r.lo){ head="Dropping fast: "+rate; msg="Faster than "+a+" lb a week risks muscle. Eat a little more and keep protein high."; }
+    else if(pct<=0.1){ head="Barely moving: "+rate; msg="A cut should lose about "+z+" to "+a+" lb a week. Give it two weeks of steady logging before changing anything."; }
+    else { head="Going up: "+rate; msg="Weight is rising during a cut. Check portions and weekend eating."; }
+  } else {
+    head=(cls==="ok"?"Steady: ":"Moving: ")+rate; msg=cls==="ok"?"Right where maintenance should sit.":"Drifting from maintenance. Adjust food by about 100 kcal in the opposite direction if it continues.";
+  }
+  var ci=cycleInfo(S.date);
+  if(!ci.none&&p.src==="recent"){ var ph=phaseFor(ci.day,ci.avg,ci.mens); if(ph.k==="lut") msg+=" You are in the luteal phase, when water can add 2 to 5 lb, so judge this again after your period starts."; }
+  if(p.src==="cycle") msg+=" Measured between the same phase of your last two cycles, so cycle water is already filtered out.";
+  return {cls:cls,head:head,msg:msg};
+}
+
+/* ---- weight chart: 12 weeks, 7-day average, goal line, cycle bands ---- */
+function weightChart(keys,wts,goal){
+  var have=wts.filter(function(v){ return v!=null; });
+  if(have.length<2) return "<p class='muted small' style='text-align:center;padding:20px 0;margin:0'>Log two weigh-ins and your trend line appears here.<br>Same time each morning works best.</p>";
+  var roll=rollAvg(wts), W=480,H=200,L=38,R=10,T=16,B=26,iw=W-L-R,ih=H-T-B;
+  var lo=Math.min.apply(null,have), hi=Math.max.apply(null,have); if(goal){ lo=Math.min(lo,goal); hi=Math.max(hi,goal); }
+  var pad=Math.max((hi-lo)*.12,.8); lo-=pad; hi+=pad;
   function X(i){ return L+(i/(keys.length-1))*iw; } function Y(v){ return T+ih-((v-lo)/(hi-lo))*ih; }
-  var s="<svg viewBox='0 0 "+W+" "+H+"' role='img' aria-label='Bodyweight with 7 day average'>", step=iw/(keys.length-1);
+  var step=iw/(keys.length-1), s="<svg viewBox='0 0 "+W+" "+H+"' role='img' aria-label='Bodyweight over 12 weeks with 7 day average'>";
   cycleBands(keys).forEach(function(b){ var x=Math.max(L,X(b.start)-step/2), w=Math.min((b.end-b.start+1)*step,W-R-x); s+="<rect x='"+x.toFixed(1)+"' y='"+T+"' width='"+w.toFixed(1)+"' height='"+ih+"' fill='var(--m-fat)' opacity='"+(b.k==="mens"?.2:.08)+"'/>"; });
-  [lo,(lo+hi)/2,hi].forEach(function(v){ s+="<line x1='"+L+"' x2='"+(W-R)+"' y1='"+Y(v).toFixed(1)+"' y2='"+Y(v).toFixed(1)+"' stroke='var(--border)'/><text x='"+(L-6)+"' y='"+(Y(v)+3.5).toFixed(1)+"' text-anchor='end' font-size='9' fill='var(--text-3)'>"+r1(v)+"</text>"; });
-  var roll=[]; keys.forEach(function(k,i){ var win=[]; for(var j=Math.max(0,i-6);j<=i;j++) if(wts[j]!=null) win.push(wts[j]); if(win.length) roll.push({i:i,v:win.reduce(function(a,b){ return a+b; },0)/win.length}); });
-  if(roll.length>1) s+="<path d='"+roll.map(function(p,i){ return (i?"L":"M")+X(p.i).toFixed(1)+" "+Y(p.v).toFixed(1); }).join(" ")+"' fill='none' stroke='var(--accent)' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/>";
-  pts.forEach(function(p){ s+="<circle cx='"+X(p.i).toFixed(1)+"' cy='"+Y(p.v).toFixed(1)+"' r='2.8' fill='var(--text-3)'/>"; });
-  var last=roll[roll.length-1]; if(last) s+="<circle cx='"+X(last.i).toFixed(1)+"' cy='"+Y(last.v).toFixed(1)+"' r='4.6' fill='var(--accent)' stroke='var(--surface)' stroke-width='2'/><text x='"+(X(last.i)-8).toFixed(1)+"' y='"+(Y(last.v)-12).toFixed(1)+"' text-anchor='end' font-size='11' font-weight='600' fill='var(--accent)'>"+r1(last.v)+"</text>";
+  [0,1,2,3].forEach(function(n){ var v=lo+(hi-lo)*n/3; s+="<line x1='"+L+"' x2='"+(W-R)+"' y1='"+Y(v).toFixed(1)+"' y2='"+Y(v).toFixed(1)+"' stroke='var(--border)'/><text x='"+(L-6)+"' y='"+(Y(v)+3.5).toFixed(1)+"' text-anchor='end' font-size='9' fill='var(--text-3)'>"+r1(v)+"</text>"; });
+  if(goal) s+="<line x1='"+L+"' x2='"+(W-R)+"' y1='"+Y(goal).toFixed(1)+"' y2='"+Y(goal).toFixed(1)+"' stroke='var(--accent-deep)' stroke-width='1.5' stroke-dasharray='5 3'/><text x='"+(W-R)+"' y='"+(Y(goal)-5).toFixed(1)+"' text-anchor='end' font-size='9.5' font-weight='600' fill='var(--accent-deep)'>GOAL "+r1(goal)+"</text>";
+  var rp=[]; roll.forEach(function(v,i){ if(v!=null) rp.push({i:i,v:v}); });
+  if(rp.length>1){
+    var line=rp.map(function(p,i){ return (i?"L":"M")+X(p.i).toFixed(1)+" "+Y(p.v).toFixed(1); }).join(" ");
+    s+="<path d='"+line+" L"+X(rp[rp.length-1].i).toFixed(1)+" "+(T+ih)+" L"+X(rp[0].i).toFixed(1)+" "+(T+ih)+" Z' fill='var(--accent)' opacity='.12'/>";
+    s+="<path d='"+line+"' fill='none' stroke='var(--accent)' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'/>";
+  }
+  wts.forEach(function(v,i){ if(v!=null) s+="<circle cx='"+X(i).toFixed(1)+"' cy='"+Y(v).toFixed(1)+"' r='2.4' fill='var(--text-3)' opacity='.7'/>"; });
+  var last=rp[rp.length-1];
+  if(last) s+="<circle cx='"+X(last.i).toFixed(1)+"' cy='"+Y(last.v).toFixed(1)+"' r='5' fill='var(--accent)' stroke='var(--surface)' stroke-width='2'/><text x='"+(X(last.i)-9).toFixed(1)+"' y='"+(Y(last.v)-11).toFixed(1)+"' text-anchor='end' font-size='12' font-weight='700' fill='var(--accent-deep)'>"+r1(last.v)+"</text>";
+  var mid=Math.floor(keys.length/2);
+  s+="<text x='"+L+"' y='"+(H-6)+"' font-size='9' fill='var(--text-3)'>"+fmtD(keys[0])+"</text><text x='"+X(mid).toFixed(1)+"' y='"+(H-6)+"' text-anchor='middle' font-size='9' fill='var(--text-3)'>"+fmtD(keys[mid])+"</text><text x='"+(W-R)+"' y='"+(H-6)+"' text-anchor='end' font-size='9' fill='var(--text-3)'>"+fmtD(keys[keys.length-1])+"</text>";
   return s+"</svg>";
 }
-function renderTrend(){
-  var keys=lastKeys(21), T=S.profile.targets;
-  var kc=keys.map(function(k){ return S.days[k]?totals(k).k:null; }), pr=keys.map(function(k){ return S.days[k]?totals(k).p:null; });
-  var wk=lastKeys(63), wt=wk.map(function(k){ return S.days[k]&&day(k).weight!=null?day(k).weight:null; });
-  var lk=kc.filter(function(v){ return v>0; }), lp=pr.filter(function(v){ return v>0; }), wl=wt.filter(function(v){ return v!=null; });
-  var avgK=lk.length?lk.reduce(function(a,b){ return a+b; },0)/lk.length:0, avgP=lp.length?lp.reduce(function(a,b){ return a+b; },0)/lp.length:0;
-  var trend="—", tu="need 4 weigh-ins", bl=baselines();
-  if(bl.length>=2){ var l2=bl.slice(-2), gap=daysBetween(l2[0].start,l2[1].start)/7, per=(l2[1].avg-l2[0].avg)/(gap||4); trend=(per>=0?"+":"")+r1(per); tu="lb / wk, cycle-matched"; }
-  else if(wl.length>=4){ var half=Math.floor(wl.length/2), a=wl.slice(0,half).reduce(function(x,y){ return x+y; },0)/half, b=wl.slice(half).reduce(function(x,y){ return x+y; },0)/(wl.length-half), pw=(b-a)/((wk.length/2/7)||1); trend=(pw>=0?"+":"")+r1(pw); tu="lb / week"; }
-  function stat(l,v,u){ return "<div class='stat'><div class='eyebrow'>"+l+"</div><div class='v'>"+v+"</div><div class='u'>"+u+"</div></div>"; }
-  var h="<div class='stats'>"+stat("Avg kcal",lk.length?r0(avgK):"—",lk.length?"of "+T.k:"no days logged")+stat("Avg protein",lp.length?r0(avgP):"—",lp.length?"of "+T.p+" g":"no days logged")+stat("Weight",trend,tu)+"</div>";
-  var d=cur();
-  h+="<div class='wtform'><input class='field' id='wtIn' type='number' step='0.1' inputmode='decimal' placeholder='Weigh-in for this day (lb)' value='"+(d.weight!=null?d.weight:"")+"' aria-label='Weigh-in in pounds'><button class='btn' id='wtSave'>Log</button></div>"+
-    "<button class='toggle' id='periodBtn' aria-pressed='"+!!d.period+"'><span class='dot'></span><span>"+(d.period?"Period logged on this day":"Period on this day")+"</span></button>";
-  var ci=cycleInfo(S.date);
-  h+="<div class='card'><h3 class='h2' style='font-size:18px'>Cycle</h3>";
-  if(ci.none) h+="<p class='muted small' style='margin:6px 0 0'>Mark the days you bleed. After two logged periods this shows your cycle day and separates real weight change from cycle water.</p>";
-  else {
-    var ph=phaseFor(ci.day,ci.avg,ci.mens), due=ci.avg?ci.avg-ci.day:null, rw=refWindow(ci.avg,ci.mens), note;
-    if(ph.k==="lut") note="Luteal phase. Progesterone drives fluid retention, and 2 to 5 lb on the scale is ordinary — not fat. Hold your target; read your trend from the follicular window.";
-    else if(ph.k==="mens") note="Retained water usually clears over the next few days, so weigh-ins from here read lower without anything having changed.";
-    else if(ph.k==="foll") note=(ci.day>=rw.lo&&ci.day<=rw.hi)?"Follicular phase, inside your reference window (day "+rw.lo+"–"+rw.hi+"). These weigh-ins are the ones worth comparing month to month.":"Follicular phase. Your cleanest comparison window is day "+rw.lo+"–"+rw.hi+".";
-    else note="Around ovulation. A small water shift is common.";
-    h+="<div class='cyc3'><div><div class='eyebrow'>Cycle day</div><div class='v'>"+ci.day+"</div></div><div><div class='eyebrow'>Avg length</div><div class='v'>"+(ci.avg||"—")+"</div></div><div><div class='eyebrow'>Next in</div><div class='v'>"+(due!=null?Math.max(0,due):"—")+"</div></div></div><span class='pill'>"+ph.n+"</span><p class='muted small' style='margin:10px 0 0'>"+esc(note)+"</p>";
+function weekRows(n){
+  var mon=mondayOf(S.date), rows=[];
+  for(var i=n-1;i>=0;i--){
+    var st=shiftKey(mon,-7*i), v=[];
+    for(var d=0;d<7;d++){ var k=shiftKey(st,d); if(k>S.date) break; var dd=S.days[k]; if(dd&&dd.weight!=null) v.push(dd.weight); }
+    rows.push({start:st,avg:mean(v),n:v.length});
   }
-  h+="</div><div class='card chartcard'><h3 class='h2' style='font-size:18px'>Bodyweight</h3><p class='cap'>Dots are weigh-ins, the line is a 7-day average. Shaded bands are your period and the luteal phase before it.</p>"+weightChart(wk,wt)+"</div>";
-  if(bl.length){ h+="<div class='card'><h3 class='h2' style='font-size:18px'>Cycle-matched baseline</h3><p class='muted small'>Average weight in the same phase of each cycle — the fair way to see real change.</p><table style='width:100%;border-collapse:collapse;font-size:14px'><tbody>"+bl.map(function(r,i){ var dl=i?r.avg-bl[i-1].avg:null; return "<tr><td style='padding:8px 0;border-top:1px solid var(--border)'>"+esc(prettyDate(r.start,{month:"short",day:"numeric"}))+"</td><td style='text-align:right;border-top:1px solid var(--border)'>"+r1(r.avg)+" lb</td><td style='text-align:right;border-top:1px solid var(--border);color:"+(dl==null?"inherit":(dl>=0?"var(--good)":"var(--warn)"))+"'>"+(dl==null?"—":(dl>=0?"+":"")+r1(dl))+"</td></tr>"; }).join("")+"</tbody></table></div>"; }
-  h+="<div class='card chartcard'><h3 class='h2' style='font-size:18px'>Calories vs target</h3><p class='cap'>Faded bars fell more than 10% short of target.</p>"+barChart(keys,kc,T.k,"var(--m-kcal)")+"</div>"+
-     "<div class='card chartcard'><h3 class='h2' style='font-size:18px'>Protein vs target</h3><p class='cap'>Hitting protein is the most protective habit while building. Over is fine.</p>"+barChart(keys,pr,T.p,"var(--m-pro)")+"</div>"+
-     "<div class='card'><h3 class='h2' style='font-size:18px'>Daily targets</h3><div class='tgt4'><div><b>"+T.k+"</b><span>kcal</span></div><div><b>"+T.p+"</b><span>protein</span></div><div><b>"+T.c+"</b><span>carbs</span></div><div><b>"+T.f+"</b><span>fat</span></div></div><p class='muted small' style='margin:10px 0 0'>"+(S.profile.goal?"Set from your weight and goal. Update your weight any time and recalculate.":"Set by your phase. Change them from the phase button on Train.")+"</p>"+(S.profile.goal?"<button class='btn ghost sm' id='recalcT' style='margin-top:10px'>Update weight &amp; targets</button>":"")+"</div>"+
+  var prev=null; rows.forEach(function(r){ r.delta=(r.avg!=null&&prev!=null)?r.avg-prev:null; if(r.avg!=null) prev=r.avg; });
+  return rows;
+}
+function weekList(cw){
+  var rows=weekRows(8), avs=rows.map(function(r){ return r.avg; }).filter(function(v){ return v!=null; });
+  if(avs.length<2) return "";
+  var lo=Math.min.apply(null,avs), hi=Math.max.apply(null,avs), span=Math.max(hi-lo,.5);
+  return rows.slice().reverse().map(function(r,i){
+    var w=r.avg==null?0:22+((r.avg-lo)/span)*70, cls=r.delta==null?"":bandCls(r.delta/(cw||r.avg)*100);
+    return "<div class='wkrow'><span class='wl'>"+(i===0?"This week":fmtD(r.start))+"</span><span class='wb'><i class='"+cls+"' style='width:"+w.toFixed(0)+"%'></i></span><span class='wv'>"+(r.avg==null?"—":r1(r.avg))+"</span><span class='wd "+cls+"'>"+(r.delta==null?"":sgn(r.delta))+"</span></div>";
+  }).join("");
+}
+
+/* ---- cycle: history, prediction, weight by phase ---- */
+function cycleList(){
+  var st=periodStarts(); return st.map(function(s,i){ var nx=st[i+1]; return {start:s,len:nx?daysBetween(s,nx):null,bleed:bleedLen(s),cur:!nx}; });
+}
+function cycleBar(ci){
+  var avg=ci.avg||28, L=Math.max(avg,ci.day), W=480, bw=W/L, s="<svg viewBox='0 0 "+W+" 50' role='img' aria-label='Where you are in your cycle'>";
+  for(var d=1;d<=L;d++){
+    var ph=phaseFor(d,avg,ci.mens), f=ph.k==="mens"?"var(--m-fat)":ph.k==="foll"?"var(--accent)":ph.k==="ovul"?"var(--m-carb)":"var(--m-fat)", o=ph.k==="mens"?.85:ph.k==="foll"?.35:ph.k==="ovul"?.95:.28;
+    s+="<rect x='"+((d-1)*bw+.5).toFixed(1)+"' y='20' width='"+(bw-1).toFixed(1)+"' height='16' rx='2' fill='"+f+"' opacity='"+o+"'/>";
+  }
+  var mx=(ci.day-.5)*bw, ax=Math.min(Math.max(mx,28),W-28);
+  s+="<path d='M"+(mx-5).toFixed(1)+" 10 L"+(mx+5).toFixed(1)+" 10 L"+mx.toFixed(1)+" 18 Z' fill='var(--text)'/><text x='"+ax.toFixed(1)+"' y='7' text-anchor='middle' font-size='10' font-weight='700' fill='var(--text)'>Day "+ci.day+"</text>";
+  s+="<text x='0' y='48' font-size='9' fill='var(--text-3)'>Day 1</text><text x='"+W+"' y='48' text-anchor='end' font-size='9' fill='var(--text-3)'>Day "+L+"</text>";
+  return s+"</svg>";
+}
+function cycleWeight(){
+  var ci=cycleInfo(S.date); if(ci.none) return null;
+  var L=ci.avg||28, groups={mens:[],foll:[],ovul:[],lut:[]}, curves=[];
+  ci.starts.forEach(function(s,idx){
+    var nx=ci.starts[idx+1], mens=bleedLen(s), span=nx?daysBetween(s,nx):daysBetween(s,S.date)+1;
+    if(span<1||(nx&&(span<18||span>45))) return;
+    var pts=[]; for(var d=1;d<=Math.min(span,L+10);d++){ var dd=S.days[shiftKey(s,d-1)]; if(dd&&dd.weight!=null) pts.push({d:d,w:dd.weight}); }
+    if(pts.length<3) return;
+    var rw=refWindow(L,mens), ref=pts.filter(function(p){ return p.d>=rw.lo&&p.d<=rw.hi; }).map(function(p){ return p.w; });
+    var base=mean(ref.length?ref:pts.map(function(p){ return p.w; })), cp=[];
+    pts.forEach(function(p){ groups[phaseFor(p.d,L,mens).k].push(p.w-base); cp.push({d:p.d,dev:p.w-base}); });
+    curves.push({start:s,pts:cp,cur:!nx});
+  });
+  if(!curves.length) return null;
+  return {L:L,mens:ci.mens,groups:groups,curves:curves.slice(-3)};
+}
+function cycleWeightChart(cw){
+  var W=480,H=170,L=34,R=8,T=12,B=22,iw=W-L-R,ih=H-T-B, maxD=cw.L+3, m=1;
+  cw.curves.forEach(function(c){ c.pts.forEach(function(p){ m=Math.max(m,Math.abs(p.dev)); }); }); m=Math.ceil(m*1.15);
+  function X(d){ return L+((d-1)/(maxD-1))*iw; } function Y(v){ return T+ih/2-(v/m)*(ih/2); }
+  var s="<svg viewBox='0 0 "+W+" "+H+"' role='img' aria-label='Weight change by cycle day'>", bw=iw/(maxD-1), runs=[], run=null;
+  for(var d=1;d<=maxD;d++){
+    var k=phaseFor(d,cw.L,cw.mens).k; if(k!=="lut"&&k!=="mens"){ run=null; continue; }
+    if(run&&run.k===k) run.e=d; else { run={k:k,s:d,e:d}; runs.push(run); }
+  }
+  runs.forEach(function(r){ var x=Math.max(L,X(r.s)-bw/2); s+="<rect x='"+x.toFixed(1)+"' y='"+T+"' width='"+Math.min((r.e-r.s+1)*bw,W-R-x).toFixed(1)+"' height='"+ih+"' fill='var(--m-fat)' opacity='"+(r.k==="mens"?.2:.08)+"'/>"; });
+  [-m,0,m].forEach(function(v){ s+="<line x1='"+L+"' x2='"+(W-R)+"' y1='"+Y(v).toFixed(1)+"' y2='"+Y(v).toFixed(1)+"' stroke='"+(v===0?"var(--border-strong)":"var(--border)")+"' "+(v===0?"stroke-dasharray='4 3'":"")+"/><text x='"+(L-6)+"' y='"+(Y(v)+3.5).toFixed(1)+"' text-anchor='end' font-size='9' fill='var(--text-3)'>"+(v>0?"+":"")+v+"</text>"; });
+  cw.curves.forEach(function(c,i){
+    var col=c.cur?"var(--accent)":"var(--text-3)", op=c.cur?1:(.45+.2*i);
+    if(c.pts.length>1) s+="<path d='"+c.pts.map(function(p,j){ return (j?"L":"M")+X(p.d).toFixed(1)+" "+Y(p.dev).toFixed(1); }).join(" ")+"' fill='none' stroke='"+col+"' stroke-width='"+(c.cur?2.6:1.8)+"' stroke-linecap='round' stroke-linejoin='round' opacity='"+op+"'/>";
+    c.pts.forEach(function(p){ s+="<circle cx='"+X(p.d).toFixed(1)+"' cy='"+Y(p.dev).toFixed(1)+"' r='"+(c.cur?2.8:1.8)+"' fill='"+col+"' opacity='"+op+"'/>"; });
+  });
+  s+="<text x='"+L+"' y='"+(H-6)+"' font-size='9' fill='var(--text-3)'>Day 1</text><text x='"+X(cw.L).toFixed(1)+"' y='"+(H-6)+"' text-anchor='middle' font-size='9' fill='var(--text-3)'>Day "+cw.L+"</text>";
+  return s+"</svg>";
+}
+var PH_NAMES={mens:"Period",foll:"After your period",ovul:"Ovulation",lut:"Before your period"};
+function phaseRows(cw){
+  var m=1; Object.keys(cw.groups).forEach(function(k){ var a=mean(cw.groups[k]); if(a!=null) m=Math.max(m,Math.abs(a)); });
+  return ["mens","foll","ovul","lut"].map(function(k){
+    var a=mean(cw.groups[k]); if(a==null) return "<div class='phrow'><span class='pl'>"+PH_NAMES[k]+"</span><span class='pt'></span><span class='pv muted'>no data</span></div>";
+    var w=Math.abs(a)/m*50;
+    return "<div class='phrow'><span class='pl'>"+PH_NAMES[k]+"</span><span class='pt'><i style='"+(a>=0?"left:50%":"right:50%")+";width:"+w.toFixed(1)+"%'></i></span><span class='pv'>"+sgn(a)+" lb</span></div>";
+  }).join("");
+}
+function logPeriodRange(start,n){
+  var t=todayKey(); for(var i=0;i<n;i++){ var k=shiftKey(start,i); if(k>t) break; day(k).period=true; persistDay(k); }
+}
+function clearPeriod(start){
+  var k=start; while(S.days[k]&&S.days[k].period){ S.days[k].period=false; persistDay(k); k=shiftKey(k,1); }
+}
+
+/* ---- goal weight + body fat ---- */
+function goalCard(cw){
+  var P=S.profile, gw=P.goalWeight, h="<div class='card'><h3 class='h2' style='font-size:18px'>Your goal</h3>";
+  if(!gw){
+    return h+"<p class='muted small' style='margin:6px 0 12px'>Set the weight and body-fat range you are working toward. This tab will then show how far you have come and what weight fits your body-fat goal.</p><button class='btn' id='goalBtn'>Set my goal</button></div>";
+  }
+  var range=(P.goalBfLo&&P.goalBfHi)?P.goalBfLo+"–"+P.goalBfHi+"%":"—";
+  h+="<div class='tgt4' style='grid-template-columns:repeat(3,1fr)'><div><b>"+r1(gw)+"</b><span>goal lb</span></div><div><b>"+range+"</b><span>body fat</span></div><div><b>"+(cw?Math.max(0,r1(cw-gw)):"—")+"</b><span>lb to go</span></div></div>";
+  if(P.bf&&cw){
+    var lean=cw*(1-P.bf/100), bfg=(1-lean/gw)*100;
+    h+="<p class='small' style='margin:12px 0 0'>Right now you are about <b>"+r1(lean)+" lb lean</b> and <b>"+r1(cw-lean)+" lb fat</b> ("+P.bf+"%).</p>"+
+       "<p class='small' style='margin:6px 0 0'>If you keep all your muscle, "+r1(gw)+" lb works out to about <b>"+r1(bfg)+"% body fat</b>.</p>";
+    if(P.goalBfLo&&P.goalBfHi) h+="<p class='small' style='margin:6px 0 0'>With today's muscle, "+P.goalBfLo+"–"+P.goalBfHi+"% lands at <b>"+r1(lean/(1-P.goalBfLo/100))+"–"+r1(lean/(1-P.goalBfHi/100))+" lb</b>. Build muscle first and that number rises.</p>";
+    h+="<p class='muted small' style='margin:10px 0 0'>Estimates only. Body-fat readings are usually off by a few points, so use the same method each time.</p>";
+  } else h+="<p class='muted small' style='margin:12px 0 0'>Add your current body-fat % to see how much of your weight is muscle and which weight fits your range.</p>";
+  return h+"<button class='btn ghost sm' id='goalBtn' style='margin-top:12px'>Edit goal</button></div>";
+}
+function openGoals(){
+  var P=S.profile;
+  function f(id,label,val,ph){ return "<div><label class='eyebrow' for='"+id+"' style='display:block;margin:0 0 6px'>"+label+"</label><input class='field' id='"+id+"' type='number' step='0.1' inputmode='decimal' placeholder='"+ph+"' value='"+esc(val==null?"":val)+"'></div>"; }
+  openSheet("Your goal",
+    "<div style='display:grid;gap:14px'>"+f("gw","Goal weight (lb)",P.goalWeight,"e.g. 135")+f("gbf","Current body fat % (optional)",P.bf,"e.g. 22")+
+    "<div style='display:grid;grid-template-columns:1fr 1fr;gap:10px'>"+f("glo","Goal body fat, low %",P.goalBfLo,"e.g. 15")+f("ghi","high %",P.goalBfHi,"e.g. 17")+"</div></div>"+
+    "<p class='muted small' style='margin:14px 0 0'>Leave a field empty to clear it.</p>",
+    "<button class='btn ghost' id='gx' style='flex:0 0 36%'>Cancel</button><button class='btn' id='gs'>Save goal</button>");
+  $("gx").onclick=closeSheet;
+  $("gs").onclick=function(){
+    var gw=num($("gw").value), bf=num($("gbf").value), lo=num($("glo").value), hi=num($("ghi").value);
+    if(gw!=null&&(gw<70||gw>400)){ toast("Goal weight should be between 70 and 400 lb"); return; }
+    if((bf!=null&&(bf<3||bf>60))||(lo!=null&&(lo<3||lo>60))||(hi!=null&&(hi<3||hi>60))){ toast("Body fat should be between 3 and 60 %"); return; }
+    if(lo!=null&&hi!=null&&lo>hi){ var t=lo; lo=hi; hi=t; }
+    P.goalWeight=gw; P.bf=bf; P.goalBfLo=lo; P.goalBfHi=hi; persistProfile(); closeSheet(); toast("Goal saved");
+  };
+}
+
+function card(title,sub,inner,cls){ return "<div class='card"+(cls?" "+cls:"")+"'><h3 class='h2' style='font-size:18px'>"+title+"</h3>"+(sub?"<p class='cap'>"+sub+"</p>":"")+inner+"</div>"; }
+function renderTrend(){
+  var keys=lastKeys(21), T=S.profile.targets, P=S.profile, d=cur();
+  var kc=keys.map(function(k){ return S.days[k]?totals(k).k:null; }), pr=keys.map(function(k){ return S.days[k]?totals(k).p:null; });
+  var wk=lastKeys(84), wt=wk.map(function(k){ return S.days[k]&&day(k).weight!=null?day(k).weight:null; });
+  var roll=rollAvg(wt), cwv=null; for(var i=roll.length-1;i>=0;i--){ if(roll[i]!=null){ cwv=roll[i]; break; } }
+  var firstW=null; wt.some(function(v){ if(v!=null){ firstW=v; return true; } return false; });
+  var peak=Math.max.apply(null,roll.filter(function(v){ return v!=null; }).concat([0]));
+  var pace=paceInfo(), pv=paceVerdict(pace,cwv), rows=weekRows(2), wkDelta=rows[1]&&rows[1].delta;
+  var h="";
+
+  /* 1. where you are */
+  h+="<div class='card hero-w'><div class='eyebrow'>Your weight, 7-day average</div><div class='big-w'>"+(cwv!=null?r1(cwv):"—")+"<small> lb</small></div>"+
+     "<div class='mini3'><div><b>"+(cwv!=null&&firstW!=null?sgn(cwv-firstW):"—")+"</b><span>since your first weigh-in</span></div>"+
+     "<div><b>"+(wkDelta!=null?sgn(wkDelta):"—")+"</b><span>this week vs last</span></div>"+
+     "<div><b>"+(P.goalWeight?r1(P.goalWeight):"—")+"</b><span>goal</span></div></div>";
+  if(P.goalWeight&&cwv!=null&&peak>P.goalWeight){
+    var pct=Math.max(0,Math.min(1,(peak-cwv)/(peak-P.goalWeight)));
+    h+="<div class='goalbar'><div class='gtrack'><i style='width:"+(pct*100).toFixed(0)+"%'></i></div><div class='gcap'><span>"+(pct>0?r0(pct*100)+"% of the way down from your highest ("+r1(peak)+")":"Counting down from your highest weight ("+r1(peak)+")")+"</span><span>"+r1(Math.max(0,cwv-P.goalWeight))+" lb to go</span></div></div>";
+  }
+  h+="<div class='note "+pv.cls+"' style='margin-top:14px'><b style='display:block;margin-bottom:3px'>"+esc(pv.head)+"</b>"+esc(pv.msg)+"</div>"+
+     "<div class='wtform'><input class='field' id='wtIn' type='number' step='0.1' inputmode='decimal' placeholder='Weigh-in for "+esc(S.date===todayKey()?"today":fmtD(S.date))+" (lb)' value='"+(d.weight!=null?d.weight:"")+"' aria-label='Weigh-in in pounds'><button class='btn' id='wtSave'>Log</button></div></div>";
+
+  /* 2. weight chart */
+  h+=card("Weight, last 12 weeks","The green line is your 7-day average, which smooths out daily water swings. Dots are single weigh-ins. Pink bands are your period and the days before it.",weightChart(wk,wt,P.goalWeight),"chartcard");
+  var wl=weekList(cwv);
+  if(wl) h+=card("Week by week","Average weight each week and the change from the week before. Green means that change fits your current phase.",wl);
+
+  /* 3. cycle */
+  var ci=cycleInfo(S.date), cyc="";
+  var logRow="<div class='logper'><div><label class='eyebrow' for='lpS'>Period started</label><input class='field' id='lpS' type='date' max='"+todayKey()+"' value='"+S.date+"'></div><div><label class='eyebrow' for='lpN'>Days</label><input class='field' id='lpN' type='number' min='1' max='10' value='5' inputmode='numeric'></div><button class='btn' id='lpGo'>Add</button></div>"+
+     "<button class='toggle' id='periodBtn' aria-pressed='"+!!d.period+"'><span class='dot'></span><span>"+(d.period?"Period logged on this day":"Period on this day")+"</span></button>";
+  if(ci.none){
+    cyc="<p class='muted small' style='margin:0 0 12px'>Add the first day of your last period, and how many days it lasted. After two periods you will see your cycle length, your next expected period, and how your weight moves through the month.</p>"+logRow;
+  } else {
+    var ph=phaseFor(ci.day,ci.avg,ci.mens), avg=ci.avg||28, due=daysBetween(S.date,shiftKey(ci.last,avg)), rw=refWindow(ci.avg,ci.mens), note;
+    if(ph.k==="lut") note="Progesterone is high, so you hold more water. A scale reading 2 to 5 lb up is normal and is not fat. Hold your calories and judge your weight again after your period starts.";
+    else if(ph.k==="mens") note="Water retained before your period usually clears over the next few days, so weigh-ins from here often read lower with nothing changed.";
+    else if(ph.k==="foll") note=(ci.day>=rw.lo&&ci.day<=rw.hi)?"These are your cleanest weigh-ins of the month (days "+rw.lo+" to "+rw.hi+"). Compare these from cycle to cycle.":"Your cleanest weigh-ins come on days "+rw.lo+" to "+rw.hi+" of your cycle.";
+    else note="Around ovulation a small water shift is common.";
+    var dueTxt=due>0?due+" day"+(due===1?"":"s"):(due===0?"today":Math.abs(due)+" late");
+    var cl=cycleList(), lens=cl.filter(function(c){ return c.len&&c.len>=18&&c.len<=45; }).map(function(c){ return c.len; });
+    var mn=lens.length?Math.min.apply(null,lens):null, mxl=lens.length?Math.max.apply(null,lens):null, reg=lens.length>=2?(mxl-mn<=4?"Regular":(mxl-mn<=7?"Slightly variable":"Variable")):null;
+    cyc="<div class='cyc3'><div><div class='eyebrow'>Cycle day</div><div class='v'>"+ci.day+"</div></div><div><div class='eyebrow'>Next period</div><div class='v'>"+dueTxt+"</div></div><div><div class='eyebrow'>Average cycle</div><div class='v'>"+(ci.avg?ci.avg+" d":"—")+"</div></div></div>"+
+      cycleBar(ci)+"<div class='legend'><span><i style='background:var(--m-fat);opacity:.85'></i>Period</span><span><i style='background:var(--accent);opacity:.35'></i>After period</span><span><i style='background:var(--m-carb)'></i>Ovulation</span><span><i style='background:var(--m-fat);opacity:.28'></i>Before period</span></div>"+
+      "<span class='pill'>"+ph.n+"</span><p class='muted small' style='margin:10px 0 14px'>"+esc(note)+"</p>"+
+      "<p class='small' style='margin:0 0 14px'>Next period expected around <b>"+fmtD(shiftKey(ci.last,avg))+"</b>"+(ci.avg?"":" (a 28-day guess until you log a second period)")+".</p>"+
+      "<h4 class='sub-h'>Your cycles"+(mn!=null?" · "+(mn===mxl?mn+" days":mn+"–"+mxl+" days")+(reg?" · "+reg:""):"")+"</h4>"+
+      cl.slice().reverse().slice(0,8).map(function(c){
+        var odd=c.len&&(c.len<18||c.len>45);
+        return "<div class='cyrow'><span class='cd'>"+fmtD(c.start)+"</span><span class='cl'>"+(c.cur?"Day "+ci.day+" so far":c.len+" days"+(odd?" (not counted)":""))+"</span><span class='cb'>period "+c.bleed+" day"+(c.bleed===1?"":"s")+"</span><button class='linkbtn' data-rm='"+c.start+"' aria-label='Remove period from "+esc(fmtD(c.start))+"'>Remove</button></div>";
+      }).join("")+
+      "<h4 class='sub-h' style='margin-top:16px'>Add a period</h4>"+logRow;
+  }
+  h+=card("Your cycle","How long your cycles run, when the next one is due, and where you are in the month.",cyc);
+
+  /* 4. cycle and weight */
+  var cwx=cycleWeight(), bl=baselines(), cwTxt="";
+  if(cwx){
+    var lutA=mean(cwx.groups.lut), folA=mean(cwx.groups.foll), msg;
+    if(lutA!=null&&folA!=null){ var diff=lutA-folA; msg=Math.abs(diff)<.6?"So far your weight barely changes with your cycle, which makes any steady climb easier to trust.":"Your weight runs about <b>"+r1(Math.abs(diff))+" lb "+(diff>0?"higher":"lower")+"</b> in the days before your period than in the days after it. "+(diff>0?"That is water, not fat, and it drops back once your period starts.":"Keep logging to confirm the pattern."); }
+    else msg="Keep weighing in through the days before your next period. Once there is data for both halves of the month, this will tell you how much your cycle moves your weight.";
+    cwTxt="<p class='small' style='margin:0 0 12px'>"+msg+"</p>"+phaseRows(cwx)+"<p class='cap' style='margin:12px 0 6px'>Each line is one cycle, measured against that cycle's own baseline. The green line is the current cycle.</p>"+cycleWeightChart(cwx);
+  } else cwTxt="<p class='muted small' style='margin:0'>"+(ci.none?"Log your periods above first. ":"")+"This fills in once you have at least 3 weigh-ins inside a logged cycle. Weighing most mornings gives the clearest picture.</p>";
+  if(bl.length) cwTxt+="<h4 class='sub-h' style='margin-top:16px'>Same-phase baseline</h4><p class='cap' style='margin:0 0 6px'>Your average weight in the same part of each cycle. This is the fairest progress number.</p><table class='bltab'><tbody>"+bl.map(function(r,i){ var dl=i?r.avg-bl[i-1].avg:null, bc=dl==null?"":bandCls(dl/r.avg*100/(daysBetween(bl[i-1].start,r.start)/7||4)); return "<tr><td>"+esc(fmtD(r.start))+"</td><td style='text-align:right'>"+r1(r.avg)+" lb</td><td style='text-align:right;color:"+(bc==="warn"?"var(--warn)":bc==="ok"?"var(--good)":"inherit")+"'>"+(dl==null?"—":sgn(dl))+"</td></tr>"; }).join("")+"</tbody></table>";
+  h+=card("How your cycle moves your weight","Weight compared with each cycle's baseline, split by part of the month.",cwTxt);
+
+  /* 5. goal */
+  h+=goalCard(cwv);
+
+  /* 6. eating */
+  var logged=kc.filter(function(v){ return v>0; }), within=logged.filter(function(v){ return Math.abs(v-T.k)/T.k<=.1; }).length;
+  var lp=pr.filter(function(v){ return v>0; }), avgK=mean(logged), avgP=mean(lp);
+  h+="<div class='stats' style='margin-top:12px'><div class='stat'><div class='eyebrow'>Avg kcal</div><div class='v'>"+(logged.length?r0(avgK):"—")+"</div><div class='u'>"+(logged.length?"of "+T.k:"no days logged")+"</div></div>"+
+     "<div class='stat'><div class='eyebrow'>Avg protein</div><div class='v'>"+(lp.length?r0(avgP):"—")+"</div><div class='u'>"+(lp.length?"of "+T.p+" g":"no days logged")+"</div></div>"+
+     "<div class='stat'><div class='eyebrow'>On target</div><div class='v'>"+(logged.length?within+"/"+logged.length:"—")+"</div><div class='u'>days within 10%</div></div></div>";
+  h+=card("Calories vs target","Last 3 weeks. The dashed line is your daily target. Faded bars fell more than 10% short.",barChart(keys,kc,T.k,"var(--m-kcal)"),"chartcard")+
+     card("Protein vs target","Hitting protein is the most protective habit while building. Over is fine.",barChart(keys,pr,T.p,"var(--m-pro)"),"chartcard");
+  h+="<div class='card'><h3 class='h2' style='font-size:18px'>Daily targets</h3><div class='tgt4'><div><b>"+T.k+"</b><span>kcal</span></div><div><b>"+T.p+"</b><span>protein</span></div><div><b>"+T.c+"</b><span>carbs</span></div><div><b>"+T.f+"</b><span>fat</span></div></div><p class='muted small' style='margin:10px 0 0'>"+(P.goal?"Set from your weight and goal. You can change the calories to any number you like.":"Set by your phase. Change them from the phase button on Train.")+"</p>"+(P.goal?"<button class='btn ghost sm' id='recalcT' style='margin-top:10px'>Update weight &amp; targets</button>":"")+"</div>"+
      "<p class='foot' id='syncNote'></p><p class='foot'><button class='linkbtn' id='signOut'>Sign out</button></p>";
   $("panel-trend").innerHTML=h;
+
   var save=function(){ var v=num($("wtIn").value); if(v==null) return; cur().weight=v; persistDay(S.date); renderTrend(); toast("Weight saved"); };
   $("wtSave").onclick=save; $("wtIn").onkeydown=function(e){ if(e.key==="Enter"){ e.preventDefault(); save(); } };
   var rct=$("recalcT"); if(rct) rct.onclick=function(){ openOnboarding(false); };
+  var gb=$("goalBtn"); if(gb) gb.onclick=openGoals;
   $("periodBtn").onclick=function(){ var dd=cur(); dd.period=!dd.period; persistDay(S.date); renderTrend(); };
+  var lg=$("lpGo"); if(lg) lg.onclick=function(){
+    var s=$("lpS").value, n=Math.round(num($("lpN").value)||0);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(s)||s>todayKey()){ toast("Pick a start date that is today or earlier"); return; }
+    if(n<1||n>10){ toast("Period length should be 1 to 10 days"); return; }
+    logPeriodRange(s,n); renderTrend(); toast("Period added");
+  };
+  $("panel-trend").querySelectorAll("[data-rm]").forEach(function(b){ b.onclick=function(){ clearPeriod(b.dataset.rm); renderTrend(); toast("Period removed"); }; });
   $("signOut").onclick=function(){ if(DEV) return; supabaseClient.auth.signOut().then(function(){ location.reload(); }); };
   var dot=$("syncdot"); $("syncNote").textContent=dot.title||"";
 }
-
 /* ================= welcome: weight + goal -> daily targets ================= */
 /* Starting estimates from bodyweight alone (calories per lb of bodyweight, protein per lb, 27% of
    calories from fat, the rest carbs). A coach can fine-tune these. */
@@ -1066,10 +1307,10 @@ var GOALS={
   maintain:{label:"Maintain",     mult:14.5, protein:0.8, blurb:"Roughly your maintenance calories."},
   build:   {label:"Build muscle", mult:16,   protein:1.0, blurb:"A small surplus with plenty of protein."}
 };
-function calcTargets(w,goal){
+function calcTargets(w,goal,kOverride,pOverride){
   var g=GOALS[goal]||GOALS.lose;
-  var k=Math.max(1400,Math.min(3500,Math.round(w*g.mult/10)*10));
-  var p=Math.round(w*g.protein/5)*5, f=Math.round(k*0.27/9/5)*5;
+  var k=kOverride?Math.round(kOverride):Math.max(1400,Math.min(3500,Math.round(w*g.mult/10)*10));
+  var p=pOverride?Math.round(pOverride):Math.round(w*g.protein/5)*5, f=Math.round(k*0.27/9/5)*5;
   var c=Math.max(0,Math.round((k-p*4-f*9)/4/5)*5);
   return {k:k,p:p,c:c,f:f};
 }
@@ -1078,15 +1319,25 @@ function openOnboarding(first){
   var body="<p class='muted' style='margin:0 0 14px'>"+(first?"Welcome! Let’s set your daily targets so Plate Count can guide your food each day.":"Update your weight and Plate Count will recalculate your daily targets.")+"</p>"+
     "<label class='eyebrow' for='ow' style='display:block;margin-bottom:6px'>Your weight today (lb)</label>"+
     "<input class='field' id='ow' type='number' inputmode='decimal' step='0.1' placeholder='e.g. 165' value='"+esc(w)+"' style='margin-bottom:14px'>"+
+    "<label class='eyebrow' for='ok' style='display:block;margin-bottom:6px'>Daily calories (change it to any number you like)</label>"+
+    "<input class='field' id='ok' type='number' inputmode='numeric' step='10' placeholder='Worked out from your weight' value='"+(first?"":esc(S.profile.targets.k))+"' style='margin-bottom:14px'>"+
+    "<label class='eyebrow' for='op' style='display:block;margin-bottom:6px'>Daily protein in grams (change it to any number you like)</label>"+
+    "<input class='field' id='op' type='number' inputmode='numeric' step='5' placeholder='Worked out from your weight' value='"+(first?"":esc(S.profile.targets.p))+"' style='margin-bottom:14px'>"+
     "<p class='eyebrow' style='margin:0 0 8px'>Your goal</p><div class='chips' id='og'>"+Object.keys(GOALS).map(function(k){
       return "<button class='chip' type='button' data-g='"+k+"' aria-pressed='"+(k===goal)+"'>"+GOALS[k].label+"</button>"; }).join("")+"</div>"+
     "<p class='muted small' id='oblurb' style='margin:8px 0 0'></p><div id='oprev'></div>"+
     "<p class='muted small' style='margin:14px 0 0'>These are starting estimates, not medical advice. Your coach can fine-tune them, and you can update them any time.</p>";
   openSheet(first?"Welcome to Plate Count":"Update weight & targets",body,
     "<button class='btn ghost' id='oskip' style='flex:0 0 36%'>"+(first?"Later":"Cancel")+"</button><button class='btn' id='osave'>Set my targets</button>");
-  var inp=$("ow");
+  var inp=$("ow"), kin=$("ok"), pin=$("op"), kEdited=!first&&!!kin.value, pEdited=!first&&!!pin.value;
+  kin.oninput=function(){ kEdited=!!kin.value; calc(); };
+  pin.oninput=function(){ pEdited=!!pin.value; calc(); };
   function calc(){
-    var wt=num(inp.value), T=wt&&wt>=70&&wt<=600?calcTargets(wt,goal):null;
+    var wt=num(inp.value), ko=kEdited?num(kin.value):null, po=pEdited?num(pin.value):null;
+    if(ko!=null&&(ko<1000||ko>5000)) ko=null; if(po!=null&&(po<30||po>500)) po=null;
+    var T=wt&&wt>=70&&wt<=600?calcTargets(wt,goal,ko,po):null;
+    if(T&&!kEdited) kin.placeholder="Suggested: "+calcTargets(wt,goal).k;
+    if(T&&!pEdited) pin.placeholder="Suggested: "+calcTargets(wt,goal).p;
     $("oblurb").textContent=GOALS[goal].blurb;
     $("oprev").innerHTML=T?"<div class='tgt4' style='margin-top:14px'><div><b>"+T.k+"</b><span>kcal</span></div><div><b>"+T.p+"</b><span>protein</span></div><div><b>"+T.c+"</b><span>carbs</span></div><div><b>"+T.f+"</b><span>fat</span></div></div>":"";
     $("osave").disabled=!T; return T;
