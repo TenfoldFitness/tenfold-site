@@ -48,7 +48,10 @@ var S = {
 
 function normDay(d){
   if(!d||typeof d!=="object") d={};
-  var out={entries:[],weight:null,sets:{},period:!!d.period,updatedAt:+d.updatedAt||0,exSwaps:{},wd:null,cardio:{done:false,miles:null,minutes:null}};
+  var out={entries:[],weight:null,sets:{},period:!!d.period,updatedAt:+d.updatedAt||0,exSwaps:{},wd:null,cardio:{done:false,miles:null,minutes:null,type:""},extras:[]};
+  (Array.isArray(d.extras)?d.extras:[]).forEach(function(e){
+    if(e&&typeof e.name==="string"&&e.name.trim()) out.extras.push({id:String(e.id||slug(e.name)),name:e.name.trim().slice(0,60),s:Math.max(1,Math.min(10,+e.s||3))});
+  });
   (Array.isArray(d.entries)?d.entries:[]).forEach(function(e){
     if(!e||typeof e!=="object") return;
     out.entries.push({name:String(e.name==null?"":e.name),amt:String(e.amt==null?"":e.amt),
@@ -67,6 +70,7 @@ function normDay(d){
   if(typeof d.wd==="number"&&d.wd>=0&&d.wd<7) out.wd=d.wd;
   if(d.cardio&&typeof d.cardio==="object"){
     out.cardio.done=!!d.cardio.done; out.cardio.miles=num(d.cardio.miles); out.cardio.minutes=num(d.cardio.minutes);
+    out.cardio.type=typeof d.cardio.type==="string"?d.cardio.type:"";
   }
   return out;
 }
@@ -395,6 +399,8 @@ function tickRest(){
 /* ================= totals + burn ================= */
 function totals(k){ var t={k:0,p:0,c:0,f:0}; day(k).entries.forEach(function(e){ t.k+=e.k;t.p+=e.p;t.c+=e.c;t.f+=e.f; }); return t; }
 var MET_CARDIO=6.5, MET_LIFT=5, MIN_PER_SET=2.5;
+var CARDIO_TYPES=[["Treadmill",6.5],["Elliptical",5],["Bike",6.8],["Stair climber",8],["Rowing",7],["Walk outdoors",3.8],["Run outdoors",9],["Swim",6],["Other",5]];
+function cardioMET(t){ for(var i=0;i<CARDIO_TYPES.length;i++) if(CARDIO_TYPES[i][0]===t) return CARDIO_TYPES[i][1]; return MET_CARDIO; }
 function lastWeightLb(){
   var ks=Object.keys(S.days).filter(function(k){ return S.days[k]&&S.days[k].weight!=null; }).sort();
   return ks.length?S.days[ks[ks.length-1]].weight:150;
@@ -402,7 +408,7 @@ function lastWeightLb(){
 function kcalMET(met,min,kg){ return met*3.5*kg/200*min; }
 function estBurn(k){
   var d=day(k), kg=lastWeightLb()/2.20462, burn=0, c=d.cardio, sets=0;
-  if(c&&c.minutes) burn+=kcalMET(MET_CARDIO,c.minutes,kg);
+  if(c&&c.minutes) burn+=kcalMET(cardioMET(c.type),c.minutes,kg);
   Object.keys(d.sets).forEach(function(x){ if(d.sets[x].done) sets++; });
   if(sets) burn+=kcalMET(MET_LIFT,sets*MIN_PER_SET,kg);
   return {kcal:burn,cardioMin:(c&&c.minutes)||0,sets:sets};
@@ -783,9 +789,53 @@ function buildItems(p,d,wd,rdate){
     }
     items.push(it);
   });
+  /* Extra exercises added for this one day (an unplanned workout, or a lift added on top). */
+  (day(rdate).extras||[]).forEach(function(x){
+    items.push({L:"+",n:x.name,origN:x.name,s:x.s,r:"8-12",rest:"90 sec",key:"x|"+x.id,extra:true,xid:x.id});
+  });
   return items;
 }
+function exerciseNames(){
+  var seen={}, out=[]; function add(n){ if(n&&typeof n==="string"&&!seen[n.toLowerCase()]){ seen[n.toLowerCase()]=1; out.push(n); } }
+  PROGRAMS.forEach(function(pg){ (pg.days||[]).forEach(function(dd){ (dd.ex||[]).forEach(function(e){ add(e.n); (e.sw||[]).forEach(add); }); }); });
+  Object.keys(S.days).forEach(function(k){ ((S.days[k]||{}).extras||[]).forEach(function(x){ add(x.name); }); });
+  return out.sort();
+}
+function openAddEx(rd){
+  var names=exerciseNames(), nsets=3;
+  openSheet("Add an exercise","<p class='muted small' style='margin:0 0 10px'>Adds it to "+esc(rd===todayKey()?"today":prettyDate(rd,{month:"short",day:"numeric"}))+" only. Your sets and weights save like any other exercise.</p>"+
+    "<input class='field' id='xn' placeholder='Search or type an exercise…' autocomplete='off'><div class='list' id='xl' style='margin-top:10px'></div>"+
+    "<p class='eyebrow' style='margin:14px 0 8px'>Sets</p><div class='chips' id='xs'>"+[1,2,3,4,5].map(function(n){ return "<button class='chip' type='button' data-n='"+n+"' aria-pressed='"+(n===nsets)+"'>"+n+"</button>"; }).join("")+"</div>",
+    "<button class='btn' id='xa'>Add to workout</button>");
+  var inp=$("xn");
+  function list(){
+    var q=inp.value.trim().toLowerCase(), m=names.filter(function(n){ return !q||n.toLowerCase().indexOf(q)>=0; }).slice(0,8);
+    $("xl").innerHTML=m.map(function(n,i){ return "<button class='item' type='button' data-i='"+i+"'><span class='t'>"+esc(n)+"</span><span class='plus'>+</span></button>"; }).join("");
+    $("xl").querySelectorAll("[data-i]").forEach(function(b){ b.onclick=function(){ inp.value=m[+b.dataset.i]; list(); }; });
+  }
+  inp.oninput=list; list();
+  $("xs").querySelectorAll(".chip").forEach(function(b){ b.onclick=function(){ nsets=+b.dataset.n; $("xs").querySelectorAll(".chip").forEach(function(o){ o.setAttribute("aria-pressed",o===b?"true":"false"); }); }; });
+  $("xa").onclick=function(){
+    var name=inp.value.trim(); if(!name){ toast("Type or pick an exercise"); return; }
+    var dd=day(rd), id=slug(name)||("x"+Date.now());
+    if((dd.extras||[]).some(function(x){ return x.id===id; })){ toast("That one is already on this workout"); return; }
+    dd.extras=dd.extras||[]; dd.extras.push({id:id,name:name.slice(0,60),s:nsets});
+    persistDay(rd); S.openId=id; closeSheet(); toast("Added "+name);
+  };
+}
 var CHECK="<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M5 12.5l4.5 4.5L19 7.5'/></svg>";
+/* Cardio for the day: pick the machine you actually used, then log minutes and miles. */
+function cardioCard(d,rd,p){
+  var c=day(rd).cardio, cs=cardioStatus(rd), dur=p.phase&&p.phase.cardio?p.phase.cardio:"", typ=c.type||"Treadmill", planned=!!d.cardio;
+  var types="<p class='eyebrow' style='margin:12px 0 8px'>What did you do?</p><div class='chips' id='cTypes'>"+CARDIO_TYPES.map(function(t){
+    return "<button class='chip' type='button' data-ct='"+esc(t[0])+"' aria-pressed='"+(t[0]===typ)+"'>"+esc(t[0])+"</button>"; }).join("")+"</div>";
+  return "<details class='fold'"+((planned||c.done||c.minutes)?" open":"")+"><summary>Cardio<span class='r'>"+(c.done?"Done · "+esc(typ):esc(planned?dur:"optional"))+"</span></summary><div class='inner'>"+
+    (planned?esc(d.cardio)+(d.cardioSwap?"<br><span class='small'>Swap: "+esc(d.cardioSwap)+"</span>":""):"<span class='small muted'>Log any cardio you did today.</span>")+types+
+    "<div class='cardio-row' style='margin-top:12px'><button class='tick' id='cTick' aria-pressed='"+c.done+"' aria-label='Mark cardio done'>"+CHECK+"</button>"+
+    "<input class='numfield' id='cMin' type='number' inputmode='decimal' placeholder='min' value='"+(c.minutes!=null?c.minutes:"")+"' aria-label='Cardio minutes'>"+
+    "<input class='numfield' id='cMi' type='number' inputmode='decimal' step='0.1' placeholder='miles' value='"+(c.miles!=null?c.miles:"")+"' aria-label='Cardio miles'></div>"+
+    "<p class='cardio-note "+cs.cls+"'>"+esc(cs.msg)+"</p></div></details>";
+}
 function renderTrain(){
   var rd=S.date, wd=workoutIdx(rd), p=program(), pos=programPos(todayKey()), isNow=(PROGRAMS[pos.idx]===p);
   prevIdx=buildPrevIndex();
@@ -795,11 +845,17 @@ function renderTrain(){
     "<svg viewBox='0 0 24 24'><path d='M6 9l6 6 6-6'/></svg></button>";
   var h="";
   if(d.rest){
-    h="<div class='card'><div class='session'><div class='ttl'><div class='eyebrow'>"+esc(prettyDate(rd,{weekday:"long"}))+"</div><h1 class='h1'>"+esc(d.title)+"</h1></div>"+chip+"</div></div>"+
-      "<div class='restday'>"+esc(d.rest)+"</div>";
-    $("panel-train").innerHTML=h; $("phaseBtn").onclick=openPhaseSheet; return;
+    if(!(day(rd).extras||[]).length){
+      h="<div class='card'><div class='session'><div class='ttl'><div class='eyebrow'>"+esc(prettyDate(rd,{weekday:"long"}))+"</div><h1 class='h1'>"+esc(d.title)+"</h1></div>"+chip+"</div></div>"+
+        "<div class='restday'>"+esc(d.rest)+"</div>"+
+        "<div class='card' style='margin-top:12px'><p class='muted small' style='margin:0 0 10px'>Training anyway? Add the exercises you did, or log cardio below.</p><button class='btn ghost' id='addEx'>+ Add an exercise</button></div>"+
+        cardioCard(d,rd,p);
+      var rp=$("panel-train"); rp.innerHTML=h; wireTrain(rp,rd,[],day(rd).sets,wd); return;
+    }
+    d={title:d.title+" · extra workout",ex:[]};
   }
   var items=buildItems(p,d,wd,rd), sets=day(rd).sets;
+  if(S.openId){ for(var xi=0;xi<items.length;xi++) if(items[xi].xid===S.openId) S.openEx=xi; S.openId=null; }
   var total=0, done=0;
   items.forEach(function(it){ for(var i=0;i<it.s;i++){ total++; if((sets[it.key+"|"+i]||{}).done) done++; } });
   h+="<div class='card'><div class='session'><div class='ttl'><div class='eyebrow'>"+esc(prettyDate(rd,{weekday:"long"}))+(wd!==wdIndex(rd)?" · swapped":"")+"</div><h1 class='h1'>"+esc(d.title||d.name)+"</h1></div>"+chip+"</div>"+
@@ -807,15 +863,7 @@ function renderTrain(){
      "<div class='progtxt'><span id='progTxt'>"+done+" of "+total+" sets done</span><span>"+items.length+" exercises</span></div>"+
      (p.note?"<details class='fold' style='border:0;margin-top:8px'><summary style='padding:0;min-height:40px;font-size:13px;color:var(--text-2)'>About this phase</summary><div class='inner' style='padding:0 0 4px'><p style='margin:0 0 8px'>"+esc(p.note)+"</p>"+(p.phase&&p.phase.tech?"<p class='tech'>"+esc(p.phase.tech)+"</p>":"")+"</div></details>":"")+"</div>";
 
-  var cardioHtml="";
-  if(d.cardio){
-    var c=day(rd).cardio, cs=cardioStatus(rd), dur=p.phase&&p.phase.cardio?p.phase.cardio+" · ":"";
-    cardioHtml="<details class='fold' open><summary>Cardio<span class='r'>"+(c.done?"Done":esc(dur.replace(" · ","")))+"</span></summary><div class='inner'>"+esc(d.cardio)+(d.cardioSwap?"<br><span class='small'>Swap: "+esc(d.cardioSwap)+"</span>":"")+
-      "<div class='cardio-row'><button class='tick' id='cTick' aria-pressed='"+c.done+"' aria-label='Mark cardio done'>"+CHECK+"</button>"+
-      "<input class='numfield' id='cMin' type='number' inputmode='decimal' placeholder='min' value='"+(c.minutes!=null?c.minutes:"")+"' aria-label='Cardio minutes'>"+
-      "<input class='numfield' id='cMi' type='number' inputmode='decimal' step='0.1' placeholder='miles' value='"+(c.miles!=null?c.miles:"")+"' aria-label='Cardio miles'></div>"+
-      "<p class='cardio-note "+cs.cls+"'>"+esc(cs.msg)+"</p></div></details>";
-  }
+  var cardioHtml=cardioCard(d,rd,p);
   if(d.bands||d.warmup||d.bosu){
     h+="<details class='fold'><summary>Warm-up"+(d.bosu?" &amp; balance":"")+"<span class='r'>optional</span></summary><div class='inner'><ul style='margin:0;padding-left:18px'>"+
       (d.bands||[]).concat(d.warmup||[]).map(function(x){ return "<li>"+esc(x)+"</li>"; }).join("")+(d.bosu||[]).map(function(x){ return "<li>"+esc(x)+" <span class='small'>(balance)</span></li>"; }).join("")+"</ul></div></details>";
@@ -846,10 +894,11 @@ function renderTrain(){
           "<button class='tick' aria-pressed='"+!!v.done+"' aria-label='Mark set "+(si+1)+" done'>"+CHECK+"</button></div>";
       }
       var opts=[it.origN].concat(it.sw||[]);
-      h+="<div class='ex-foot'><button class='linkbtn' data-swap='"+ix+"'>"+(it.n!==it.origN?"Doing: "+esc(it.n)+" — change":"Did something else? Swap")+"</button></div></div>";
+      h+="<div class='ex-foot'>"+(it.extra?"<button class='linkbtn' data-rmx='"+esc(it.xid)+"'>Remove this exercise</button>":"<button class='linkbtn' data-swap='"+ix+"'>"+(it.n!==it.origN?"Doing: "+esc(it.n)+" — change":"Did something else? Swap")+"</button>")+"</div></div>";
     }
     h+="</div>";
   });
+  h+="<button class='btn ghost' id='addEx' style='margin-top:12px'>+ Add an exercise</button>";
   h+=cardioHtml;
   h+="<p class='foot'>Numbers save per day. Tap ✓ with empty boxes to log the suggested weight and reps.</p>";
   var panel=$("panel-train"); panel.innerHTML=h;
@@ -902,7 +951,14 @@ function wireTrain(panel,rd,items,sets,wd){
       renderTrain(); renderWeek();
     };
   });
-  var c=function(){ var cd=day(rd); return cd.cardio=cd.cardio||{done:false,miles:null,minutes:null}; };
+  var ax=$("addEx"); if(ax) ax.onclick=function(){ openAddEx(rd); };
+  panel.querySelectorAll("[data-rmx]").forEach(function(b){ b.onclick=function(){
+    var dd=day(rd), id=b.dataset.rmx; dd.extras=(dd.extras||[]).filter(function(x){ return x.id!==id; });
+    Object.keys(dd.sets).forEach(function(k){ if(k.indexOf("x|"+id+"|")===0) delete dd.sets[k]; });
+    persistDay(rd); S.openEx=null; renderTrain(); renderWeek(); toast("Exercise removed");
+  }; });
+  panel.querySelectorAll("[data-ct]").forEach(function(b){ b.onclick=function(){ c().type=b.dataset.ct; persistDay(rd); renderTrain(); }; });
+  var c=function(){ var cd=day(rd); return cd.cardio=cd.cardio||{done:false,miles:null,minutes:null,type:""}; };
   var ct=$("cTick"); if(ct) ct.onclick=function(){ c().done=!c().done; persistDay(rd); renderTrain(); renderWeek(); };
   var cm=$("cMin"); if(cm) cm.oninput=function(){ c().minutes=cm.value===""?null:num(cm.value); persistDay(rd); };
   var cmi=$("cMi"); if(cmi) cmi.oninput=function(){ c().miles=cmi.value===""?null:num(cmi.value); persistDay(rd); };
