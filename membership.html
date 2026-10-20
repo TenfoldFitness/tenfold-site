@@ -46,7 +46,7 @@
       <div class="tier-head"><h2 style="margin:0; font-size:16px;">2. Guided</h2><span class="tier-price">$100/mo</span></div>
       <ul class="tier-list">
         <li>Everything in Foundation</li>
-        <li>Custom 4-week workout plan</li>
+        <li>A new custom 4-week plan each month</li>
         <li>2 virtual check-ins per month</li>
       </ul>
       <button class="btn btn-primary btn-sm select-tier" data-tier="2" data-kind="subscription">Select Guided</button>
@@ -66,8 +66,9 @@
     <div class="tier-card">
       <div class="tier-head"><h2 style="margin:0; font-size:16px;">4. In-Person Starter</h2><span class="tier-price">$850 / 12 weeks</span></div>
       <ul class="tier-list">
-        <li>Everything above</li>
+        <li>Everything in Foundation &amp; Guided, plus full nutrition planning</li>
         <li>1x/week in-person training (12 sessions)</li>
+        <li>Weekly virtual sessions are not included</li>
         <li>Includes premium coaching &amp; nutrition planning fees</li>
       </ul>
       <button class="btn btn-primary btn-sm select-tier" data-tier="4" data-kind="package">Select In-Person Starter</button>
@@ -76,8 +77,9 @@
     <div class="tier-card">
       <div class="tier-head"><h2 style="margin:0; font-size:16px;">5. In-Person Standard</h2><span class="tier-price">$1,600 / 12 weeks</span></div>
       <ul class="tier-list">
-        <li>Everything above</li>
+        <li>Everything in Foundation &amp; Guided, plus full nutrition planning</li>
         <li>2x/week in-person training (24 sessions)</li>
+        <li>Weekly virtual sessions are not included</li>
         <li>Includes premium coaching &amp; nutrition planning fees</li>
       </ul>
       <button class="btn btn-primary btn-sm select-tier" data-tier="5" data-kind="package">Select In-Person Standard</button>
@@ -86,8 +88,9 @@
     <div class="tier-card">
       <div class="tier-head"><h2 style="margin:0; font-size:16px;">6. In-Person Elite</h2><span class="tier-price">$2,200 / 12 weeks</span></div>
       <ul class="tier-list">
-        <li>Everything above</li>
+        <li>Everything in Foundation &amp; Guided, plus full nutrition planning</li>
         <li>3x/week in-person training (36 sessions)</li>
+        <li>Weekly virtual sessions are not included</li>
         <li>Includes premium coaching &amp; nutrition planning fees</li>
       </ul>
       <button class="btn btn-primary btn-sm select-tier" data-tier="6" data-kind="package">Select In-Person Elite</button>
@@ -104,11 +107,12 @@
       <p class="form-error" id="checkout-error"></p>
       <p class="small" id="checkout-success" style="display:none; color:var(--accent);"></p>
       <button id="confirm-purchase" class="btn btn-primary">Confirm</button>
-      <p class="trust-line">🔒 Secure payment via Square &middot; Cancel or change your plan anytime.</p>
+      <p class="small" style="margin:12px 0 0; color:var(--text-primary);"><strong>Monthly plans:</strong> cancel any time, no contract, no cancellation fee. <strong>12-week packages:</strong> one payment, runs 84 days from purchase, full refund if you ask before your first coaching session and none after. <a href="policies.html#refunds" target="_blank" rel="noopener" style="color:var(--accent); text-decoration:underline;">Read the details</a>.</p>
+      <p class="trust-line">🔒 Secure payment via Square.</p>
     </div>
   </main>
 
-  <footer>Tenfold Method &nbsp;&middot;&nbsp; In person &amp; virtual training</footer>
+  <footer>Tenfold Method &nbsp;&middot;&nbsp; In person &amp; virtual training &nbsp;&middot;&nbsp; <a href="policies.html">Privacy, refunds &amp; terms</a> &nbsp;&middot;&nbsp; <a href="consultation.html">Contact</a></footer>
 
   <script src="https://web.squarecdn.com/v1/square.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -131,11 +135,11 @@
 
     const TIER_INFO = {
       '1': { name: 'Foundation', price: '$20/mo', total: '$20/month, billed monthly', features: ['Client portal access', 'Daily workout (6-day split)', 'Fridge-to-recipe &amp; restaurant macro tools'] },
-      '2': { name: 'Guided', price: '$100/mo', total: '$100/month, billed monthly', features: ['Everything in Foundation', 'Custom 4-week workout plan', '2 virtual check-ins per month'] },
+      '2': { name: 'Guided', price: '$100/mo', total: '$100/month, billed monthly', features: ['Everything in Foundation', 'A new custom 4-week plan each month', '2 virtual check-ins per month'] },
       '3': { name: 'Virtual Intensive', price: '$1,000 / 12 weeks', total: '$1,000 one-time, covers 12 weeks', features: ['Everything in Foundation &amp; Guided', '1 virtual training session/week (12 total)', 'Full nutrition planning'] },
-      '4': { name: 'In-Person Starter', price: '$850 / 12 weeks', total: '$850 one-time, covers 12 weeks', features: ['Everything above', '1x/week in-person training (12 sessions)'] },
-      '5': { name: 'In-Person Standard', price: '$1,600 / 12 weeks', total: '$1,600 one-time, covers 12 weeks', features: ['Everything above', '2x/week in-person training (24 sessions)'] },
-      '6': { name: 'In-Person Elite', price: '$2,200 / 12 weeks', total: '$2,200 one-time, covers 12 weeks', features: ['Everything above', '3x/week in-person training (36 sessions)'] },
+      '4': { name: 'In-Person Starter', price: '$850 / 12 weeks', total: '$850 one-time, covers 12 weeks', features: ['Everything in Foundation &amp; Guided, plus full nutrition planning', '1x/week in-person training (12 sessions)', 'Weekly virtual sessions are not included'] },
+      '5': { name: 'In-Person Standard', price: '$1,600 / 12 weeks', total: '$1,600 one-time, covers 12 weeks', features: ['Everything in Foundation &amp; Guided, plus full nutrition planning', '2x/week in-person training (24 sessions)', 'Weekly virtual sessions are not included'] },
+      '6': { name: 'In-Person Elite', price: '$2,200 / 12 weeks', total: '$2,200 one-time, covers 12 weeks', features: ['Everything in Foundation &amp; Guided, plus full nutrition planning', '3x/week in-person training (36 sessions)', 'Weekly virtual sessions are not included'] },
     };
 
     function showConfirmedPlan(tierId) {
@@ -157,7 +161,7 @@
       document.getElementById('checkout-box').style.display = 'none';
       document.getElementById('tier-list').style.display = 'block';
       document.getElementById('membership-heading').textContent = 'Choose your membership';
-      document.getElementById('membership-subheading').textContent = 'Every tier builds on the one before it. Pick the level that fits where you are right now — you can always move up later.';
+      document.getElementById('membership-subheading').textContent = 'Pick the level that fits where you are right now — you can always move up later.';
       document.getElementById('tier-list').scrollIntoView({ behavior: 'smooth' });
     });
 

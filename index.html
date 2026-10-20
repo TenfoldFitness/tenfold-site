@@ -18,7 +18,7 @@
       <nav class="primary-nav" id="primary-nav">
         <a href="framework.html">The Framework</a>
         <a href="about.html">About</a>
-        <a href="sample-workout.html">Free workout</a>
+        <a href="sample-workout.html">Free session</a>
         <a href="blog.html">Blog</a>
         <a href="pricing.html">Pricing</a>
         <a class="instagram-link" href="https://www.instagram.com/tenfold_health/" aria-label="Instagram" target="_blank" rel="noopener">
@@ -39,10 +39,11 @@
         <p class="section-label"><span class="ten-mark ten-mark-gold">10</span>TENFOLD METHOD</p>
         <h1 style="font-size:52px; max-width:600px;">Elite training.<br><em>Real</em> psychology.</h1>
         <p class="sub" style="font-size:16px; max-width:470px; line-height:1.6; margin:0 0 12px;">Not fitness coaching with a mindset tip attached. Strength training and evidence-based skills coaching, built as one program, by someone formally trained in both.</p>
+        <p class="sub audience-line" style="font-size:16px; max-width:470px; line-height:1.6; margin:0 0 12px;"><strong>Built for adults 40 and over</strong> who want to stay strong, capable and independent for the long game.</p>
         <p class="sub" style="font-size:13px; max-width:470px; line-height:1.6; margin:0 0 26px; opacity:0.8;">M.S.W. and M.B.A., Boston College &middot; ten years practising as a macro social worker &middot; ISSA certified personal trainer</p>
         <div>
           <a href="signup.html?tier=1" class="btn btn-primary">Start for $20/mo</a>
-          <a href="sample-workout.html" class="btn" style="margin-left:8px;">Try a free workout first</a>
+          <a href="sample-workout.html" class="btn" style="margin-left:8px;">Try a free session first</a>
         </div>
         <p class="reassure-line">Cancel anytime. Or <a href="consultation.html" style="color:inherit; text-decoration:underline;">book a free 15-minute call</a> if you would rather talk first.</p>
         <div class="mark-line">
@@ -65,15 +66,15 @@
             <p class="stat-label">Week cycles, five sessions a week</p>
           </div>
           <div class="stat-cell">
-            <p class="stat-num">4</p>
-            <p class="stat-label">Groups run back to back</p>
+            <p class="stat-num">10</p>
+            <p class="stat-label">Years practising as a macro social worker</p>
           </div>
         </div>
       </div>
     </section>
 
     <!-- UNEXPECTED FULL-BLEED MOMENT -->
-    <section class="reveal" style="border-top:none; padding:0;">
+    <section class="reveal" id="results" style="border-top:none; padding:0;">
       <div class="bleed-band">
         <span class="ten-mark ten-mark-gold" style="font-size:22px;">10</span>
         <p class="big-quote">Across two years of pilot cohorts, participants reported better emotional control, better sleep, and a better ability to work through a negative thought.</p>
@@ -114,7 +115,7 @@
 
 
     <!-- WHERE THIS COMES FROM: the pilot -->
-    <section class="reveal">
+    <section class="reveal" id="pilot">
       <div class="wrap">
         <p class="section-label"><span class="ten-mark">10</span>WHERE THIS COMES FROM</p>
         <h2 style="font-size:34px;">Two years of running it before selling it</h2>
@@ -128,8 +129,8 @@
           </div>
           <div class="index-card">
             <p class="index-num">02</p>
-            <p class="index-name">What participants reported</p>
-            <p class="index-copy">Better emotional control, better sleep, and a better ability to work through a negative thought.</p>
+            <p class="index-name">Who took part</p>
+            <p class="index-copy">Women in groups of three to six, across four groups. I have not published a total head count, so I do not quote one.</p>
           </div>
           <div class="index-card">
             <p class="index-num">03</p>
@@ -138,19 +139,12 @@
           </div>
         </div>
 
-        <!-- ============================================================
-             ALUMNI QUOTES GO HERE.
-             Sarah: paste two short quotes below and delete this comment.
-             Use a first name and a real detail (which cohort, how long).
-             Two attributed sentences will outperform this whole section.
-             Template, copy it twice:
-
+        <!-- Alumni quotes: when you have them, add one block per quote below the cards.
         <figure class="alumni-quote">
-          <blockquote>Her words, one or two sentences, exactly as she said them.</blockquote>
+          <blockquote>Her words, exactly as she said them.</blockquote>
           <figcaption>First name &middot; 2024 cohort, three cycles</figcaption>
         </figure>
-
-             ============================================================ -->
+        -->
 
       </div>
     </section>
@@ -169,6 +163,7 @@
               <button type="button" class="quiz-choice" data-val="fitness" aria-pressed="false">Improving fitness</button>
               <button type="button" class="quiz-choice" data-val="weight" aria-pressed="false">Losing weight</button>
               <button type="button" class="quiz-choice" data-val="mental" aria-pressed="false">Mental health</button>
+              <button type="button" class="quiz-choice" data-val="future" aria-pressed="false">Planning for the future</button>
             </div>
           </div>
           <div class="quiz-q" data-q="2">
@@ -324,7 +319,7 @@
   <p class="scope-note">Tenfold is skills coaching and physical training. It is not therapy and it is not medical care. Members who need clinical support beyond that scope are referred to a licensed provider.</p>
 
   <div class="motif-footer" style="padding:20px 0;">TENFOLD <span class="ten-mark">10</span> METHOD</div>
-  <footer>Tenfold Method &nbsp;&middot;&nbsp; In person &amp; virtual training</footer>
+  <footer>Tenfold Method &nbsp;&middot;&nbsp; In person &amp; virtual training &nbsp;&middot;&nbsp; <a href="policies.html">Privacy, refunds &amp; terms</a> &nbsp;&middot;&nbsp; <a href="consultation.html">Contact</a></footer>
 
   <script>
     // Scroll-reveal for sections
@@ -363,6 +358,7 @@
       fitness:  { line: 'You told us your main focus is improving your fitness, so your plan starts with building strength and stamina you can feel.' },
       weight:   { line: 'You told us your main focus is losing weight, so your plan starts with sustainable habits, not restriction.' },
       mental:   { line: 'You told us your main focus is mental health, so your plan leans on the skills-coaching side of the method, with movement alongside it. Tenfold is skills coaching, not therapy.' },
+      future:   { line: 'You told us your main focus is planning for the future, so your plan starts with the strength, balance and independence that hold up over the years.' },
     };
 
     function maybeShowQuizResult() {
@@ -375,10 +371,10 @@
 
       if (support === 'self') {
         tierLabel = 'Foundation — $20/mo';
-        ctaHref = 'signup.html?tier=1'; ctaText = 'See this package';
+        ctaHref = 'signup.html?tier=1'; ctaText = 'See this plan';
       } else if (support === 'regular' && setting === 'virtual') {
         tierLabel = 'Guided — $100/mo';
-        ctaHref = 'signup.html?tier=2'; ctaText = 'See this package';
+        ctaHref = 'signup.html?tier=2'; ctaText = 'See this plan';
       } else if (support === 'weekly' && setting === 'virtual') {
         tierLabel = 'Virtual Intensive — $1,000 / 12 wks';
         ctaHref = 'signup.html?tier=3'; ctaText = 'See this package';

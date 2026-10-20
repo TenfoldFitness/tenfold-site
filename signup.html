@@ -64,23 +64,30 @@
       <div class="join-form">
         <p class="step-indicator" id="step-indicator">Step 1 of 2 &middot; Your details</p>
 
-        <div class="tool-box" id="account-step">
+        <form class="tool-box" id="account-step" novalidate>
+          <div class="error-summary" id="error-summary" role="alert" tabindex="-1" hidden>
+            <h2>There is a problem</h2>
+            <ul id="error-summary-list"></ul>
+          </div>
           <div class="field">
             <label for="su-name">Name</label>
-            <input type="text" id="su-name" required />
+            <input type="text" id="su-name" name="name" autocomplete="name" required aria-describedby="err-su-name" />
+            <p class="field-error" id="err-su-name" hidden></p>
           </div>
           <div class="field">
             <label for="su-email">Email</label>
-            <input type="email" id="su-email" required />
+            <input type="email" id="su-email" name="email" autocomplete="email" required aria-describedby="err-su-email" />
+            <p class="field-error" id="err-su-email" hidden></p>
           </div>
           <div class="field">
-            <label for="su-phone">Phone number</label>
-            <input type="tel" id="su-phone" required />
-            <p class="small" style="margin:4px 0 0;">So we can reach you about your sessions.</p>
+            <label for="su-phone" id="su-phone-label">Phone number</label>
+            <input type="tel" id="su-phone" name="tel" autocomplete="tel" required aria-describedby="su-phone-hint err-su-phone" />
+            <p class="hint" id="su-phone-hint">So we can reach you about your sessions.</p>
+            <p class="field-error" id="err-su-phone" hidden></p>
           </div>
           <div class="field">
             <label for="su-priority">What is your top priority right now?</label>
-            <select id="su-priority" style="width:100%; padding:10px 12px; border-radius:var(--radius); border:1px solid var(--border); font-family:var(--font-body); font-size:14px;">
+            <select id="su-priority" name="priority" required aria-describedby="err-su-priority">
               <option value="">Select one</option>
               <option value="Physical health">Physical health</option>
               <option value="Improving my fitness">Improving my fitness</option>
@@ -88,25 +95,29 @@
               <option value="Planning for the future">Planning for the future</option>
               <option value="Mental health">Mental health</option>
             </select>
+            <p class="field-error" id="err-su-priority" hidden></p>
           </div>
           <div class="field">
             <label for="su-password">Create a password</label>
-            <input type="password" id="su-password" required minlength="6" placeholder="At least 6 characters" autocomplete="new-password" />
+            <input type="password" id="su-password" name="new-password" required minlength="6" autocomplete="new-password" aria-describedby="su-password-hint err-su-password" />
+            <p class="hint" id="su-password-hint">At least 6 characters.</p>
+            <p class="field-error" id="err-su-password" hidden></p>
             <label style="display:flex; align-items:center; gap:8px; margin-top:8px; font-size:13px; cursor:pointer; min-height:24px;">
               <input type="checkbox" id="su-show-password" style="width:auto; margin:0;" /> Show password
             </label>
           </div>
-          <p class="form-error" id="signup-error"></p>
-          <button class="btn btn-primary btn-sm" id="signup-submit">Continue to payment</button>
-        </div>
+          <button type="submit" class="btn btn-primary btn-sm" id="signup-submit">Continue to payment</button>
+        </form>
 
         <div class="tool-box" id="payment-step" style="display:none;">
+          <button type="button" class="back-link" id="back-to-details">&larr; Back to your details</button>
           <p class="small" style="margin:0 0 12px;">Your login is created once your payment goes through.</p>
+          <p class="small" id="policy-line" style="margin:0 0 14px; color:var(--text-primary);"></p>
           <div id="card-container" style="margin-bottom:14px;"></div>
           <p class="form-error" id="checkout-error"></p>
           <p class="small" id="checkout-success" style="display:none; color:var(--accent);"></p>
           <button id="confirm-purchase" class="btn btn-primary">Start my membership</button>
-          <p class="trust-line">🔒 Secure payment via Square &middot; Cancel or change your plan anytime.</p>
+          <p class="trust-line" id="trust-line">🔒 Secure payment via Square.</p>
         </div>
 
         <p class="small center" style="margin-top:16px;">Already have an account? <a href="portal-login.html" style="color:var(--accent);">Log in</a></p>
@@ -115,7 +126,7 @@
     </div>
   </main>
 
-  <footer>Tenfold &nbsp;&middot;&nbsp; In person &amp; virtual coaching</footer>
+  <footer>Tenfold &nbsp;&middot;&nbsp; In person &amp; virtual coaching &nbsp;&middot;&nbsp; <a href="policies.html">Privacy, refunds &amp; terms</a> &nbsp;&middot;&nbsp; <a href="consultation.html">Contact</a></footer>
 
   <script src="https://web.squarecdn.com/v1/square.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -129,21 +140,21 @@
       '1': { name: 'Foundation', price: '$20/mo', total: '$20/month, billed monthly', kind: 'subscription',
              features: ['Client portal access', 'Daily workout (6-day split)', 'Fridge-to-recipe &amp; restaurant macro tools'] },
       '2': { name: 'Guided', price: '$100/mo', total: '$100/month, billed monthly', kind: 'subscription',
-             features: ['Everything in Foundation', 'Custom 4-week workout plan', '2 virtual check-ins per month'] },
+             features: ['Everything in Foundation', 'A new custom 4-week plan each month', '2 virtual check-ins per month'] },
       '3': { name: 'Virtual Intensive', price: '$1,000 / 12 weeks', total: '$1,000 one-time, covers 12 weeks', kind: 'package',
              features: ['Everything in Foundation &amp; Guided', '1 virtual training session/week (12 total)', 'Full nutrition planning'] },
       '4': { name: 'In-Person Starter', price: '$850 / 12 weeks', total: '$850 one-time, covers 12 weeks', kind: 'package',
-             features: ['Everything above', '1x/week in-person training (12 sessions)', 'About $71 a session'] },
+             features: ['Everything in Foundation &amp; Guided, plus full nutrition planning', '1x/week in-person training (12 sessions)', 'Weekly virtual sessions are not included', 'About $71 a session'] },
       '5': { name: 'In-Person Standard', price: '$1,600 / 12 weeks', total: '$1,600 one-time, covers 12 weeks', kind: 'package',
-             features: ['Everything above', '2x/week in-person training (24 sessions)', 'About $67 a session'] },
+             features: ['Everything in Foundation &amp; Guided, plus full nutrition planning', '2x/week in-person training (24 sessions)', 'Weekly virtual sessions are not included', 'About $67 a session'] },
       '6': { name: 'In-Person Elite', price: '$2,200 / 12 weeks', total: '$2,200 one-time, covers 12 weeks', kind: 'package',
-             features: ['Everything above', '3x/week in-person training (36 sessions)', 'About $61 a session'] },
+             features: ['Everything in Foundation &amp; Guided, plus full nutrition planning', '3x/week in-person training (36 sessions)', 'Weekly virtual sessions are not included', 'About $61 a session'] },
     };
 
     const info = TIER_INFO[tier] || TIER_INFO['1'];
 
     // Pre-fill the priority from the home-page quiz so the client doesn't answer the same question twice.
-    const FOCUS_TO_PRIORITY = { physical: 'Physical health', fitness: 'Improving my fitness', weight: 'Losing weight', mental: 'Mental health' };
+    const FOCUS_TO_PRIORITY = { physical: 'Physical health', fitness: 'Improving my fitness', weight: 'Losing weight', mental: 'Mental health', future: 'Planning for the future' };
     const focusParam = params.get('focus');
     if (focusParam && FOCUS_TO_PRIORITY[focusParam]) {
       document.getElementById('su-priority').value = FOCUS_TO_PRIORITY[focusParam];
@@ -155,6 +166,25 @@
     document.getElementById('order-summary-total').textContent = info.total;
     document.getElementById('confirm-purchase').textContent =
       info.kind === 'subscription' ? 'Start my membership' : 'Confirm my package';
+
+    // The cost, cancellation and refund rule, said in plain words right where the person pays.
+    const POLICY_LINK = ' <a href="policies.html#refunds" target="_blank" rel="noopener" style="color:var(--accent); text-decoration:underline;">Read the details</a>.';
+    document.getElementById('policy-line').innerHTML = info.kind === 'subscription'
+      ? 'Billed monthly. Cancel any time from your portal. No contract, no cancellation fee.' + POLICY_LINK
+      : 'One payment for 12 weeks. Your package runs 84 days from today. You can have a full refund if you ask before your first coaching session. After your first session it is not refundable.' + POLICY_LINK;
+    document.getElementById('trust-line').textContent = info.kind === 'subscription'
+      ? '🔒 Secure payment via Square. You can cancel anytime.'
+      : '🔒 Secure payment via Square. This is one payment, not a subscription.';
+
+    // Phone is only needed when there are sessions or check-ins to arrange. Foundation has none.
+    const phoneRequired = tier !== '1' && !!TIER_INFO[tier];
+    if (!phoneRequired) {
+      document.getElementById('su-phone-label').textContent = 'Phone number (optional)';
+      document.getElementById('su-phone').required = false;
+      document.getElementById('su-phone-hint').textContent = 'Only if you would like a text or call about your account.';
+    } else {
+      document.getElementById('su-phone-hint').textContent = 'So we can reach you about your sessions and check-ins.';
+    }
 
     document.getElementById('change-plan-link').addEventListener('click', function () {
       const compare = document.getElementById('compare-plans');
@@ -172,9 +202,39 @@
 
     // ---- Step 1: collect details. No account is created until the payment goes through. ----
     let pendingDetails = null;
-    document.getElementById('signup-submit').addEventListener('click', async function () {
-      const errorEl = document.getElementById('signup-error');
-      errorEl.style.display = 'none';
+    const FIELD_IDS = ['su-name', 'su-email', 'su-phone', 'su-priority', 'su-password'];
+
+    function clearFieldErrors() {
+      FIELD_IDS.forEach(function (id) {
+        document.getElementById(id).removeAttribute('aria-invalid');
+        const msg = document.getElementById('err-' + id);
+        msg.hidden = true; msg.textContent = '';
+      });
+      document.getElementById('error-summary').hidden = true;
+      document.getElementById('error-summary-list').innerHTML = '';
+    }
+
+    // Each problem is said twice in the same words: next to its field, and in a list at the top that links to it.
+    function showFieldErrors(problems) {
+      const list = document.getElementById('error-summary-list');
+      problems.forEach(function (p) {
+        document.getElementById(p.id).setAttribute('aria-invalid', 'true');
+        const msg = document.getElementById('err-' + p.id);
+        msg.textContent = p.text; msg.hidden = false;
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = '#' + p.id; a.textContent = p.text;
+        a.addEventListener('click', function (ev) { ev.preventDefault(); document.getElementById(p.id).focus(); });
+        li.appendChild(a); list.appendChild(li);
+      });
+      const summary = document.getElementById('error-summary');
+      summary.hidden = false;
+      summary.focus();
+    }
+
+    document.getElementById('account-step').addEventListener('submit', async function (ev) {
+      ev.preventDefault();
+      clearFieldErrors();
 
       const name = document.getElementById('su-name').value.trim();
       const email = document.getElementById('su-email').value.trim();
@@ -182,31 +242,30 @@
       const priority = document.getElementById('su-priority').value;
       const password = document.getElementById('su-password').value;
 
-      // Say exactly what is missing, and take the person to it
-      const missing = [];
-      if (!name) missing.push(['su-name', 'your name']);
-      if (!email) missing.push(['su-email', 'your email']);
-      if (!phone) missing.push(['su-phone', 'a phone number']);
-      if (!priority) missing.push(['su-priority', 'your top priority']);
-      if (!password) missing.push(['su-password', 'a password']);
-      if (missing.length) {
-        errorEl.textContent = 'Please add ' + missing.map(m => m[1]).join(', ').replace(/, ([^,]*)$/, ' and $1') + '.';
-        errorEl.style.display = 'block';
-        document.getElementById(missing[0][0]).focus();
-        return;
-      }
-      if (password.length < 6) {
-        errorEl.textContent = 'Your password needs at least 6 characters. You have ' + password.length + ' so far.';
-        errorEl.style.display = 'block';
-        document.getElementById('su-password').focus();
-        return;
-      }
+      const problems = [];
+      if (!name) problems.push({ id: 'su-name', text: 'Enter your name' });
+      if (!email) problems.push({ id: 'su-email', text: 'Enter your email address' });
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) problems.push({ id: 'su-email', text: 'Enter an email address in the correct format, like name@example.com' });
+      if (phoneRequired && !phone) problems.push({ id: 'su-phone', text: 'Enter a phone number' });
+      if (!priority) problems.push({ id: 'su-priority', text: 'Choose your top priority' });
+      if (!password) problems.push({ id: 'su-password', text: 'Enter a password' });
+      else if (password.length < 6) problems.push({ id: 'su-password', text: 'Your password must be at least 6 characters. You have entered ' + password.length });
+      if (problems.length) { showFieldErrors(problems); return; }
 
       pendingDetails = { name, email, phone, priority, password };
       document.getElementById('step-indicator').textContent = 'Step 2 of 2 · Payment';
       document.getElementById('account-step').style.display = 'none';
       document.getElementById('payment-step').style.display = 'block';
       document.getElementById('payment-step').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+
+    // Back to step 1. Not offered once a payment is processing or done: the button is disabled in those states.
+    document.getElementById('back-to-details').addEventListener('click', function () {
+      if (purchaseDone || document.getElementById('confirm-purchase').disabled) return;
+      document.getElementById('step-indicator').textContent = 'Step 1 of 2 · Your details';
+      document.getElementById('payment-step').style.display = 'none';
+      document.getElementById('account-step').style.display = 'block';
+      document.getElementById('su-name').focus();
     });
 
     // ---- Step 2: payment (same Square + Edge Function pattern as membership.html) ----

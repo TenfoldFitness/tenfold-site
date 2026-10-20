@@ -10,8 +10,8 @@
     .price-card.featured { border-color: var(--accent); background: var(--surface-2); }
     .price-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 4px; }
     .price-value { font-size: 16px; font-weight: 600; color: var(--accent); white-space: nowrap; }
-    .price-unit { display: block; font-size: 11px; font-weight: 400; color: var(--text-muted); text-align: right; }
-    .price-badge { display: inline-block; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+    .price-unit { display: block; font-size: 12px; font-weight: 400; color: var(--text-muted); text-align: right; }
+    .price-badge { display: inline-block; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
       background: var(--accent); color: #fff; padding: 3px 8px; margin-bottom: 10px; }
     .track-head { margin: 34px 0 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
     .track-head h2 { font-size: 15px; margin: 0 0 3px; }
@@ -33,7 +33,7 @@
       <nav class="primary-nav" id="primary-nav">
         <a href="framework.html">The Framework</a>
         <a href="about.html">About</a>
-        <a href="sample-workout.html">Free workout</a>
+        <a href="sample-workout.html">Free session</a>
         <a href="blog.html">Blog</a>
         <a href="pricing.html" class="current">Pricing</a>
         <a class="instagram-link" href="https://www.instagram.com/tenfold_health/" aria-label="Instagram" target="_blank" rel="noopener">
@@ -49,12 +49,39 @@
     <div class="giant-mark">10</div>
     <div class="wrap" style="max-width:600px;">
       <p class="section-label"><span class="ten-mark ten-mark-gold">10</span>PRICING</p>
-      <h1>Coaching packages</h1>
-      <p>Start at $20 a month and move up whenever you want. Every price on this page is listed, and every package builds on the one before it.</p>
+      <h1>Plans and packages</h1>
+      <p>Start at $20 a month and move up whenever you want. Every price on this page is listed. Monthly plans can be cancelled any time. The 12-week packages are one payment.</p>
     </div>
   </section>
 
   <main class="wrap" style="max-width:640px;">
+
+    <!-- Side-by-side comparison: the cards below hold the detail -->
+    <h2 class="compare-title">Compare what each one includes</h2>
+    <div class="compare-wrap" role="region" aria-label="Comparison of plans and packages" tabindex="0">
+      <table class="compare">
+        <caption class="sr-only">What is included in each plan or package</caption>
+        <thead>
+          <tr>
+            <th scope="col"><span class="sr-only">Feature</span></th>
+            <th scope="col">Foundation<span class="c-price">$20/mo</span></th>
+            <th scope="col">Guided<span class="c-price">$100/mo</span></th>
+            <th scope="col">Virtual Intensive<span class="c-price">$1,000</span></th>
+            <th scope="col">In-Person<span class="c-price">$850 to $2,200</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">How you pay</th><td>Monthly</td><td>Monthly</td><td>One payment, 12 weeks</td><td>One payment, 12 weeks</td></tr>
+          <tr><th scope="row">Portal, program, macro tools, session log</th><td>Included</td><td>Included</td><td>Included</td><td>Included</td></tr>
+          <tr><th scope="row">Custom four-week plan</th><td>Not included</td><td>A new one each month</td><td>Included</td><td>Included</td></tr>
+          <tr><th scope="row">Virtual coaching check-ins</th><td>Not included</td><td>Two a month</td><td>Included</td><td>Included</td></tr>
+          <tr><th scope="row">Weekly virtual session</th><td>Not included</td><td>Not included</td><td>12, one a week</td><td>Not included</td></tr>
+          <tr><th scope="row">Full nutrition planning</th><td>Not included</td><td>Not included</td><td>Included</td><td>Included</td></tr>
+          <tr><th scope="row">In-person sessions</th><td>Not included</td><td>Not included</td><td>Not included</td><td>12, 24 or 36</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small compare-note"><strong>Monthly plans:</strong> no contract, no cancellation fee. <strong>12-week packages:</strong> one payment, access runs 84 days from purchase, full refund before your first session and none after. <a href="policies.html#refunds" style="color:var(--accent); text-decoration:underline;">Read the details</a>.</p>
 
     <div class="price-card" style="margin-top:24px; background:var(--surface-2);">
       <div class="price-head"><h2 style="margin:0; font-size:16px;">Free consultation</h2><span class="price-value">$0</span></div>
@@ -98,10 +125,11 @@
       </div>
       <ul class="price-feats">
         <li>Everything in Foundation</li>
-        <li>A custom four-week plan written for you</li>
+        <li>A new custom four-week plan written for you each month</li>
         <li>Two virtual coaching check-ins a month</li>
       </ul>
       <a href="signup.html?tier=2" class="btn btn-primary btn-sm">Choose Guided</a>
+      <p class="small" style="margin:10px 0 0; color:var(--text-muted);">Billed monthly. Cancel anytime. No contract, no cancellation fee.</p>
     </div>
 
     <div class="price-card">
@@ -120,7 +148,7 @@
     <!-- ===== TRACK 3: IN PERSON ===== -->
     <div class="track-head">
       <h2>In-person coaching</h2>
-      <p>Everything above, plus hands-on sessions with me in Pawtucket. Each package runs twelve weeks.</p>
+      <p>Everything in Foundation and Guided plus full nutrition planning, with hands-on sessions with me in Pawtucket. Each package runs twelve weeks. The weekly virtual sessions in Virtual Intensive are not part of these packages.</p>
     </div>
 
     <div class="price-card">
@@ -129,7 +157,7 @@
         <span class="price-value">$850<span class="price-unit">12 weeks &middot; about $71 a session</span></span>
       </div>
       <ul class="price-feats">
-        <li>Everything above</li>
+        <li>Everything in Foundation and Guided, plus full nutrition planning</li>
         <li>Twelve in-person sessions</li>
       </ul>
       <a href="signup.html?tier=4" class="btn btn-primary btn-sm">Choose Starter</a>
@@ -141,7 +169,7 @@
         <span class="price-value">$1,600<span class="price-unit">12 weeks &middot; about $67 a session</span></span>
       </div>
       <ul class="price-feats">
-        <li>Everything above</li>
+        <li>Everything in Foundation and Guided, plus full nutrition planning</li>
         <li>Twenty-four in-person sessions</li>
       </ul>
       <a href="signup.html?tier=5" class="btn btn-primary btn-sm">Choose Standard</a>
@@ -153,7 +181,7 @@
         <span class="price-value">$2,200<span class="price-unit">12 weeks &middot; about $61 a session</span></span>
       </div>
       <ul class="price-feats">
-        <li>Everything above</li>
+        <li>Everything in Foundation and Guided, plus full nutrition planning</li>
         <li>Thirty-six in-person sessions</li>
       </ul>
       <a href="signup.html?tier=6" class="btn btn-primary btn-sm">Choose Elite</a>
@@ -167,12 +195,12 @@
     </div>
 
     <div class="center" style="padding: 8px 0 40px;">
-      <p class="small" style="margin-bottom:14px;">Not sure which one? Start at $20 and move up whenever you want. Every package builds on the one before it.</p>
+      <p class="small" style="margin-bottom:14px;">Not sure which one? Start at $20 and move up whenever you want.</p>
       <a href="signup.html?tier=1" class="btn btn-primary">Start for $20/mo</a>
     </div>
   </main>
 
-  <footer>Tenfold &nbsp;&middot;&nbsp; In person &amp; virtual coaching</footer>
+  <footer>Tenfold &nbsp;&middot;&nbsp; In person &amp; virtual coaching &nbsp;&middot;&nbsp; <a href="policies.html">Privacy, refunds &amp; terms</a> &nbsp;&middot;&nbsp; <a href="consultation.html">Contact</a></footer>
 
 
   <script src="js/nav-toggle.js" defer></script>
