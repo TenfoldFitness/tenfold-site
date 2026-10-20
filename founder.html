@@ -1,0 +1,775 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sarah Bregler</title>
+<meta name="description" content="Sarah Bregler built her work from what went wrong, and believes education is how a person changes their life. Applied AI builder, social worker, program designer.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Sarah Bregler">
+<meta property="og:description" content="Everything I'm proud of, I built from what went wrong. Social worker, program strategist, Applied AI builder.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sarah Bregler">
+<meta name="twitter:description" content="Everything I'm proud of, I built from what went wrong. Social worker, program strategist, Applied AI builder.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700;12..96,800&family=Caveat:wght@500;700&display=swap">
+<style>
+:root{
+  --cream:#F2E6D0;--paper:#FBF5E8;--ink:#2B211C;--soft:#5B4A3F;--line:#DFCDAE;
+  --forest:#35294A;--forest-d:#241B36;--forest-l:#5A3F66;--clay:#B9573A;--clay-l:#EDA97F;
+  --turq:#1F6F6B;--sage:#7C8B6E;
+  --disp:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;
+  --hand:"Caveat","Comic Sans MS",cursive;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:var(--disp);font-size:18px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--forest);color:var(--cream)}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--clay);outline-offset:3px}
+p{margin:0 0 1em}
+.wrap{max-width:1060px;margin:0 auto;padding:0 26px}
+.label{font-size:14px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.hand{font-family:var(--hand);font-weight:700;line-height:1}
+
+/* nav */
+.nav{position:sticky;top:0;z-index:40;background:rgba(242,230,208,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;height:60px;gap:12px}
+.sig{font-weight:800;font-size:20px;letter-spacing:-.02em;text-decoration:none}
+.nav ul{display:flex;gap:4px;list-style:none;margin:0;padding:0}
+.nav ul a{display:block;font-size:15px;font-weight:500;text-decoration:none;padding:8px 12px;border-radius:99px;color:var(--soft)}
+.nav ul a:hover,.nav ul a.on{background:var(--forest);color:var(--cream)}
+@media(max-width:860px){.sig{display:none}.nav .wrap{justify-content:center}}
+@media(max-width:620px){.sig{display:none}.nav .wrap{justify-content:center}.nav ul{gap:0}.nav ul a{font-size:12.5px;padding:7px 5px}}
+
+/* hero: the envelope */
+.hero{padding:18px 18px 0}
+.hero-in{max-width:1180px;margin:0 auto;border-radius:30px;color:var(--cream);padding:clamp(40px,7vw,84px) clamp(26px,6vw,76px) clamp(80px,9vw,110px);background:linear-gradient(90deg,rgba(36,27,54,.8) 0%,rgba(36,27,54,.5) 32%,rgba(36,27,54,0) 60%),linear-gradient(180deg,rgba(36,27,54,.32) 0%,rgba(36,27,54,0) 30%),url(images/founder/painting.jpg) center/cover no-repeat,#241B36;position:relative;overflow:hidden;box-shadow:0 24px 60px -30px rgba(0,0,0,.7)}
+.sky{background:linear-gradient(180deg,#241B36 0%,#33264A 24%,#4B3256 48%,#7A4561 72%,#A24E2C 100%);color:var(--cream);position:relative;overflow:hidden;padding-bottom:clamp(250px,30vw,360px)}
+.sun{position:absolute;right:14%;top:0;width:clamp(150px,20vw,260px);height:clamp(150px,20vw,260px);border-radius:50%;background:radial-gradient(circle,#FBD9AE 0%,#F4B98A 45%,rgba(237,169,127,0) 70%);pointer-events:none;z-index:0;opacity:.35;will-change:transform}
+.sky>*:not(.ridges):not(.sun){position:relative;z-index:1}
+.sky>.ridges{z-index:2}
+.nav{position:sticky}
+.prog{position:absolute;left:0;bottom:-1px;height:3px;width:100%;transform-origin:left;transform:scaleX(0);background:linear-gradient(90deg,#5A3F66,#A24E2C,#EDA97F)}
+.stage{display:inline-block;margin-left:14px;vertical-align:middle;color:var(--clay);font-size:13px}
+.sky .stage{color:var(--clay-l)}
+.stagenote{margin:14px auto 0;max-width:28em;color:rgba(242,230,208,.9);font-size:1.1rem}
+.skim{max-width:760px;margin:56px auto 0;padding:22px 26px;border:1px solid rgba(242,230,208,.28);border-radius:22px;background:rgba(36,27,54,.35);backdrop-filter:blur(4px)}
+.skim .label{color:var(--clay-l);font-size:13px}
+.skim ul{list-style:none;margin:10px 0 0;padding:0}
+.skim li{font-size:1.02rem;line-height:1.5;margin:0 0 8px;color:var(--cream)}
+.skim li b{color:var(--clay-l)}
+.skim a{color:var(--cream);font-weight:700}
+.ext::after{content:"\00a0\2197";font-weight:700}
+.hint{margin:22px 0 0;font-size:1.5rem;color:var(--cream);opacity:.9;animation:nudge 2.4s ease-in-out infinite}
+@keyframes nudge{50%{transform:translateY(5px)}}
+.feednote{margin:0 0 14px;font-size:15px;color:var(--soft);border:1px dashed var(--soft);border-radius:12px;padding:10px 14px}
+.stage small{font-weight:500;letter-spacing:.04em;text-transform:none;opacity:.85;font-size:13px}
+.cap{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px}
+.cap .count{font-size:2.2rem;color:var(--clay-l)}
+.cap .ctl{display:flex;gap:8px}
+.phone{position:relative;width:min(230px,100%);margin:14px auto 0;border:3px solid rgba(242,230,208,.7);border-radius:30px;padding:14px 12px 12px;background:#F4E6D2;color:#2A1F19;overflow:hidden}
+.phone .top{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.phone .top span,.phone .hidechip{font:700 12px var(--disp);border:1px solid #C9B294;border-radius:99px;padding:3px 10px;background:#FFFCF6;color:#51423A}
+.phone .top .hidechip{cursor:pointer}
+.phone .sunmark{width:34px;height:34px;border-radius:50%;background:#E8A020;margin:14px auto 0;box-shadow:0 0 0 8px #FBE6B8}
+.phone .opts{display:flex;gap:6px;margin:16px 0 14px}
+.phone .opts button{flex:1;height:64px;border-radius:16px;border:2px solid var(--c);background:var(--t);cursor:pointer;transition:transform .2s}
+.phone .opts button:hover{transform:scale(1.05)}
+.phone .opts button.on{background:var(--c);box-shadow:0 0 0 3px #FFFCF6,0 0 0 5px var(--c)}
+.phone .tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
+.phone .tabs i{display:block;height:5px;border-radius:3px;background:#C9B294}
+.phone .tabs i:first-child{background:#C24E22}
+.phone .cover{position:absolute;inset:0;background:#FFFCF6;color:#2A1F19;padding:26px 22px;font-size:15px;line-height:1.9;display:none}
+.phone.hid .cover{display:block}
+.shots{display:flex;gap:12px;justify-content:center;align-items:flex-start;margin:14px 0 0}
+.shots img{display:block;width:calc(50% - 6px);max-width:200px;height:auto;border-radius:20px;border:3px solid rgba(242,230,208,.7);box-shadow:0 14px 30px -14px rgba(0,0,0,.7)}
+.shots img:nth-child(2){margin-top:26px}
+.phonecap{font-size:13px;opacity:.8;text-align:center;margin:12px 0 0}.edu.bk{grid-template-columns:repeat(2,1fr);margin:30px 0 0}
+.edu.bk.after{grid-template-columns:1fr;margin:14px 0 0}
+@media(max-width:860px){.edu.bk{grid-template-columns:1fr}}
+.testcard{margin:0 0 26px}
+.testcard h3{font-weight:800;font-size:1.3rem;line-height:1.1;letter-spacing:-.025em;margin:6px 0 8px;color:var(--forest)}
+.testcard p{font-size:16.5px;color:var(--soft);margin:0}
+.sxwrap{margin-top:64px}
+.tallybox{overflow:hidden;transition:max-height 1.5s ease,opacity 1.3s ease,margin 1.5s ease,padding 1.5s ease}
+.tallybox.gone{max-height:0!important;opacity:0;margin-top:0;margin-bottom:0;padding-top:0;padding-bottom:0;border-color:transparent}
+#again{margin-top:16px;color:var(--cream)}
+.feature.sx-wait{display:none}
+.loopback{margin-top:40px;font-size:2rem;color:var(--clay);text-align:center}
+.loopback a{color:var(--forest);text-decoration:none;border-bottom:2px solid var(--forest);white-space:nowrap}
+.essaycard{max-width:760px;margin:40px auto 0;text-align:center;padding:34px 30px 30px}
+.essaycard h3{font-weight:800;font-size:clamp(1.8rem,4vw,2.6rem);line-height:1;letter-spacing:-.04em;margin:8px 0 14px;color:var(--forest)}
+.essaycard .eq{font-size:clamp(1.7rem,3.4vw,2.3rem);color:var(--clay);margin:0 auto 18px;max-width:20em;line-height:1.1}
+.essaycard .eqlink{margin:0}
+.toolrow{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 2px}
+.tools{display:inline-block;padding:2px 10px;border:1px solid var(--clay);border-radius:99px;color:var(--clay);font-size:12px;font-weight:600;letter-spacing:.02em;line-height:1.5}
+.bridge{margin:48px auto 0;font-size:clamp(1.7rem,3.6vw,2.4rem);color:var(--clay-l);max-width:20em;line-height:1.1;text-align:center}
+.bridge a{color:var(--cream);text-decoration:none;border-bottom:2px solid var(--cream);white-space:nowrap}
+.sky .band h2,.sky .conf h2{color:var(--cream)}
+.sky .lede{color:rgba(242,230,208,.9)}
+.sky .num{color:var(--clay-l)}
+.sky .hl{background:linear-gradient(transparent 62%,rgba(237,169,127,.42) 62%)}
+.sky .words.one .pull{color:var(--cream)}
+.sky .words.one .by{color:rgba(242,230,208,.85)}
+.sky .intro{color:var(--cream)}
+.sky .feature-grid.three>div{border-bottom:0}
+.notes details{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
+.notes summary{cursor:pointer;font-weight:700;font-size:15px;color:var(--clay)}
+.notes details p{margin:8px 0 0;font-size:15.5px}.subhead{color:var(--cream)}
+.sky .card,.sky .feature,.sky .conf-card.a,.sky .beliefs a{color:var(--ink)}
+.sky .tallybox{border:1px solid rgba(242,230,208,.2)}
+.ridges{position:absolute;left:0;right:0;bottom:0;width:100%;height:clamp(170px,22vw,260px);display:block;pointer-events:none;z-index:1}
+.hero-in>*:not(.ridges){position:relative;z-index:2}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opacity:.09;mix-blend-mode:multiply;background-image:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.who{font-size:15px;font-weight:500;letter-spacing:.04em;opacity:.9;margin:0 0 26px}
+.who b{font-weight:800;letter-spacing:0}
+.hero h1{font-weight:800;font-size:clamp(2.5rem,7.2vw,5.6rem);line-height:.98;letter-spacing:-.045em;margin:0 0 28px;max-width:11.5em}
+.hero h1 em{font-style:normal;color:var(--clay-l)}
+.hero .creed{font-size:clamp(1.15rem,2.3vw,1.6rem);line-height:1.4;max-width:28em;font-weight:500;margin:0;opacity:.96}
+.fade{opacity:0;transform:translateY(14px);animation:rise .9s ease forwards}
+.d1{animation-delay:.15s}.d2{animation-delay:.85s}.d3{animation-delay:1.6s}.d4{animation-delay:2.3s}
+@keyframes rise{to{opacity:1;transform:none}}
+.beliefs{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;max-width:1100px;margin:-44px auto 0;padding:0 26px;position:relative;z-index:5}
+.beliefs a{display:block;text-decoration:none;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:20px;padding:20px 22px 22px;box-shadow:0 16px 36px -20px rgba(43,33,28,.5);transition:background .2s,transform .2s}
+.beliefs a:hover{background:#fff;transform:translateY(-4px)}
+.hero-in{min-height:min(66vh,540px)}
+.hero h1{max-width:8.5em;font-size:clamp(2.2rem,5.4vw,4.3rem);text-shadow:0 2px 28px rgba(36,27,54,.55)}
+.hero .who,.hero .ask{text-shadow:0 1px 18px rgba(36,27,54,.7)}
+.ask{font-size:clamp(1.8rem,3.4vw,2.6rem);color:var(--clay-l);margin:6px 0 0;max-width:16em}
+.beliefs .s{display:block;font-size:15px;font-weight:400;color:var(--soft);margin-top:4px;line-height:1.3}
+.intro{max-width:36em;margin:64px auto 0;padding:0 26px;text-align:center;font-size:clamp(1.2rem,2.3vw,1.6rem);line-height:1.45;color:var(--soft);font-weight:500}
+.beliefs .n{font-family:var(--hand);font-size:2.4rem;color:var(--clay);display:block;line-height:1}
+.beliefs span.t{display:block;font-weight:700;font-size:1.15rem;line-height:1.2;margin-top:4px}
+@media(max-width:900px){.beliefs{grid-template-columns:repeat(2,1fr)}.beliefs a:last-child{grid-column:1/-1}}
+@media(max-width:480px){.beliefs{gap:10px;padding:0 16px}.beliefs a{padding:16px 14px 16px}.beliefs span.t{font-size:1.05rem}.beliefs .s{font-size:14px}}
+
+/* bands */
+.band{padding:104px 0 20px}
+.band h2{font-weight:800;font-size:clamp(2.1rem,5.6vw,4rem);line-height:1;letter-spacing:-.04em;margin:0 0 16px;max-width:13em}
+.band .num{font-family:var(--hand);font-weight:700;font-size:clamp(2.6rem,6vw,4.2rem);line-height:.8;display:block;color:var(--clay);margin-bottom:8px}
+.lede{font-size:clamp(1.15rem,2.1vw,1.45rem);line-height:1.45;max-width:31em;color:var(--soft);margin-bottom:34px}
+.hl{background:linear-gradient(transparent 60%,rgba(184,92,56,.28) 60%);padding:0 .06em}
+
+/* tally panel */
+.tallybox{margin:36px 0 10px;border-radius:26px;background:radial-gradient(120% 100% at 10% 0%,var(--forest-l) 0%,var(--forest) 55%,var(--forest-d) 100%);color:var(--cream);padding:24px}
+.tframe{position:relative;overflow:hidden;transition:height 1.4s ease}
+.deg{display:block;font-size:14px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--turq);margin:0 0 10px}
+.tallybox canvas{display:block;width:100%;opacity:.5}
+.tallybox .cap{display:flex;justify-content:flex-end;margin-top:12px}
+.tallybox .final{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;font-size:clamp(2.8rem,9vw,6rem);color:var(--clay-l);text-shadow:0 2px 28px rgba(36,27,54,.95),0 0 10px rgba(36,27,54,.85);pointer-events:none}
+.replay{font:600 14px var(--disp);letter-spacing:.04em;background:transparent;color:var(--cream);border:1.5px solid rgba(255,251,243,.5);border-radius:99px;padding:9px 16px;cursor:pointer}
+.replay:hover{background:var(--cream);color:var(--forest)}
+.words{display:grid;grid-template-columns:1fr 1fr;gap:38px;margin-top:46px}
+@media(max-width:800px){.words{grid-template-columns:1fr}}
+.pull{font-weight:800;font-size:clamp(1.6rem,3.6vw,2.5rem);line-height:1.1;letter-spacing:-.03em;margin:0 0 12px;color:var(--forest)}
+.words p{font-size:1.12rem;line-height:1.55;color:var(--soft);max-width:30em}
+.daynote{font-size:14px;letter-spacing:.04em;margin:10px 4px 0;text-align:right;color:rgba(242,230,208,.78)}
+#sidexside,#tenfold{scroll-margin-top:90px}
+.words.one .built{margin:0 auto;font-size:clamp(1.3rem,2.6vw,1.8rem);font-weight:700;color:var(--cream)}
+.words.one .built a{color:var(--clay-l);font-weight:700;text-decoration:none;border-bottom:2px solid var(--clay-l)}
+.words.one .built a:hover{background:var(--clay-l);color:var(--ink)}
+.words.one{display:block;margin-top:34px;text-align:center}
+.words.one .pull{margin:0 auto 10px;max-width:18em}
+.words.one .by{font-size:15px;letter-spacing:.06em;margin:0 auto;color:var(--soft)}
+
+/* cards */
+.card{background:var(--paper);border:1px solid var(--line);border-radius:22px;padding:26px 26px 22px;box-shadow:0 8px 28px -16px rgba(33,28,23,.28)}
+.edu{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:30px}
+@media(max-width:860px){.edu{grid-template-columns:1fr}}
+.edu .card h3{font-weight:800;font-size:1.35rem;line-height:1.1;letter-spacing:-.025em;margin:0 0 4px;color:var(--forest)}
+.edu .card p{font-size:16.5px;color:var(--soft);margin:0}
+.kick{font-size:14px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--turq)}
+
+/* people */
+.feature{background:var(--paper);border:1px solid var(--line);border-radius:28px;overflow:hidden;margin-bottom:26px;box-shadow:0 14px 40px -20px rgba(33,28,23,.35)}
+.feature-top{display:grid;grid-template-columns:1.15fr .85fr}
+@media(max-width:800px){.feature-top{grid-template-columns:1fr}}
+.feature-top .l{padding:36px 34px}
+.feature-top .r{padding:36px 34px;background:var(--forest);color:var(--cream);display:flex;flex-direction:column;justify-content:center;gap:8px}
+.feature-top .r .hand{font-size:2rem;color:var(--clay-l)}
+.feature h3.t{font-weight:800;font-size:clamp(2.4rem,6vw,4.2rem);line-height:.92;letter-spacing:-.05em;margin:6px 0 14px;color:var(--forest)}
+.big{font-weight:700;font-size:clamp(1.3rem,2.6vw,1.9rem);line-height:1.15;letter-spacing:-.025em;margin:0}
+.btn{display:inline-block;margin-top:20px;font-weight:700;font-size:15px;text-decoration:none;background:var(--forest);color:var(--cream);padding:13px 22px;border-radius:99px}
+.btn:hover{background:var(--clay)}
+.feature-grid{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line)}
+.feature-grid>div{padding:24px 26px 26px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.feature-grid>div:nth-child(3n){border-right:0}
+.feature-grid>div:nth-last-child(-n+2){border-bottom:0}
+.feature-grid h4{font-weight:800;font-size:1.15rem;line-height:1.1;letter-spacing:-.02em;margin:0 0 8px;color:var(--forest)}
+.feature-grid p{font-size:16px;line-height:1.5;color:var(--soft);margin:0}
+.feature-grid.three>button{display:flex;flex-direction:column;justify-content:flex-start;align-items:flex-start;text-align:left;font:inherit;color:inherit;background:none;border:0;border-right:1px solid var(--line);padding:24px 26px 22px;cursor:pointer;transition:background .2s}
+.feature-grid.three>button:last-child{border-right:0}
+.feature-grid.three>button:hover{background:var(--cream)}
+.feature-grid.three>button[aria-selected="true"]{background:var(--cream);box-shadow:inset 0 3px 0 var(--clay)}
+.feature-grid .cue{display:block;margin-top:12px;font-weight:700;font-size:14px;color:var(--clay)}
+.feature-detail{border-top:1px solid var(--line);padding:24px 30px 28px;background:var(--cream);color:var(--ink)}
+.feature-detail[hidden]{display:none}
+.feature-detail ul{margin:0;padding-left:1.2em}
+.feature-detail li{margin-bottom:.6em;font-size:16.5px;line-height:1.55}
+.feature-detail li:last-child{margin-bottom:0}
+@media(max-width:900px){.feature-grid.three>button{border-right:0;border-bottom:1px solid var(--line)}.feature-grid.three>button:last-child{border-bottom:0}}
+@media(max-width:900px){.feature-grid{grid-template-columns:1fr}.feature-grid>div{border-right:0!important;border-bottom:1px solid var(--line)!important}.feature-grid>div:last-child{border-bottom:0!important}}
+
+.feature-grid.three>div{border-bottom:0}
+.notes details{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
+.notes summary{cursor:pointer;font-weight:700;font-size:15px;color:var(--clay)}
+.notes details p{margin:8px 0 0;font-size:15.5px}.subhead{font-weight:800;font-size:1.7rem;letter-spacing:-.03em;margin:56px 0 18px}
+.notes{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:stretch}
+@media(max-width:900px){.notes{grid-template-columns:1fr}}
+.notes .card h3{font-weight:800;font-size:1.3rem;line-height:1.1;letter-spacing:-.025em;margin:6px 0 10px}
+.notes .card p{font-size:16px;color:var(--soft)}
+.notes .card b{color:var(--ink)}
+.notes .card .jc{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);font-size:15.5px}
+.notes .card .jc b{color:var(--clay)}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
+@media(max-width:800px){.duo{grid-template-columns:1fr}}
+.duo .card h3{font-weight:800;font-size:1.3rem;line-height:1.1;letter-spacing:-.025em;margin:6px 0 8px;color:var(--forest)}
+.duo .card p{font-size:16.5px;color:var(--soft);margin:0}
+.duo a{color:var(--clay);font-weight:700}
+
+/* writing */
+.piece{display:grid;grid-template-columns:200px 1fr;gap:24px;border-top:1px solid var(--line);padding:24px 0}
+.piece:last-child{border-bottom:1px solid var(--line)}
+.piece .label{color:var(--clay);padding-top:5px;font-size:13px}
+.piece h3{font-weight:800;font-size:clamp(1.25rem,2.3vw,1.7rem);line-height:1.1;letter-spacing:-.025em;margin:0 0 6px}
+.piece p{font-size:16.5px;color:var(--soft);margin:0}
+.pmeta{margin:10px 0 0!important;font-size:15px;color:var(--soft)}
+.pmeta span{opacity:.75}
+.plink{font:700 16px var(--disp);color:var(--clay);text-decoration:none;border:0;border-bottom:2px solid var(--clay);background:none;padding:0 0 1px;cursor:pointer}
+.plink:hover{background:var(--clay);color:var(--paper)}
+.reader{position:fixed;inset:0;z-index:300;background:var(--cream);overflow-y:auto;overscroll-behavior:contain}
+.reader[hidden]{display:none}
+.reader-bar{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 26px;background:var(--cream);border-bottom:1px solid var(--line)}
+.reader-bar .label{font-size:13px;color:var(--soft)}
+.reader-bar button{font:700 15px var(--disp);color:var(--cream);background:var(--ink);border:0;border-radius:99px;padding:10px 20px;cursor:pointer}
+.reader-bar button:hover{background:var(--clay)}
+.reader-body{max-width:40em;margin:0 auto;padding:54px 26px 140px;font-size:1.16rem;line-height:1.72;color:var(--ink)}
+.reader-body:focus{outline:none}
+.reader-body .rh{margin-bottom:34px}
+.reader-body h1{font-weight:800;font-size:clamp(2rem,5vw,3.2rem);line-height:1.02;letter-spacing:-.035em;margin:10px 0 14px}
+.reader-body h2{font-weight:800;font-size:1.7rem;line-height:1.1;letter-spacing:-.03em;margin:8px 0 12px}
+.reader-body .label{display:block;margin-top:44px;color:var(--clay);font-size:13px}
+.reader-body .rh .label{margin-top:0}
+.reader-body .dek{font-size:1.25rem;line-height:1.45;color:var(--soft);margin:0 0 10px}
+.reader-body .rby{font-size:15px;color:var(--soft);margin:0}
+.reader-body p{margin:0 0 1.2em}
+.reader-body sup a{font-size:.7em;color:var(--clay);text-decoration:none;margin-left:1px}
+.reader-body ul{padding-left:1.2em;margin:0 0 1.4em}
+.reader-body li{margin-bottom:.7em}
+.reader-body .ev{list-style:none;padding:0}
+.reader-body .ev li{display:grid;grid-template-columns:110px 1fr;gap:16px;border-top:1px solid var(--line);padding:14px 0;margin:0}
+.reader-body .ev b{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--clay);padding-top:4px}
+.reader-body .ev p{margin:0}
+.reader-body .spec{margin:0 0 1.6em;border:1px solid var(--line);border-radius:16px;background:var(--paper);padding:6px 20px}
+.reader-body .spec div{display:grid;grid-template-columns:110px 1fr;gap:16px;padding:10px 0;border-bottom:1px solid var(--line)}
+.reader-body .spec div:last-child{border-bottom:0}
+.reader-body dt{font-size:13px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--clay);padding-top:3px}
+.reader-body dd{margin:0}
+.reader-body .refs{font-size:.95rem;line-height:1.5;color:var(--soft);padding-left:1.6em}
+.reader-body .refs a{color:var(--soft)}
+.reader-body .disc{font-size:.95rem;color:var(--soft);border-top:1px solid var(--line);padding-top:16px;margin-top:30px}
+.reader-body .orig a,.reader-body .gate a{color:var(--clay);font-weight:700}
+.reader-body .orig a::after,.reader-body .gate a::after{content:"\00a0\2197"}
+.reader-body .gate{border:1px dashed var(--soft);border-radius:14px;padding:16px 18px;font-size:1rem;color:var(--soft)}
+@media(max-width:560px){.reader-body .ev li,.reader-body .spec div{grid-template-columns:1fr;gap:2px}}
+.pending{display:inline-block;margin-top:10px;font-size:13px;font-weight:600;color:var(--soft);border:1.5px dashed var(--soft);border-radius:99px;padding:3px 12px}
+@media(max-width:700px){.piece{grid-template-columns:1fr;gap:4px}}
+
+footer{margin-top:100px;padding:18px 18px 18px}
+footer .in{max-width:1180px;margin:0 auto;border-radius:30px;color:var(--cream);text-align:center;padding:76px 26px clamp(200px,24vw,280px);background:linear-gradient(180deg,#241B36 0%,#3B2B50 40%,#6A4160 66%,#B9573A 90%,#EDA97F 100%);position:relative;overflow:hidden}
+footer .in>*:not(.ridges){position:relative;z-index:2}
+footer h2{font-weight:800;font-size:clamp(2rem,5.4vw,3.8rem);line-height:1;letter-spacing:-.04em;max-width:13em;margin:0 auto 14px}
+footer p{font-size:1.2rem;max-width:26em;margin:0 auto 26px;opacity:.92}
+footer a.mail{display:inline-block;font-weight:700;font-size:16px;text-decoration:none;background:var(--cream);color:var(--forest);padding:15px 28px;border-radius:99px}
+footer a.mail:hover{background:var(--clay-l)}
+footer .fine{margin-top:34px;font-size:14px;opacity:.7}
+
+.art{max-width:1060px;margin:84px auto 0;padding:0 26px}
+.art img{display:block;width:100%;height:auto;border-radius:24px;box-shadow:0 18px 44px -22px rgba(43,33,28,.55)}
+.art figcaption{font-size:2rem;color:var(--clay);margin-top:12px;text-align:right}
+.conf{padding:96px 0 10px}
+.conf h2{font-size:clamp(1.9rem,4.6vw,3.2rem)}
+.conf-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:20px;margin-top:26px}
+@media(max-width:800px){.conf-grid{grid-template-columns:1fr}}
+.conf-card{border-radius:26px;padding:34px 32px 38px}
+.conf-card.a{background:var(--paper);border:1px solid var(--line);box-shadow:0 14px 40px -22px rgba(33,28,23,.35)}
+.conf-card.b{background:#A24E2C;color:var(--cream)}
+.conf-card.c{grid-column:1/-1;background:var(--ink);color:var(--cream)}
+.conf-card.c .hand{color:var(--clay-l)}
+.conf-card .hand{font-size:2.2rem;display:block;margin-bottom:12px}
+.conf-card.a .hand{color:var(--clay)}
+.conf-card.b .hand{color:var(--cream);opacity:.9}
+.conf-card p{font-weight:800;font-size:clamp(1.55rem,3vw,2.35rem);line-height:1.1;letter-spacing:-.035em;margin:0}
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .7s,transform .7s}
+.reveal.in{opacity:1;transform:none}
+.js-off .reveal{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}.fade,.reveal{opacity:1;transform:none}
+  .tallybox canvas{transition:opacity 1.8s ease!important}.tallybox .final{transition:opacity 2s ease .3s!important}}
+</style>
+</head>
+<body class="js-off">
+
+<header class="nav"><div class="wrap">
+  <a class="sig" href="#top">Sarah Bregler</a>
+  <ul>
+    <li><a href="#happened">Happened</a></li>
+    <li><a href="#learned">Learned</a></li>
+    <li><a href="#built">Built</a></li>
+    <li><a href="#decide">Decide</a></li>
+    <li><a href="#test">Tested</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</div><span class="prog" id="prog" aria-hidden="true"></span></header>
+
+<main id="top">
+
+<div class="sky">
+<span class="sun" id="sun" aria-hidden="true"></span>
+<section class="hero"><div class="hero-in">
+  <p class="who fade d1"><b>Sarah Bregler</b> &middot; Social worker &middot; Program strategist &middot; Applied AI builder</p>
+  <h1 class="fade d1">Everything I&rsquo;m proud of, I <em>built</em> from what went wrong.</h1>
+  <p class="ask hand fade d2">Everyone has been marked by life.</p>
+</div></section>
+
+<nav class="beliefs" aria-label="The five parts of the story">
+  <a href="#happened"><span class="n">1</span><span class="t">What happened</span><span class="s">What I&rsquo;ve lived</span></a>
+  <a href="#learned"><span class="n">2</span><span class="t">What I learned</span><span class="s">What I believe</span></a>
+  <a href="#built"><span class="n">3</span><span class="t">What I built</span><span class="s">For people in the same spot</span></a>
+  <a href="#decide"><span class="n">4</span><span class="t">How I decide</span><span class="s">The calls I made</span></a>
+  <a href="#test"><span class="n">5</span><span class="t">Put to the test</span><span class="s">Research and writing</span></a>
+</nav>
+
+<aside class="skim reveal" aria-label="In 30 seconds">
+  <span class="label">In 30 seconds</span>
+  <ul>
+    <li><b>Who:</b> a social worker with an MBA and MSW, a decade in socialized medicine, who transitioned into mission-based work.</li>
+    <li><b>Built:</b> <a class="ext" href="https://sidexsideorg.app" rel="noopener">SidexSide</a>, a free live app for the first months home from prison, and <a class="ext" href="https://tenfoldframework.com" rel="noopener">Tenfold</a>, a mental health and wellness training program for anyone.</li>
+    <li><b>Open to:</b> a role or a collaboration. <a href="#contact">Write to me &darr;</a></li>
+  </ul>
+</aside>
+
+
+
+
+
+<!-- 1 -->
+<section class="band" id="happened"><div class="wrap">
+  <span class="num">1</span><span class="stage label">Part 1 &middot; What happened</span>
+  <h2 class="reveal">I don&rsquo;t hide what I&rsquo;ve lived. I <span class="hl">learned</span> from it.</h2>
+
+  <div class="tallybox" id="tallybox">
+    <div class="tframe" id="tframe"><canvas id="tally" role="img" aria-label="Thousands of tally marks, one for every day"></canvas><div class="final hand">Time inside.</div></div>
+    <div class="cap"><span></span><span class="ctl"><button type="button" class="replay" id="tskip">Skip</button><button type="button" class="replay" id="treplay">Replay</button></span></div>
+  </div>
+
+  <p class="bridge hand reveal">So I build for the people who are where I was.</p>
+  <button type="button" class="replay" id="again" hidden>Replay &ldquo;Time inside&rdquo;</button>
+</div></section>
+
+<!-- 2 -->
+<section class="band" id="learned"><div class="wrap">
+  <span class="num">2</span><span class="stage label">Part 2 &middot; What I learned</span>
+  <h2 class="reveal">Education is how a person <span class="hl">changes</span> their life.</h2>
+
+  <div class="edu">
+    <div class="card reveal"><h3>Biochemistry &amp; Medical Humanities</h3><span class="deg">B.A.</span><p>The science of the body, and the study of how people experience illness and care.</p></div>
+    <div class="card reveal"><h3>MBA &amp; MSW</h3><span class="deg">Boston College</span><p>Business management and macro social work, learned side by side.</p></div>
+    <div class="card reveal"><h3>Applied AI Professional Certification</h3><span class="deg">Columbia University</span><p>A 12-week course on AI safety, ethics and governance, through Fair Chance Futures.</p></div>
+  </div>
+</div></section>
+
+<!-- 3 -->
+<section class="band" id="built"><div class="wrap">
+  <span class="num">3</span><span class="stage label">Part 3 &middot; What I built</span>
+  <h2 class="reveal">I invest in <span class="hl">people.</span></h2>
+  <p class="lede reveal">Everything I build starts with a person I care about and a problem that is theirs, not mine.</p>
+  <article class="feature reveal" id="sidexside">
+    <div class="feature-top">
+      <div class="l">
+        <span class="kick">The one that is live</span>
+        <h3 class="t">SidexSide</h3>
+        <p class="big">A free app for the first months home after prison.</p>
+        <a class="btn ext" href="https://sidexsideorg.app" rel="noopener">Open the live app</a>
+      </div>
+      <div class="r">
+        <p class="big">Free. Private. Made for your phone.</p>
+        <div class="shots" id="phone">
+          <img src="images/founder/sidexside-welcome.png" width="474" height="905" alt="SidexSide welcome screen: You don&rsquo;t have to do this alone. Check in. Write. Meet people who get it. Built by Jose, Ryan and Sarah. Not tied to parole, probation, or courts.">
+          <img src="images/founder/sidexside-today.png" width="478" height="905" alt="SidexSide Today screen: a check-in, days showed up, one small step toward someone, and tabs for Today, People, Help out, Journal and You.">
+        </div>
+        <p class="phonecap" id="phonecap">Real screens from the live app: the welcome, and Today.</p>
+        <button type="button" class="btn" id="try-live" style="margin-top:10px;border:0;cursor:pointer;background:var(--cream);color:var(--forest)">Try the live app here</button>
+      </div>
+    </div>
+    <div class="feature-grid three" role="tablist" aria-label="More about SidexSide">
+      <button type="button" role="tab" aria-selected="false" aria-controls="sx-panel" data-i="0"><h4>Why it exists</h4><p>The first six months home bring loneliness and real distress.</p><span class="cue">See the details +</span></button>
+      <button type="button" role="tab" aria-selected="false" aria-controls="sx-panel" data-i="1"><h4>What it does</h4><p>A one-tap check-in, a journal, a three-goal plan, and 988 and 911 one tap away.</p><span class="cue">See the details +</span></button>
+      <button type="button" role="tab" aria-selected="false" aria-controls="sx-panel" data-i="2"><h4>How it protects people</h4><p>One tap hides the screen. Journals are locked on the phone, so nobody on the server can open them, us included.</p><span class="cue">See the details +</span></button>
+    </div>
+    <div class="feature-detail" id="sx-panel" role="tabpanel" hidden></div>
+    <template id="sx-d0"><ul>
+      <li>People released from federal prison into places where they know almost nobody face loneliness and real psychological distress in the first six months home.</li>
+      <li>Every design question came back to one: can somebody use this when they are tired, scared, or on a cracked phone?</li>
+      <li>The app runs on plain rules. The applied AI part is that we built the prototype with Claude.</li>
+    </ul></template>
+    <template id="sx-d1"><ul>
+      <li>Six tabs, one job each: a one-tap check-in, people, give and ask, a journal, a three-goal plan, and you.</li>
+      <li>988, 911 and local lines are one tap away from every screen.</li>
+      <li>The check-in is four big choices and takes under five seconds.</li>
+      <li>The week shows days logged, not a streak, and a missed day never counts against anyone.</li>
+      <li>On a bad night, the breathing tool slows down rather than speeds up. If the phone asks for reduced motion, it shows a still circle instead.</li>
+      <li>When someone says they feel alone, the app suggests one small step toward a real person and offers words they can send. Anyone can turn a kind of suggestion off.</li>
+    </ul></template>
+    <template id="sx-d2"><ul>
+      <li>If someone walks up, one tap turns the screen into a grocery list. Getting back takes a full second of holding, so it can&rsquo;t happen by accident.</li>
+      <li>Journals, moods and goals are locked on the phone before anything leaves it, so the server holds a copy that nobody there can open, us included.</li>
+      <li>Messages open only on the two phones in the conversation.</li>
+      <li>Logs keep no IP addresses, no device details, no text.</li>
+      <li>Every rate limit is set twice, once at the gateway and again in the database, so if one is skipped the other still holds.</li>
+      <li>It never diagnoses and it never stands in for people.</li>
+      <li>We are not connected to parole, probation or courts, and the app says so up front.</li>
+    </ul></template>
+  </article>
+
+
+
+  <div class="duo" style="grid-template-columns:1fr">
+    <div class="card reveal" id="tenfold"><span class="kick">Founder &middot; Mental health &amp; wellness</span><h3>Tenfold Method</h3><p>A mental health and wellness training program for anyone. It started with twelve-week cohorts for women reentering and women in recovery. <a class="plink ext" href="https://tenfoldframework.com" rel="noopener">tenfoldframework.com</a></p></div>
+  </div>
+
+</div></section>
+
+<!-- 4 -->
+<section class="band" id="decide"><div class="wrap">
+  <span class="num">4</span><span class="stage label">Part 4 &middot; How I decide</span>
+  <h2 class="reveal">I name the problem, then set the <span class="hl">limits.</span></h2>
+  <p class="lede reveal">Three projects for outside teams. For each one I wrote down the problem, scoped the solution, and made one call about what to leave out or not claim.</p>
+  <div class="notes">
+    <article class="card reveal">
+      <span class="kick">KeHE</span>
+      <h3>Forecasting food trends, with a person in the loop</h3>
+      <p><b>Problem.</b> Buyers need an early read on which food trends are real.</p>
+      <p><b>Scope.</b> A buyer dashboard that scores each trend out of 100 and leaves every decision to a person.</p>
+      <p><b>Tools.</b> Python, FastAPI, LlamaIndex, Nixtla</p>
+      <details><summary>The judgment call</summary><p>The detector flags and a person decides. A repository advertising cultural-momentum scoring was an unmodified fork of a 671B language model with no such feature, so I cut it. The tool ships with real products and no fabricated figures.</p></details>
+    </article>
+    <article class="card reveal">
+      <span class="kick">JPMorgan Chase</span>
+      <h3>One shared record, so nobody falls out of a workshop</h3>
+      <p><b>Problem.</b> No single record of who is in a workshop and where they stand.</p>
+      <p><b>Scope.</b> One row per person, matched on email then phone, with one status every facilitator can read.</p>
+      <p><b>Tools.</b> Airtable, Automations, QR check-in</p>
+      <details><summary>The judgment call</summary><p>An ambiguous match is flagged, never guessed. A walk-in with no contact details counts toward headcount and is excluded from every outbound send.</p></details>
+    </article>
+    <article class="card reveal">
+      <span class="kick">Checkr</span>
+      <h3>Telling government buyers what Checkr can actually do</h3>
+      <p><b>Problem.</b> Agencies need to know what Checkr can do before they spend review time.</p>
+      <p><b>Scope.</b> A pre-suitability portal that runs before review. The agency keeps every decision.</p>
+      <p><b>Tools.</b> Framer, FCRA review pass, OPM hiring framework</p>
+      <details><summary>The judgment call</summary><p>The brief wanted &ldquo;compliant hiring.&rdquo; Checkr supports compliance and does not guarantee it, so the page says so.</p></details>
+    </article>
+  </div></div></section>
+
+  <svg class="ridges" viewBox="0 0 1200 220" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0,118 L90,72 L170,104 L270,48 L360,100 L450,62 L520,112 L560,74 L700,74 L742,114 L860,70 L960,110 L1070,60 L1200,100 L1200,220 L0,220Z" fill="#8A4350"/>
+    <path d="M0,150 L120,110 L210,140 L330,92 L430,135 L540,102 L650,150 L770,106 L880,145 L990,102 L1100,140 L1200,116 L1200,220 L0,220Z" fill="#6A3A44"/>
+    <path d="M0,184 L100,160 L200,180 L320,142 L420,175 L540,150 L640,185 L760,156 L880,180 L1000,150 L1100,178 L1200,160 L1200,220 L0,220Z" fill="#4A2F38"/>
+    <path d="M0,214 L150,200 L300,212 L460,198 L620,214 L800,200 L960,213 L1100,201 L1200,210 L1200,220 L0,220Z" fill="#F2E6D0"/>
+  </svg>
+</div>
+
+<!-- 5 -->
+<section class="band" id="test"><div class="wrap">
+  <span class="num">5</span><span class="stage label">Part 5 &middot; Put to the test</span>
+  <h2 class="reveal">I put my thinking where it can be <span class="hl">tested.</span></h2>
+  <p class="lede reveal">Research on movement, pain and mental health, published where anyone can check it.</p>
+  <div>
+    <div id="tenfold-feed">
+    <div class="piece"><div class="label">Research<br>Mental health &amp; movement</div><div><h3>Moving through it: how exercise reshapes the biology of anxiety and depression</h3><p>For a long time, exercise has been talked about almost entirely in terms of the body.</p><p class="pmeta"><button type="button" class="plink readbtn" data-art="moving">Read it here</button></p></div></div>
+    <div class="piece"><div class="label">Research<br>Movement &amp; recovery</div><div><h3>Under Tension: What Resistance Bands Do for Back and Hip Pain</h3><p>What the research actually says about training your way out of pain, and where that evidence runs out.</p><p class="pmeta"><button type="button" class="plink readbtn" data-art="under">Read it here</button></p></div></div>
+    <div class="piece"><div class="label">Research<br>Acuity &amp; functional movement</div><div><h3>Pairing Nutrition with Movement</h3><p>The hurdle is not a lack of desire, it is the frustration when hard earned effort does not show.</p><p class="pmeta"><button type="button" class="plink readbtn" data-art="pairing">Read it here</button></p></div></div>
+    </div>
+    <p class="pmeta tf-more"><a class="plink ext" href="https://tenfoldframework.com/blog" rel="noopener">More on Tenfold Method</a></p>
+  </div>
+  <p class="loopback hand reveal">Everything I&rsquo;m proud of, I built from what went wrong. And I&rsquo;m not done.</p>
+</div></section>
+
+</main>
+
+<footer id="contact"><div class="in">
+  <h2>Have a role or a collaboration in mind? I&rsquo;d like to hear it.</h2>
+  <p>Tell me what you are building, and who it is for. I work best on things that start with a real person and a real problem.</p>
+  <a class="mail" href="mailto:sjaneb330@gmail.com?subject=Hello%20from%20your%20portfolio">Write to Sarah &rarr;</a>
+  <div class="fine">Sarah Bregler &middot; Pawtucket, RI</div>
+  <svg class="ridges" viewBox="0 0 1200 220" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0,118 L90,72 L170,104 L270,48 L360,100 L450,62 L520,112 L560,74 L700,74 L742,114 L860,70 L960,110 L1070,60 L1200,100 L1200,220 L0,220Z" fill="#7A4A64"/>
+    <path d="M0,150 L120,110 L210,140 L330,92 L430,135 L540,102 L650,150 L770,106 L880,145 L990,102 L1100,140 L1200,116 L1200,220 L0,220Z" fill="#A9533A"/>
+    <path d="M0,184 L100,160 L200,180 L320,142 L420,175 L540,150 L640,185 L760,156 L880,180 L1000,150 L1100,178 L1200,160 L1200,220 L0,220Z" fill="#5A3D32"/>
+    <path d="M0,210 L150,195 L300,208 L460,190 L620,210 L800,192 L960,209 L1100,195 L1200,205 L1200,220 L0,220Z" fill="#2B211C"/>
+  </svg>
+</div></footer>
+
+
+<div class="reader" id="reader" hidden role="dialog" aria-modal="true" aria-label="Article">
+  <div class="reader-bar"><span class="label">Sarah Bregler &middot; Writing</span><button type="button" id="reader-close">Close &times;</button></div>
+  <article class="reader-body" id="reader-body" tabindex="-1"></article>
+</div>
+<template id="art-under"><header class="rh"><span class="label">Rehab Science &middot; Resistance Training</span><h1>Under Tension: What Resistance Bands Do for Back and Hip Pain</h1><p class="dek">What the research actually says about training your way out of back and hip pain, and where that evidence runs out.</p><p class="rby">Sarah &middot; first published on Tenfold Method</p></header>
+<p>In fifteen years of coaching people through pain and stiffness, I have watched the same pattern play out more times than I can count. Someone's back or hip starts hurting, so they stop moving it, and the stillness ends up doing more damage than the original ache ever would have. Back and hip pain are common enough that almost everyone deals with a flare up eventually, and exercise is one of the few things that actually holds up when researchers look closely at it. Resistance training and targeted stretching produce real, measurable drops in chronic low back and hip pain.<sup><a href="#fn1">1</a></sup><sup><a href="#fn2">2</a></sup> The catch, and I tell every client this upfront, is that the benefit is usually short to medium term, and it depends entirely on the program fitting the person doing it.</p>
+<p>One honest note before I get into the research: very little of it tested resistance bands by name. Most of it comes from broader resistance training and stretching studies. That gap matters less than it sounds, because a band's job is simple. It supplies resistance through a range of motion, the same job a cable machine or a dumbbell does. In my own Functional Movement Training sessions, bands are often what I reach for first, precisely because the loading principles below transfer directly, even when the original study used different equipment.</p>
+<span class="label">The Evidence, At Full Stretch</span>
+<h2>Not every claim carries the same weight</h2>
+<p>I am careful never to oversell a client on an exercise, and I want to do the same thing here. Here is what the current research actually supports, sized to how much tension it can hold. A fully drawn band means strong, consistent support across studies. A half drawn band means the support is real but thinner, or the finding is narrower than it first sounds.</p>
+<ul class="ev">
+<li><b>Strong</b><p>Exercise produces small gains in the short term and moderate, lasting improvement in chronic mechanical low back pain.<sup><a href="#fn3">3</a></sup></p></li>
+<li><b>Moderate</b><p>Pairing resistance training with back extension work meaningfully lowers pain and disability. People who gain more than 20 percent in strength see the biggest drop in pain.<sup><a href="#fn4">4</a></sup></p></li>
+<li><b>Moderate</b><p>Stretching eases low back pain by loosening passive muscle stiffness and widening range of motion.<sup><a href="#fn5">5</a></sup></p></li>
+<li><b>Moderate</b><p>Hip strengthening and stretching ease hip osteoarthritis pain in the short term, but that benefit does not hold up at the medium term mark.<sup><a href="#fn6">6</a></sup></p></li>
+</ul>
+<span class="label">Why It Works</span>
+<h2>The mechanism behind the relief</h2>
+<p>This is the part I find genuinely satisfying to explain to clients, because it takes the mystery out of why a simple band can do so much. Loading matters more than the tool that provides it. Moderate resistance, worked twice a week for two sets of eight to twelve reps, produced pain relief that lasted up to two years in some patients.<sup><a href="#fn7">7</a></sup> A band makes this easy to approximate. Color and length stand in for a percentage of a one rep max, and eight to twelve reps to a hard but doable finish is the same target either way.</p>
+<p>Motor control work aimed at the deep stabilizers, the transversus abdominis and the lumbar multifidus, helps most when someone has trouble recruiting those muscles in the first place.<sup><a href="#fn8">8</a></sup> Separately, exercise turns down pain signaling through endocannabinoid pathways and anti-inflammatory effects, and that shift shows up after a single session, not just after weeks of consistent training.<sup><a href="#fn9">9</a></sup><sup><a href="#fn10">10</a></sup></p>
+<p>I say this to almost every client with back pain who wants to skip leg day: hip work is not a side note in a back pain program. Muscles crossing the hip and pelvis set the stability of the low back directly, so a plan that skips the hips is only treating half the chain.<sup><a href="#fn11">11</a></sup><sup><a href="#fn12">12</a></sup></p>
+<span class="label">The Stretch Side</span>
+<h2>What flexibility is actually doing</h2>
+<p>Clients tend to treat stretching as an afterthought, something to squeeze in if there is time left at the end of a session. I push back on that every chance I get, because the research keeps landing on the same handful of reasons it matters just as much as the loading work.</p>
+<ul>
+<li>Stretching lowers passive stiffness and eases pressure on nerve roots through the elastic give of connective tissue.<sup><a href="#fn13">13</a></sup></li>
+<li>People with more hip and trunk flexibility keep better control of the erector spinae at the end range of a forward bend. Losing that control is linked to abnormal spinal loading and pain that keeps returning.<sup><a href="#fn14">14</a></sup></li>
+<li>A well built program stretches the hip flexors and lumbar extensors while strengthening the abdominals and glutes, which corrects an overly tilted pelvis and spreads out the load the low back has been carrying alone.<sup><a href="#fn15">15</a></sup></li>
+<li>Fascial stretching targets the trigger points that form when tension loads unevenly through tissue, and it works best paired with strengthening and coordination work rather than done on its own.<sup><a href="#fn16">16</a></sup></li>
+</ul>
+<span class="label">Programming Notes</span>
+<h2>Turning this into an actual routine</h2>
+<p>This is close to how I actually build these plans with clients, and it is worth saying plainly: the research is consistent on one point, a program built for a specific person outperforms a generic one. Pain mechanism, movement pattern, and individual biomechanical deficits should all shape what gets prescribed.<sup><a href="#fn17">17</a></sup><sup><a href="#fn18">18</a></sup> Core stability work beats generic strengthening for cutting pain, disability, and fear of movement in chronic low back pain, and the best results come from combining stability training with resistance work rather than choosing one over the other.<sup><a href="#fn19">19</a></sup></p>
+<dl class="spec">
+<div><dt>Load</dt><dd>Moderate tension, roughly 50 to 70 percent of max effort</dd></div>
+<div><dt>Frequency</dt><dd>Twice weekly</dd></div>
+<div><dt>Volume</dt><dd>2 sets of 8 to 12 reps per movement</dd></div>
+<div><dt>Pair with</dt><dd>Hip flexor and lumbar extensor stretching, deep core activation</dd></div>
+</dl>
+<span class="label">Where The Evidence Runs Thin</span>
+<h2>What this research does not show</h2>
+<p>I would rather tell you where this evidence gets thin than let you find out the hard way, so here is the honest version.</p>
+<ul>
+<li>Hip osteoarthritis benefits fade by the medium term mark. There is no evidence yet that the relief lasts.<sup><a href="#fn20">20</a></sup></li>
+<li>Sticking with the program is the real obstacle. Some of these studies saw dropout rates near 50 percent.<sup><a href="#fn21">21</a></sup></li>
+<li>Almost none of this research tested resistance bands specifically. One case study did use bands directly and found real gains in a client with chronic low back pain,<sup><a href="#fn22">22</a></sup> but most of what is above comes from broader resistance training and stretching studies, and band based routines borrow those findings rather than being tested directly.</li>
+</ul>
+<p>None of this replaces a clinician. Anyone starting a program for back or hip pain should get a licensed clinician's input on exercise selection, intensity, and how fast to progress.</p>
+<p>If your back or hip has been holding you back and you are not sure where a band fits into the picture, that is exactly the kind of question I like sitting down with people over. We can build something that actually fits your body and your life.</p>
+<h2>Sources</h2>
+<ol class="refs">
+<li id="fn1"><a href="https://www.mdpi.com/2227-9032/12/2/242" target="_blank" rel="noopener">The Role of Physical Exercise in Chronic Musculoskeletal Pain: Best Medicine, Healthcare (2024)</a></li>
+<li id="fn2"><a href="https://pubmed.ncbi.nlm.nih.gov/26267006/" target="_blank" rel="noopener">Physical exercise as non-pharmacological treatment of chronic pain: Why and when, Best Practice &amp; Research Clinical Rheumatology (2015)</a></li>
+<li id="fn3"><a href="https://www.mdpi.com/2227-9032/12/2/242" target="_blank" rel="noopener">The Role of Physical Exercise in Chronic Musculoskeletal Pain: Best Medicine, Healthcare (2024)</a></li>
+<li id="fn4"><a href="https://www.dovepress.com/chronic-pain-management-in-the-obese-patient-a-focused-review-of-key-c-peer-reviewed-fulltext-article-JPR" target="_blank" rel="noopener">Chronic pain management in the obese patient: a focused review of key challenges and potential exercise solutions, Journal of Pain Research (2015)</a></li>
+<li id="fn5"><a href="https://www.brjp.org.br/article/doi/10.5935/2595-0118.20220001" target="_blank" rel="noopener">Mechanisms of muscle stretching exercises for reduction of low back pain: narrative review, Brazilian Journal of Pain (2022)</a></li>
+<li id="fn6"><a href="https://www.mdpi.com/2227-9032/12/2/242" target="_blank" rel="noopener">The Role of Physical Exercise in Chronic Musculoskeletal Pain: Best Medicine, Healthcare (2024)</a></li>
+<li id="fn7"><a href="https://www.mdpi.com/2227-9032/12/2/242" target="_blank" rel="noopener">The Role of Physical Exercise in Chronic Musculoskeletal Pain: Best Medicine, Healthcare (2024)</a></li>
+<li id="fn8"><a href="https://eor.bioscientifica.com/view/journals/eor/8/7/EOR-23-0057.xml" target="_blank" rel="noopener">The effect and mechanism of motor control exercise on low back pain: a narrative review, EFORT Open Reviews (2023)</a></li>
+<li id="fn9"><a href="https://eor.bioscientifica.com/view/journals/eor/8/7/EOR-23-0057.xml" target="_blank" rel="noopener">The effect and mechanism of motor control exercise on low back pain: a narrative review, EFORT Open Reviews (2023)</a></li>
+<li id="fn10"><a href="https://pubmed.ncbi.nlm.nih.gov/33062901/" target="_blank" rel="noopener">Exercise-induced hypoalgesia after acute and regular exercise, Pain Reports (2020)</a></li>
+<li id="fn11">Kwok, 2021 (full source unconfirmed)</li>
+<li id="fn12">Hui, 2024 (full source unconfirmed)</li>
+<li id="fn13"><a href="https://www.brjp.org.br/article/doi/10.5935/2595-0118.20220001" target="_blank" rel="noopener">Mechanisms of muscle stretching exercises for reduction of low back pain: narrative review, Brazilian Journal of Pain (2022)</a></li>
+<li id="fn14">Kwok, 2021 (full source unconfirmed)</li>
+<li id="fn15">Radziszewski, 2012 (full source unconfirmed)</li>
+<li id="fn16"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11698533/" target="_blank" rel="noopener">Myofascial System and Physical Exercise: A Narrative Review on Stretching, Cureus (2024)</a></li>
+<li id="fn17"><a href="https://onlinelibrary.wiley.com/doi/full/10.1002/ejp.2190" target="_blank" rel="noopener">Personalized assessment and management of non-specific low back pain, European Journal of Pain (2023)</a></li>
+<li id="fn18"><a href="https://doi.org/10.3390/jcm12175510" target="_blank" rel="noopener">The role of back muscle dysfunctions in chronic low back pain: state-of-the-art and clinical implications, Journal of Clinical Medicine (2023)</a></li>
+<li id="fn19"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11103918/" target="_blank" rel="noopener">An Integrated Approach to Chronic Low Back Pain: Consecutive Loop TheraBand Training Combined With PNF and Conventional Physiotherapy, Cureus (2024)</a></li>
+<li id="fn20"><a href="https://www.mdpi.com/2227-9032/12/2/242" target="_blank" rel="noopener">The Role of Physical Exercise in Chronic Musculoskeletal Pain: Best Medicine, Healthcare (2024)</a></li>
+<li id="fn21"><a href="https://www.dovepress.com/chronic-pain-management-in-the-obese-patient-a-focused-review-of-key-c-peer-reviewed-fulltext-article-JPR" target="_blank" rel="noopener">Chronic pain management in the obese patient: a focused review of key challenges and potential exercise solutions, Journal of Pain Research (2015)</a></li>
+<li id="fn22"><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11103918/" target="_blank" rel="noopener">An Integrated Approach to Chronic Low Back Pain: Consecutive Loop TheraBand Training Combined With PNF and Conventional Physiotherapy, Cureus (2024)</a></li>
+</ol>
+<p class="disc">This article summarizes published research for general education. It is not medical advice and does not replace an evaluation from a licensed clinician.</p>
+<p class="orig"><a href="https://tenfoldframework.com/under-tension-resistance-bands-back-hip-pain" target="_blank" rel="noopener">First published on Tenfold Method</a></p>
+</template>
+<template id="art-moving"><header class="rh"><span class="label">Mental Health &amp; Movement</span><h1>Moving through it: how exercise reshapes the biology of anxiety and depression</h1><p class="rby">Sarah &middot; Tenfold Method</p></header>
+<p>For a long time, exercise has been talked about almost entirely in terms of the body: stronger muscles, a healthier heart, an easier time on the stairs. What often gets left out of that conversation is how directly movement shapes the mind. Depression and anxiety are two of the most common mental health conditions people live with, and they rarely show up alone. Low mood and worry tend to feed each other, and both can quietly erode the motivation to move in the first place. The encouraging part is that exercise, especially the aerobic kind, is one of the most well studied and effective tools we have for breaking that cycle.</p>
+<p class="gate">The rest of this article is on Tenfold Method, where it comes with membership. <a href="https://tenfoldframework.com/post.html?id=767c8adc-42e8-4df5-bc0c-1b8efd6e0a74" target="_blank" rel="noopener">Continue on Tenfold</a></p></template>
+<template id="art-pairing"><header class="rh"><span class="label">Mental Acuity &amp; Functional Movement</span><h1>Pairing Nutrition with Movement</h1><p class="rby">Sarah &middot; Tenfold Method</p></header>
+<p>One of the most common hurdles people face when starting a training program is not a lack of desire, but the frustration that comes when hard earned effort does not seem to yield visible results. Bridging this gap calls for a multimodal approach, meaning several strategies working together at once. When structured exercise is paired with the right foods and supplements, the body is better able to actually respond to the work being put in.</p>
+<p class="gate">The rest of this article is on Tenfold Method, where it comes with membership. <a href="https://tenfoldframework.com/post.html?id=ebb0d387-28da-474b-b67a-3275da15479f" target="_blank" rel="noopener">Continue on Tenfold</a></p></template>
+<script>
+/* Live Tenfold Method posts. The static pieces above stay as the fallback if this fails.
+   URL and publishable key are the public, browser-safe values Tenfold's own blog uses. */
+(function(){
+  var box=document.getElementById('tenfold-feed');
+  if(!box||!window.fetch) return;
+  var base='https://aeoqczhdhzlggivkgaob.supabase.co/rest/v1/posts';
+  var key='sb_publishable_l4RAXBIi_a_793wz2-k04g_vA2ispQu';
+  fetch(base+'?select=id,title,tag,content,created_at&order=created_at.desc&limit=6',{headers:{apikey:key}})
+    .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+    .then(function(posts){
+      if(!posts||!posts.length) return;
+      var frag=document.createDocumentFragment();
+      posts.forEach(function(p){
+        var m=(p.content||'').match(/<p[^>]*>([\s\S]*?)<\/p>/);
+        var d=document.createElement('div'); d.innerHTML=m?m[1]:(p.content||'');
+        var ex=(d.textContent||'').trim(); if(ex.length>160) ex=ex.slice(0,160).trim()+'…';
+        var row=document.createElement('div'); row.className='piece';
+        var lab=document.createElement('div'); lab.className='label';
+        lab.appendChild(document.createTextNode('Tenfold Method')); lab.appendChild(document.createElement('br'));
+        lab.appendChild(document.createTextNode(p.tag||''));
+        var body=document.createElement('div');
+        var h=document.createElement('h3'); h.textContent=p.title;
+        var pe=document.createElement('p'); pe.textContent=ex;
+        var meta=document.createElement('p'); meta.className='pmeta';
+        var a=document.createElement('a'); a.className='plink ext'; a.rel='noopener'; a.target='_blank';
+        a.href='https://tenfoldframework.com/post.html?id='+encodeURIComponent(p.id);
+        a.textContent='Read on Tenfold'; meta.appendChild(a);
+        body.appendChild(h); body.appendChild(pe); body.appendChild(meta);
+        row.appendChild(lab); row.appendChild(body); frag.appendChild(row);
+      });
+      box.textContent=''; box.appendChild(frag);
+    })
+    .catch(function(){
+      var n=document.createElement('p'); n.className='feednote'; n.setAttribute('role','status');
+      n.appendChild(document.createTextNode('The latest posts did not load, so these are saved copies. '));
+      var l=document.createElement('a'); l.className='plink ext'; l.rel='noopener'; l.href='https://tenfoldframework.com/blog'; l.textContent='See them on Tenfold';
+      n.appendChild(l); box.parentNode.insertBefore(n,box);
+    });
+})();
+</script>
+<script>
+(function(){
+  document.body.classList.remove('js-off');
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* article reader */
+  var reader=document.getElementById('reader'),rbody=document.getElementById('reader-body'),lastBtn=null;
+  function openArt(id,btn){
+    var tpl=document.getElementById('art-'+id);if(!tpl)return;
+    lastBtn=btn;rbody.innerHTML='';rbody.appendChild(tpl.content.cloneNode(true));
+    reader.hidden=false;reader.scrollTop=0;document.body.style.overflow='hidden';rbody.focus();
+  }
+  function closeArt(){reader.hidden=true;document.body.style.overflow='';if(lastBtn)lastBtn.focus()}
+  document.querySelectorAll('.readbtn').forEach(function(b){b.addEventListener('click',function(){openArt(b.dataset.art,b)})});
+  document.getElementById('reader-close').addEventListener('click',closeArt);
+  addEventListener('keydown',function(e){if(e.key==='Escape'&&!reader.hidden)closeArt()});
+
+  /* SidexSide details: click a column to open it, click again to close */
+  var sxTabs=[].slice.call(document.querySelectorAll('.feature-grid.three>button')),sxPanel=document.getElementById('sx-panel'),sxOpen=-1;
+  function sxShow(i){
+    sxOpen=(sxOpen===i)?-1:i;
+    sxTabs.forEach(function(b,j){var on=j===sxOpen;b.setAttribute('aria-selected',on?'true':'false');b.querySelector('.cue').textContent=on?'Hide the details −':'See the details +'});
+    if(sxOpen<0){sxPanel.hidden=true;sxPanel.innerHTML='';return}
+    sxPanel.innerHTML='';sxPanel.appendChild(document.getElementById('sx-d'+sxOpen).content.cloneNode(true));sxPanel.hidden=false;
+  }
+  sxTabs.forEach(function(b,i){b.addEventListener('click',function(){sxShow(i)})});
+
+  /* SidexSide illustration: tap a check-in circle; "Hide" swaps the screen for a grocery list, hold to return */
+  var ph=document.getElementById('phone');
+  /* the real app, loaded only when tapped (it needs SidexSide to allow this site in frame-ancestors) */
+  document.getElementById('try-live').addEventListener('click',function(){
+    var btn=this,cap=document.getElementById('phonecap');
+    var fr=document.createElement('iframe');
+    fr.src='https://sidexsideorg.app/';fr.title='SidexSide, the live app';fr.loading='lazy';
+    fr.setAttribute('allow','');fr.setAttribute('referrerpolicy','no-referrer');
+    fr.style.cssText='display:block;width:min(300px,100%);height:560px;margin:14px auto 0;border:3px solid rgba(242,230,208,.7);border-radius:30px;background:#F4E6D2';
+    ph.replaceWith(fr);btn.remove();
+    cap.innerHTML='This is the real app. If nothing shows, <a class="plink ext" style="color:var(--cream);border-color:var(--cream)" href="https://sidexsideorg.app" rel="noopener">open it in its own tab</a>.';
+  });
+
+  /* nav: highlight the section you are in */
+  var navLinks=[].slice.call(document.querySelectorAll('.nav ul a')),secIds=['happened','learned','built','decide','test','contact'];
+  var sky=document.querySelector('.sky'),sun=document.getElementById('sun'),prog=document.getElementById('prog');
+  function markNav(){
+    var tb=document.getElementById('tallybox');if(tb&&sxFeat&&tb.getBoundingClientRect().bottom<0&&sxFeat.classList.contains('sx-wait'))showSx();
+    /* scroll progress bar, and the sun sinking toward the ridges as you move through the sky */
+    var maxS=document.documentElement.scrollHeight-innerHeight;
+    prog.style.transform='scaleX('+(maxS>0?Math.min(1,scrollY/maxS):0)+')';
+    var sr=sky.getBoundingClientRect(),skyTop=sr.top+scrollY,skyH=sky.offsetHeight,sunH=sun.offsetHeight;
+    var p=Math.max(0,Math.min(1,(scrollY-skyTop)/Math.max(1,skyH-innerHeight)));
+    var y0=innerHeight*0.12,y1=skyH-sunH-Math.min(90,innerWidth*0.06)-40;
+    sun.style.transform='translateY('+(reduce?y1:y0+(y1-y0)*p)+'px)';
+    sun.style.opacity=reduce?.9:(.35+.6*p);
+    var y=scrollY+innerHeight*0.35,cur=-1;
+    secIds.forEach(function(id,i){var e=document.getElementById(id);if(e&&e.getBoundingClientRect().top+scrollY<=y)cur=i});
+    navLinks.forEach(function(a,i){var on=i===cur;a.classList.toggle('on',on);if(on)a.setAttribute('aria-current','true');else a.removeAttribute('aria-current')});
+  }
+  /* keys 1 to 5 jump between the five stages */
+  addEventListener('keydown',function(e){
+    if(e.ctrlKey||e.metaKey||e.altKey||!reader.hidden||!/^[1-5]$/.test(e.key))return;
+    var t=e.target&&e.target.tagName;if(t==='INPUT'||t==='TEXTAREA'||t==='SELECT'||(e.target&&e.target.isContentEditable))return;
+    var s=document.getElementById(secIds[+e.key-1]);if(!s)return;
+    s.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});s.setAttribute('tabindex','-1');s.focus({preventScroll:true});
+  });
+  addEventListener('scroll',markNav,{passive:true});addEventListener('resize',markNav);markNav();
+
+  /* reveals */
+  var els=[].slice.call(document.querySelectorAll('.reveal'));
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
+    els.forEach(function(el){io.observe(el)});
+  }else els.forEach(function(el){el.classList.add('in')});
+
+  /* one tally mark per day, drawn when scrolled into view, then minimized 15s after the last mark */
+  var DAYS=2131,cv=document.getElementById('tally'),ctx=cv.getContext('2d');
+  var J=[],seed=11;
+  function rnd(){seed=(seed*9301+49297)%233280;return seed/233280}
+  for(var q=0;q<DAYS;q++)J.push([rnd(),rnd(),rnd(),rnd()]);
+  var geo,shown=0,raf=0,mode='full',hold=0,shrunk=false,MINI=150,frame=document.getElementById('tframe');
+  function layout(){
+    var w=cv.clientWidth,dpr=window.devicePixelRatio||1,small=w<520,mini=mode==='mini';
+    var s=small?2.4:3,gw=s*4+(small?5:6),gh=small?13:17,rowh=gh+(small?6:7);
+    var perRow=Math.max(1,Math.floor(w/gw)),groups=Math.ceil(DAYS/5),rows=Math.ceil(groups/perRow);
+    var off=(w-perRow*gw)/2,h=rows*rowh+8;
+    cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);cv.style.height=h+'px';frame.style.height=(shrunk?Math.min(h,MINI):h)+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.lineCap='round';ctx.lineWidth=small?1:1.3;
+    geo={s:s,gw:gw,gh:gh,rowh:rowh,perRow:perRow,off:off};
+  }
+  function mark(i){
+    var g=Math.floor(i/5),k=i%5,col=g%geo.perRow,row=Math.floor(g/geo.perRow),j=J[i];
+    var x0=geo.off+col*geo.gw+2,y0=row*geo.rowh+4;
+    ctx.beginPath();
+    if(k<4){
+      var x=x0+k*geo.s+j[0]*1.2;
+      ctx.strokeStyle='#F7F0E3';
+      ctx.moveTo(x,y0+j[1]*2);ctx.lineTo(x+j[2]*1.6-.8,y0+geo.gh-j[3]*2);
+    }else{
+      ctx.strokeStyle='#EBA683';
+      ctx.moveTo(x0-3,y0+geo.gh*.78+j[0]*2);ctx.lineTo(x0+geo.s*4+3,y0+geo.gh*.18+j[1]*2);
+    }
+    ctx.stroke();
+  }
+  function drawTo(n){n=Math.min(n,DAYS);while(shown<n){mark(shown);shown++}}
+  /* the tally plays quickly, holds a moment, then fades away, and then SidexSide rises into its place */
+  var goneT=0,again=document.getElementById('again'),sxFeat=document.getElementById('sidexside');
+  function showSx(){if(!sxFeat.classList.contains('sx-wait'))return;sxFeat.classList.remove('sx-wait');sxFeat.classList.add('in','fade')}
+  function finish(){if(reduce)return;clearTimeout(goneT);goneT=setTimeout(fadeOut,1400)}
+  function fadeOut(){shrunk=true;frame.style.height=Math.min(parseFloat(cv.style.height)||MINI,MINI)+'px'}
+  function restore(){clearTimeout(goneT);shrunk=false;frame.style.height=(parseFloat(cv.style.height)||0)+'px'}
+  document.getElementById('tskip').addEventListener('click',function(){cancelAnimationFrame(raf);played=true;drawTo(DAYS);finish()});
+  document.getElementById('treplay').addEventListener('click',function(){played=true;restore();play()});
+  again.addEventListener('click',function(){restore();document.getElementById('tallybox').scrollIntoView({behavior:reduce?'auto':'smooth',block:'center'});play()});
+  function play(){
+    cancelAnimationFrame(raf);clearTimeout(hold);shrunk=false;
+    layout();ctx.clearRect(0,0,cv.width,cv.height);shown=0;
+    if(reduce){drawTo(DAYS);return}
+    var t0=null,dur=3200;
+    function step(ts){
+      if(t0===null)t0=ts;
+      var t=Math.min(1,(ts-t0)/dur),e=.5-.5*Math.cos(Math.PI*t);
+      drawTo(Math.min(DAYS,Math.ceil(DAYS*e)));
+      if(t<1)raf=requestAnimationFrame(step);else{drawTo(DAYS);finish()}
+    }
+    raf=requestAnimationFrame(step);
+  }
+  layout();
+  var box=document.getElementById('tallybox'),played=false,rt;
+  if('IntersectionObserver' in window){
+    new IntersectionObserver(function(es,o){if(es[0].isIntersecting&&!played){played=true;play();o.disconnect()}},{threshold:.2}).observe(box);
+  }else{drawTo(DAYS);box.classList.add('done')}
+  addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(function(){var n=shown;layout();shown=0;ctx.clearRect(0,0,cv.width,cv.height);drawTo(n)},150)});
+})();
+</script>
+</body>
+</html>
