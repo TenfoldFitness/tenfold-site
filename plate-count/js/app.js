@@ -113,6 +113,7 @@ function mergeProfile(p,force){
   if(/^\d{4}-\d{2}-\d{2}$/.test(p.programStart)) d.programStart=p.programStart;
   if(typeof p.programIdx==="number") d.programIdx=p.programIdx;
   if(typeof p.plyoLevel==="number") d.plyoLevel=p.plyoLevel;
+  d.proteinPerLb=(typeof p.proteinPerLb==="number"&&p.proteinPerLb>0)?p.proteinPerLb:null;
   if(typeof p.onboarded==="boolean") d.onboarded=p.onboarded;
   if(p.goal==="lose"||p.goal==="maintain"||p.goal==="build") d.goal=p.goal;
   ["goalWeight","bf","goalBfLo","goalBfHi"].forEach(function(f){ d[f]=(typeof p[f]==="number"&&isFinite(p[f]))?p[f]:null; });
@@ -411,6 +412,19 @@ function lastWeightLb(){
   var ks=Object.keys(S.days).filter(function(k){ return S.days[k]&&S.days[k].weight!=null; }).sort();
   return ks.length?S.days[ks[ks.length-1]].weight:150;
 }
+/* ---- Protein by bodyweight: grams per lb of bodyweight, set from the Saturday weigh-in before each Monday-to-Sunday week ---- */
+function weeklyWeight(k){
+  var sat=shiftKey(mondayOf(k),-2), ks=Object.keys(S.days).filter(function(x){ return S.days[x]&&S.days[x].weight!=null; }).sort();
+  if(!ks.length) return null;
+  var pick=null; ks.forEach(function(x){ if(x<=sat) pick=x; });   /* Saturday itself, else the latest weigh-in before it */
+  return S.days[pick||ks[0]].weight;
+}
+function targetsFor(k){
+  var P=S.profile, t=P.targets; if(!P.proteinPerLb) return t;
+  var wt=weeklyWeight(k); if(!wt) return t;
+  var p=Math.round(wt*P.proteinPerLb), c=Math.max(0,Math.round((t.k-p*4-t.f*9)/4/5)*5);
+  return {k:t.k,p:p,c:c,f:t.f};
+}
 function kcalMET(met,min,kg){ return met*3.5*kg/200*min; }
 function estBurn(k){
   var d=day(k), kg=lastWeightLb()/2.20462, burn=0, c=d.cardio, sets=0;
@@ -470,10 +484,10 @@ TABS.forEach(function(id){
 /* ================= FUEL ================= */
 function statusMsg(t,burn){
   /* Targets already include your training, so burn is never subtracted from the food budget. */
-  var target=S.profile.targets.k, net=t.k, diff=net-target, pLeft=S.profile.targets.p-t.p;
+  var TG=targetsFor(S.date), target=TG.k, net=t.k, diff=net-target, pLeft=TG.p-t.p;
   var block=S.profile.goal==="lose"?"cut":((program().phase&&program().phase.block)||"build");
   var dt=diff===0?"On target":(diff>0?"+"+r0(diff)+" kcal over":"−"+r0(-diff)+" kcal under");
-  if(t.k===0) return {cls:"mid",msg:"Nothing logged yet. Today's target is "+target+" kcal and "+S.profile.targets.p+" g protein."};
+  if(t.k===0) return {cls:"mid",msg:"Nothing logged yet. Today's target is "+target+" kcal and "+TG.p+" g protein."};
   var pm=pLeft>12?r0(pLeft)+" g of protein left to cover.":"Protein is covered.";
   if(block==="cut"){
     if(diff>150) return {cls:"warn",msg:dt+" against your cut target. A surplus is what stalls a cut — bring the rest of today down if you can."};
@@ -485,7 +499,7 @@ function statusMsg(t,burn){
   return {cls:"ok",msg:dt+". Read the weekly average, not any single day."};
 }
 function renderFuel(){
-  var k=S.date, d=cur(), T=S.profile.targets, t=totals(k), burn=estBurn(k);
+  var k=S.date, d=cur(), T=targetsFor(k), t=totals(k), burn=estBurn(k);
   var net=t.k, left=T.k-net, pct=T.k>0?Math.max(0,net)/T.k:0, C=2*Math.PI*56;
   var st=statusMsg(t,burn), sub="";
   if(burn.kcal>1){
@@ -1074,7 +1088,7 @@ function openPhaseSheet(){
   if(sdays.length>=7) body+="<p class='eyebrow' style='margin:18px 0 8px'>Workout for "+esc(prettyDate(S.date,{weekday:"long"}))+"</p><div class='chips'>"+sdays.map(function(x,i){
     return "<button class='chip' data-w='"+i+"' aria-pressed='"+(i===wd)+"'>"+esc(x.d+" · "+x.title)+"</button>"; }).join("")+"</div>";
   body+=shiftOption();
-  if(S.profile.goal){ var MT=S.profile.targets;
+  if(S.profile.goal){ var MT=targetsFor(todayKey());
     body+="<p class='eyebrow' style='margin:18px 0 8px'>Your daily targets</p><div class='tgt4'><div><b>"+MT.k+"</b><span>kcal</span></div><div><b>"+MT.p+"</b><span>protein</span></div><div><b>"+MT.c+"</b><span>carbs</span></div><div><b>"+MT.f+"</b><span>fat</span></div></div>"+
       "<button class='btn ghost sm' id='recalc' style='margin-top:10px'>Update weight &amp; targets</button>";
   } else if(p.phase&&p.phase.targets){ var T=p.phase.targets;
@@ -1180,7 +1194,7 @@ function paceInfo(){
   return {rate:de?nu/de*7:0,src:"recent"};
 }
 function paceVerdict(p,cw){
-  var T=S.profile.targets, b=blockNow(), r=paceBand();
+  var T=targetsFor(S.date), b=blockNow(), r=paceBand();
   if(!p||!cw) return {cls:"mid",head:"Pace: not enough weigh-ins yet",msg:"Log 4 or more weigh-ins spread over about 10 days and this will tell you whether your weight is moving at the right speed."};
   var pct=p.rate/cw*100, cls=bandCls(pct), rate=sgn(p.rate)+" lb a week", head, msg;
   var a=r1(Math.abs(r.lo)/100*cw), z=r1(Math.abs(r.hi)/100*cw);
@@ -1451,7 +1465,7 @@ function strengthCard(){
 }
 function card(title,sub,inner,cls){ return "<div class='card"+(cls?" "+cls:"")+"'><h3 class='h2' style='font-size:18px'>"+title+"</h3>"+(sub?"<p class='cap'>"+sub+"</p>":"")+inner+"</div>"; }
 function renderTrend(){
-  var keys=lastKeys(21), T=S.profile.targets, P=S.profile, d=cur();
+  var keys=lastKeys(21), T=targetsFor(S.date), P=S.profile, d=cur();
   var kc=keys.map(function(k){ return S.days[k]?totals(k).k:null; }), pr=keys.map(function(k){ return S.days[k]?totals(k).p:null; });
   var wk=lastKeys(84), wt=wk.map(function(k){ return S.days[k]&&day(k).weight!=null?day(k).weight:null; });
   var roll=rollAvg(wt), cwv=null; for(var i=roll.length-1;i>=0;i--){ if(roll[i]!=null){ cwv=roll[i]; break; } }
@@ -1529,7 +1543,7 @@ function renderTrend(){
      "<div class='stat'><div class='eyebrow'>On target</div><div class='v'>"+(logged.length?within+"/"+logged.length:"—")+"</div><div class='u'>days within 10%</div></div></div>";
   h+=card("Calories vs target","Last 3 weeks. The dashed line is your daily target. Faded bars fell more than 10% short.",barChart(keys,kc,T.k,"var(--m-kcal)"),"chartcard")+
      card("Protein vs target","Hitting protein is the most protective habit while building. Over is fine.",barChart(keys,pr,T.p,"var(--m-pro)"),"chartcard");
-  h+="<div class='card'><h3 class='h2' style='font-size:18px'>Daily targets</h3><div class='tgt4'><div><b>"+T.k+"</b><span>kcal</span></div><div><b>"+T.p+"</b><span>protein</span></div><div><b>"+T.c+"</b><span>carbs</span></div><div><b>"+T.f+"</b><span>fat</span></div></div><p class='muted small' style='margin:10px 0 0'>"+(P.goal?"Set from your weight and goal. You can change the calories to any number you like.":"Set by your phase. Change them from the phase button on Train.")+"</p>"+(P.goal?"<button class='btn ghost sm' id='recalcT' style='margin-top:10px'>Update weight &amp; targets</button>":"")+"</div>"+
+  h+="<div class='card'><h3 class='h2' style='font-size:18px'>Daily targets</h3><div class='tgt4'><div><b>"+T.k+"</b><span>kcal</span></div><div><b>"+T.p+"</b><span>protein</span></div><div><b>"+T.c+"</b><span>carbs</span></div><div><b>"+T.f+"</b><span>fat</span></div></div><p class='muted small' style='margin:10px 0 0'>"+(P.proteinPerLb&&weeklyWeight(S.date)?"This week’s protein is "+P.proteinPerLb+" g per lb of your Saturday weight ("+r1(weeklyWeight(S.date))+" lb). ":"")+(P.goal?"Set from your weight and goal. You can change the calories to any number you like.":"Set by your phase. Change them from the phase button on Train.")+"</p>"+(P.goal?"<button class='btn ghost sm' id='recalcT' style='margin-top:10px'>Update weight &amp; targets</button>":"")+"</div>"+
      "<p class='foot' id='syncNote'></p><p class='foot'><button class='linkbtn' id='signOut'>Sign out</button></p>";
   $("panel-trend").innerHTML=h;
 
@@ -1572,6 +1586,9 @@ function openOnboarding(first){
     "<input class='field' id='ok' type='number' inputmode='numeric' step='10' placeholder='Worked out from your weight' value='"+(first?"":esc(S.profile.targets.k))+"' style='margin-bottom:14px'>"+
     "<label class='eyebrow' for='op' style='display:block;margin-bottom:6px'>Daily protein in grams (change it to any number you like)</label>"+
     "<input class='field' id='op' type='number' inputmode='numeric' step='5' placeholder='Worked out from your weight' value='"+(first?"":esc(S.profile.targets.p))+"' style='margin-bottom:14px'>"+
+    "<label class='eyebrow' for='opl' style='display:block;margin-bottom:6px'>Or set protein by bodyweight: grams per lb</label>"+
+    "<input class='field' id='opl' type='number' inputmode='decimal' step='0.1' placeholder='e.g. 1 = 1 g per lb (leave empty to use the number above)' value='"+esc(S.profile.proteinPerLb||"")+"' style='margin-bottom:6px'>"+
+    "<p class='muted small' style='margin:0 0 14px'>When this is filled in, each week’s protein is your Saturday weigh-in × this number, starting the Monday after. Log your weight on Saturdays.</p>"+
     "<p class='eyebrow' style='margin:0 0 8px'>Your goal</p><div class='chips' id='og'>"+Object.keys(GOALS).map(function(k){
       return "<button class='chip' type='button' data-g='"+k+"' aria-pressed='"+(k===goal)+"'>"+GOALS[k].label+"</button>"; }).join("")+"</div>"+
     "<p class='muted small' id='oblurb' style='margin:8px 0 0'></p><div id='oprev'></div>"+
@@ -1582,23 +1599,26 @@ function openOnboarding(first){
   kin.oninput=function(){ kEdited=!!kin.value; calc(); };
   pin.oninput=function(){ pEdited=!!pin.value; calc(); };
   function calc(){
-    var wt=num(inp.value), ko=kEdited?num(kin.value):null, po=pEdited?num(pin.value):null;
+    var wt=num(inp.value), ko=kEdited?num(kin.value):null, po=pEdited?num(pin.value):null, pl=num($("opl").value);
     if(ko!=null&&(ko<1000||ko>5000)) ko=null; if(po!=null&&(po<30||po>500)) po=null;
+    if(pl!=null&&(pl<0.3||pl>3)) pl=null;
+    if(pl&&wt) po=Math.round(wt*pl);
     var T=wt&&wt>=70&&wt<=600?calcTargets(wt,goal,ko,po):null;
     if(T&&!kEdited) kin.placeholder="Suggested: "+calcTargets(wt,goal).k;
     if(T&&!pEdited) pin.placeholder="Suggested: "+calcTargets(wt,goal).p;
     $("oblurb").textContent=GOALS[goal].blurb;
-    $("oprev").innerHTML=T?"<div class='tgt4' style='margin-top:14px'><div><b>"+T.k+"</b><span>kcal</span></div><div><b>"+T.p+"</b><span>protein</span></div><div><b>"+T.c+"</b><span>carbs</span></div><div><b>"+T.f+"</b><span>fat</span></div></div>":"";
+    $("oprev").innerHTML=T?"<div class='tgt4' style='margin-top:14px'><div><b>"+T.k+"</b><span>kcal</span></div><div><b>"+T.p+"</b><span>protein</span></div><div><b>"+T.c+"</b><span>carbs</span></div><div><b>"+T.f+"</b><span>fat</span></div></div>"+(pl?"<p class='muted small' style='margin:8px 0 0'>"+r1(pl)+" g per lb × "+r1(wt)+" lb = "+T.p+" g, about "+r0(T.p*4/T.k*100)+"% of your calories.</p>":""):"";
     $("osave").disabled=!T; return T;
   }
   $("og").querySelectorAll(".chip").forEach(function(b){ b.onclick=function(){
     goal=b.dataset.g; $("og").querySelectorAll(".chip").forEach(function(o){ o.setAttribute("aria-pressed",o===b?"true":"false"); }); calc(); }; });
-  inp.oninput=calc; calc();
+  inp.oninput=calc; $("opl").oninput=calc; calc();
   setTimeout(function(){ try{ inp.focus(); }catch(e){} },80);
   $("oskip").onclick=closeSheet;
   $("osave").onclick=function(){
     var T=calc(), wt=num(inp.value); if(!T) return;
     S.profile.targets=T; S.profile.goal=goal; S.profile.onboarded=true;
+    var plv=num($("opl").value); S.profile.proteinPerLb=(plv!=null&&plv>=0.3&&plv<=3)?plv:null;
     var td=todayKey(); day(td).weight=wt; persistDay(td);
     persistProfile(); closeSheet(); toast("Targets set: "+T.k+" kcal · "+T.p+" g protein");
   };
