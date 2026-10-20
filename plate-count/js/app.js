@@ -1349,6 +1349,106 @@ function openGoals(){
   };
 }
 
+/* ---- last 7 days: the 7-day average weight, one point per day ---- */
+function last7Card(){
+  var keys=lastKeys(14), wts=keys.map(function(k){ return S.days[k]&&day(k).weight!=null?day(k).weight:null; }), roll=rollAvg(wts);
+  var k7=keys.slice(7), w7=wts.slice(7), r7=roll.slice(7), have=w7.filter(function(v){ return v!=null; });
+  var sub="Your average weight for each of the last 7 days. Each point averages that day and the 6 before it, so daily water swings even out.";
+  if(have.length<2) return card("Last 7 days",sub,"<p class='muted small' style='text-align:center;padding:14px 0;margin:0'>Log two weigh-ins this week and your 7-day average appears here.</p>");
+  var now=mean(w7), prev=mean(wts.slice(0,7)), W=480,H=176,L=38,R=14,T=20,B=26,iw=W-L-R,ih=H-T-B;
+  var all=have.concat(r7.filter(function(v){ return v!=null; })), lo=Math.min.apply(null,all), hi=Math.max.apply(null,all), pad=Math.max((hi-lo)*.25,.6); lo-=pad; hi+=pad;
+  function X(i){ return L+(i/6)*iw; } function Y(v){ return T+ih-((v-lo)/(hi-lo))*ih; }
+  var s="<svg viewBox='0 0 "+W+" "+H+"' role='img' aria-label='7-day average weight for each of the last 7 days'>";
+  [0,1,2].forEach(function(n){ var v=lo+(hi-lo)*n/2; s+="<line x1='"+L+"' x2='"+(W-R)+"' y1='"+Y(v).toFixed(1)+"' y2='"+Y(v).toFixed(1)+"' stroke='var(--border)'/><text x='"+(L-6)+"' y='"+(Y(v)+3.5).toFixed(1)+"' text-anchor='end' font-size='9' fill='var(--text-3)'>"+r1(v)+"</text>"; });
+  var pts=[]; r7.forEach(function(v,i){ if(v!=null) pts.push({i:i,v:v}); });
+  if(pts.length>1) s+="<path d='"+pts.map(function(p,j){ return (j?"L":"M")+X(p.i).toFixed(1)+" "+Y(p.v).toFixed(1); }).join(" ")+"' fill='none' stroke='var(--accent)' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'/>";
+  w7.forEach(function(v,i){ if(v!=null) s+="<circle cx='"+X(i).toFixed(1)+"' cy='"+Y(v).toFixed(1)+"' r='2.6' fill='var(--text-3)' opacity='.6'/>"; });
+  pts.forEach(function(p,j){ var last=(j===pts.length-1);
+    s+="<circle cx='"+X(p.i).toFixed(1)+"' cy='"+Y(p.v).toFixed(1)+"' r='"+(last?5:3.4)+"' fill='var(--accent)' stroke='var(--surface)' stroke-width='1.5'/><text x='"+X(p.i).toFixed(1)+"' y='"+(Y(p.v)-9).toFixed(1)+"' text-anchor='middle' font-size='"+(last?11.5:9.5)+"' font-weight='"+(last?700:600)+"' fill='"+(last?"var(--accent-deep)":"var(--text-2)")+"'>"+r1(p.v)+"</text>"; });
+  k7.forEach(function(k,i){ s+="<text x='"+X(i).toFixed(1)+"' y='"+(H-7)+"' text-anchor='middle' font-size='9.5' fill='var(--text-3)'>"+esc(prettyDate(k,{weekday:"short"}))+"</text>"; });
+  s+="</svg>";
+  var d=(now!=null&&prev!=null)?now-prev:null, ci=cycleInfo(S.date), lut=!ci.none&&phaseFor(ci.day,ci.avg,ci.mens).k==="lut";
+  return card("Last 7 days",sub,
+    "<div class='mini3' style='margin-bottom:10px'><div><b>"+r1(now)+"</b><span>average this week</span></div><div><b>"+(d!=null?sgn(d):"—")+"</b><span>vs the 7 days before</span></div><div><b>"+have.length+"/7</b><span>days weighed</span></div></div>"+s+
+    "<p class='cap' style='margin:6px 0 0'>Grey dots are single weigh-ins. The green line is the 7-day average."+(lut?" You are in the days before your period, when 2 to 5 lb of water is normal.":"")+"</p>","chartcard");
+}
+
+/* ---- period timeline: when each period started, how long it lasted, and the gap between ---- */
+function cycleTimeline(){
+  var st=periodStarts(), ci=cycleInfo(S.date); if(!st.length||ci.none) return "";
+  var avg=ci.avg||28, recent=st.filter(function(s){ return s<=S.date; }).slice(-7), t0=shiftKey(recent[0],-4), nxt=shiftKey(ci.last,avg), bl=ci.mens||5;
+  var end=shiftKey(nxt,bl+3); if(end<shiftKey(S.date,3)) end=shiftKey(S.date,3);
+  var span=Math.max(1,daysBetween(t0,end)), W=480,H=124,L=8,R=8,iw=W-L-R;
+  function X(k){ return L+Math.max(0,daysBetween(t0,k))/span*iw; }
+  var s="<svg viewBox='0 0 "+W+" "+H+"' role='img' aria-label='Timeline of your periods and the days between them'>";
+  s+="<line x1='"+L+"' x2='"+(W-R)+"' y1='74' y2='74' stroke='var(--border-strong)'/>";
+  recent.forEach(function(a,i){
+    var b=bleedLen(a), x=X(a), w=Math.max(5,b/span*iw), nx=recent[i+1];
+    s+="<rect x='"+x.toFixed(1)+"' y='60' width='"+w.toFixed(1)+"' height='28' rx='3' fill='var(--m-fat)' opacity='.85'/>";
+    s+="<text x='"+(x+w/2).toFixed(1)+"' y='78.5' text-anchor='middle' font-size='9' font-weight='700' fill='#fff'>"+(w>=14?b+"d":"")+"</text>";
+    s+="<text x='"+(x+w/2).toFixed(1)+"' y='102' text-anchor='middle' font-size='9' fill='var(--text-3)'>"+esc(fmtD(a))+"</text>";
+    if(nx){ var x2=X(nx), len=daysBetween(a,nx);
+      s+="<path d='M"+(x+w).toFixed(1)+" 44 H"+x2.toFixed(1)+" M"+(x+w).toFixed(1)+" 39 V49 M"+x2.toFixed(1)+" 39 V49' stroke='var(--text-3)' fill='none'/><text x='"+((x+w+x2)/2).toFixed(1)+"' y='36' text-anchor='middle' font-size='10.5' font-weight='600' fill='var(--text-2)'>"+len+" days</text>"; }
+  });
+  var lx=X(ci.last), lw=Math.max(5,bl/span*iw), nx2=X(nxt);
+  s+="<path d='M"+(lx+lw).toFixed(1)+" 44 H"+nx2.toFixed(1)+" M"+nx2.toFixed(1)+" 39 V49' stroke='var(--text-3)' fill='none' stroke-dasharray='3 3'/><text x='"+((lx+lw+nx2)/2).toFixed(1)+"' y='36' text-anchor='middle' font-size='10.5' fill='var(--text-3)'>~"+avg+" days</text>";
+  s+="<rect x='"+nx2.toFixed(1)+"' y='60' width='"+Math.max(5,bl/span*iw).toFixed(1)+"' height='28' rx='3' fill='none' stroke='var(--m-fat)' stroke-width='1.5' stroke-dasharray='4 3'/>";
+  s+="<text x='"+nx2.toFixed(1)+"' y='102' font-size='9' fill='var(--text-3)'>"+esc(fmtD(nxt))+"</text>";
+  var tx=X(S.date); s+="<line x1='"+tx.toFixed(1)+"' x2='"+tx.toFixed(1)+"' y1='52' y2='96' stroke='var(--text)' stroke-width='1.5'/><text x='"+Math.min(Math.max(tx,18),W-18).toFixed(1)+"' y='118' text-anchor='middle' font-size='9.5' font-weight='700' fill='var(--text)'>Today</text>";
+  s+="</svg>";
+  var lens=[]; for(var i=1;i<st.length;i++){ var L2=daysBetween(st[i-1],st[i]); if(L2>=18&&L2<=45) lens.push(L2); }
+  var bleeds=st.map(bleedLen), ab=mean(bleeds);
+  return "<h4 class='sub-h'>Timeline</h4>"+s+"<div class='legend'><span><i style='background:var(--m-fat);opacity:.85'></i>Period (days)</span><span><i style='border:1.5px dashed var(--m-fat)'></i>Expected next</span></div>"+
+    "<div class='mini3' style='margin:0 0 16px'><div><b>"+(lens.length?r0(mean(lens)):"—")+"</b><span>average days between periods</span></div><div><b>"+r1(ab)+"</b><span>average days a period lasts</span></div><div><b>"+Math.max(0,daysBetween(ci.last,S.date))+"</b><span>days since your last period began</span></div></div>";
+}
+
+/* ---- strength: your best set each week, per lift, so you can see whether you are getting stronger ---- */
+function strengthData(){
+  var names={}; function addN(n){ if(n&&typeof n==="string"&&!names[slug(n)]) names[slug(n)]=n; }
+  exerciseNames().forEach(addN);
+  Object.keys(S.days).forEach(function(k){ var d=S.days[k]||{}; Object.keys(d.exSwaps||{}).forEach(function(o){ addN(d.exSwaps[o]); }); Object.keys(d.pairs||{}).forEach(function(p){ if(d.pairs[p]) addN(d.pairs[p].n); }); });
+  var by={}, today=todayKey();
+  Object.keys(S.days).forEach(function(k){
+    var d=S.days[k]; if(!d||!d.sets||k>today) return; var wk=mondayOf(k);
+    Object.keys(d.sets).forEach(function(sk){
+      var v=d.sets[sk], p=sk.split("|"); if(!v||p.length<3||v.reps==null||!(v.done||v.w!=null)) return;
+      var w=v.w||0, reps=v.reps, sc=w>0?w*(1+reps/30):reps, a=by[p[1]]||(by[p[1]]={}), r=a[wk]||(a[wk]={sets:0,vol:0,top:null});
+      r.sets++; r.vol+=w*reps; if(!r.top||sc>r.top.sc) r.top={w:w,reps:reps,sc:sc};
+    });
+  });
+  var out=[]; Object.keys(by).forEach(function(sl){
+    var wks=Object.keys(by[sl]).sort(); if(wks.length<2) return;
+    var a=by[sl][wks[wks.length-1]], b=by[sl][wks[wks.length-2]], pct=b.top.sc>0?(a.top.sc-b.top.sc)/b.top.sc*100:0;
+    out.push({slug:sl,name:names[sl]||sl.replace(/-/g," "),wks:wks,rows:by[sl],pct:pct,last:wks[wks.length-1],bw:a.top.w===0});
+  });
+  out.sort(function(x,y){ return x.last<y.last?1:x.last>y.last?-1:x.name.localeCompare(y.name); });
+  return out;
+}
+function sparkline(vals){
+  var have=vals.filter(function(v){ return v!=null; }); if(have.length<2) return "";
+  var W=84,H=26,lo=Math.min.apply(null,have),hi=Math.max.apply(null,have),sp=Math.max(hi-lo,1e-6), pts=[];
+  vals.forEach(function(v,i){ if(v!=null) pts.push({x:3+i/(vals.length-1)*(W-6),y:H-4-((v-lo)/sp)*(H-8)}); });
+  var up=have[have.length-1]>=have[0];
+  return "<svg class='spark' viewBox='0 0 "+W+" "+H+"' aria-hidden='true'><path d='"+pts.map(function(p,j){ return (j?"L":"M")+p.x.toFixed(1)+" "+p.y.toFixed(1); }).join(" ")+"' fill='none' stroke='"+(up?"var(--good)":"var(--warn)")+"' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><circle cx='"+pts[pts.length-1].x.toFixed(1)+"' cy='"+pts[pts.length-1].y.toFixed(1)+"' r='2.8' fill='"+(up?"var(--good)":"var(--warn)")+"'/></svg>";
+}
+function strengthCard(){
+  var sub="Your best set each week for every lift you have done in two or more weeks. Open one to see weight, reps and sets week by week.";
+  var data=strengthData();
+  if(!data.length) return card("Are you getting stronger?",sub,"<p class='muted small' style='margin:0'>Log the same lift in two different weeks and the comparison appears here.</p>");
+  var up=0,dn=0,same=0; data.forEach(function(x){ if(x.pct>=2) up++; else if(x.pct<=-2) dn++; else same++; });
+  var head=up+" of "+data.length+" lifts are up from the last time you did them"+(dn?", "+dn+" down":"")+(same?", "+same+" about the same":"")+".";
+  var mon=mondayOf(S.date), six=[]; for(var i=5;i>=0;i--) six.push(shiftKey(mon,-7*i));
+  var rows=data.slice(0,24).map(function(x){
+    var vals=six.map(function(w){ var r=x.rows[w]; return r?r.top.sc:null; }), a=x.rows[x.last], cls=x.pct>=2?"up":x.pct<=-2?"down":"same";
+    var best=(a.top.w>0?r1(a.top.w)+" lb × ":"")+a.top.reps+(a.top.w>0?"":" reps");
+    var tbl=x.wks.slice().reverse().slice(0,6).map(function(w,j,arr){ var r=x.rows[w], nx=x.rows[arr[j+1]], dl=(nx&&nx.top.sc>0)?(r.top.sc-nx.top.sc)/nx.top.sc*100:null;
+      return "<tr><td>"+esc(fmtD(w))+"</td><td>"+(r.top.w>0?r1(r.top.w)+" lb × "+r.top.reps:r.top.reps+" reps")+"</td><td>"+r.sets+"</td><td>"+(r.top.w>0?String(r0(r.vol)).replace(/\B(?=(\d{3})+(?!\d))/g,","):"—")+"</td><td class='dl "+(dl==null?"":dl>=2?"up":dl<=-2?"down":"")+"'>"+(dl==null?"":(dl>0?"+":dl<0?"−":"")+Math.abs(r1(dl))+"%")+"</td></tr>"; }).join("");
+    return "<details class='sx'><summary><span class='sn'>"+esc(x.name)+"<small>"+esc(best)+" · "+esc(fmtD(x.last))+"</small></span>"+sparkline(vals)+"<span class='sd "+cls+"'>"+(x.pct>0?"+":x.pct<0?"−":"")+Math.abs(r1(x.pct))+"%</span></summary>"+
+      "<table class='sxt'><thead><tr><th>Week of</th><th>Best set</th><th>Sets</th><th>Total lb</th><th>Change</th></tr></thead><tbody>"+tbl+"</tbody></table></details>";
+  }).join("");
+  return card("Are you getting stronger?",sub,"<p class='small' style='margin:0 0 10px'><b>"+esc(head)+"</b></p>"+rows+
+    "<p class='cap' style='margin:12px 0 0'>The % compares your best set (weight × reps, turned into an estimated one-rep max) with the last week you did that lift. More reps at the same weight counts as stronger. Bodyweight lifts compare reps. Under 2% either way counts as about the same.</p>");
+}
 function card(title,sub,inner,cls){ return "<div class='card"+(cls?" "+cls:"")+"'><h3 class='h2' style='font-size:18px'>"+title+"</h3>"+(sub?"<p class='cap'>"+sub+"</p>":"")+inner+"</div>"; }
 function renderTrend(){
   var keys=lastKeys(21), T=S.profile.targets, P=S.profile, d=cur();
@@ -1371,6 +1471,8 @@ function renderTrend(){
   }
   h+="<div class='note "+pv.cls+"' style='margin-top:14px'><b style='display:block;margin-bottom:3px'>"+esc(pv.head)+"</b>"+esc(pv.msg)+"</div>"+
      "<div class='wtform'><input class='field' id='wtIn' type='number' step='0.1' inputmode='decimal' placeholder='Weigh-in for "+esc(S.date===todayKey()?"today":fmtD(S.date))+" (lb)' value='"+(d.weight!=null?d.weight:"")+"' aria-label='Weigh-in in pounds'><button class='btn' id='wtSave'>Log</button></div></div>";
+
+  h+=last7Card()+strengthCard();
 
   /* 2. weight chart */
   h+=card("Weight, last 12 weeks","The green line is your 7-day average, which smooths out daily water swings. Dots are single weigh-ins. Pink bands are your period and the days before it.",weightChart(wk,wt,P.goalWeight),"chartcard");
@@ -1403,7 +1505,7 @@ function renderTrend(){
       }).join("")+
       "<h4 class='sub-h' style='margin-top:16px'>Add a period</h4>"+logRow;
   }
-  h+=card("Your cycle","How long your cycles run, when the next one is due, and where you are in the month.",cyc);
+  h+=card("Your cycle","How long your cycles run, when the next one is due, and where you are in the month.",cycleTimeline()+cyc);
 
   /* 4. cycle and weight */
   var cwx=cycleWeight(), bl=baselines(), cwTxt="";
