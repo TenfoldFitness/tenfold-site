@@ -262,6 +262,12 @@ PROGRAMS.push({
 });
 var DEF_FOCUS={ph1:"h",ph2:"h",ph3:"s",ph4:"h",ph5:"s",ph6:"s"};
 function program(){ return PROGRAMS[S.profile.programIdx]||PROGRAMS[0]; }
+/* The Phase 2 to 6 weekly split changed. Days before this date keep the split they were logged under,
+   so numbers entered on the old site still sit under the right workout. */
+var NEW_SPLIT_FROM="2026-10-26";
+function daysFor(p,dateKey){
+  return (p.days===window.DAYS_V2&&window.DAYS&&dateKey<NEW_SPLIT_FROM)?window.DAYS:p.days;
+}
 
 /* Phase and week are COMPUTED from one fixed start date. */
 function programPosRaw(dateKey){
@@ -839,8 +845,9 @@ function cardioCard(d,rd,p){
 function renderTrain(){
   var rd=S.date, wd=workoutIdx(rd), p=program(), pos=programPos(todayKey()), isNow=(PROGRAMS[pos.idx]===p);
   prevIdx=buildPrevIndex();
-  if(p.days.length<7) wd=0;
-  var d=p.days[Math.min(wd,p.days.length-1)]||p.days[0];
+  var pdays=daysFor(p,rd);
+  if(pdays.length<7) wd=0;
+  var d=pdays[Math.min(wd,pdays.length-1)]||pdays[0];
   var chip="<button class='phasechip' id='phaseBtn' aria-label='Change phase or workout'>"+esc(p.name)+(p.phase&&isNow?" · Wk "+pos.week+"/"+pos.weeks:"")+
     "<svg viewBox='0 0 24 24'><path d='M6 9l6 6 6-6'/></svg></button>";
   var h="";
@@ -964,9 +971,15 @@ function wireTrain(panel,rd,items,sets,wd){
   var cmi=$("cMi"); if(cmi) cmi.oninput=function(){ c().miles=cmi.value===""?null:num(cmi.value); persistDay(rd); };
 }
 function openSwap(it,rd){
-  var opts=[it.origN].concat(it.sw||[]);
+  var opts=[it.origN].concat(it.sw||[]), base=opts.length, seen={};
+  opts.forEach(function(x){ seen[x.toLowerCase()]=1; });
+  /* Anything you typed in as a swap on an earlier day is offered again, newest first. */
+  Object.keys(S.days).sort().reverse().forEach(function(k){
+    var v=((S.days[k]||{}).exSwaps||{})[it.origN];
+    if(typeof v==="string"&&v&&!seen[v.toLowerCase()]){ seen[v.toLowerCase()]=1; opts.push(v); }
+  });
   openSheet("Swap exercise","<p class='muted small'>Your numbers save against whichever you pick.</p><div class='list'>"+
-    opts.map(function(x,i){ return "<button class='item' data-o='"+i+"'><span class='t'>"+esc(x)+(x===it.n?"<small>Current</small>":"")+"</span></button>"; }).join("")+"</div>"+
+    opts.map(function(x,i){ return "<button class='item' data-o='"+i+"'><span class='t'>"+esc(x)+(x===it.n?"<small>Current</small>":(i>=base?"<small>Added by you</small>":""))+"</span></button>"; }).join("")+"</div>"+
     "<input class='field' id='sw' placeholder='Something else…' style='margin-top:12px'>","<button class='btn' id='sws'>Use what I typed</button>");
   function pick(name){ var ex=day(rd).exSwaps; if(name===it.origN) delete ex[it.origN]; else ex[it.origN]=name; persistDay(rd); closeSheet(); }
   $("shBody").querySelectorAll("[data-o]").forEach(function(b){ b.onclick=function(){ pick(opts[+b.dataset.o]); }; });
@@ -980,7 +993,8 @@ function openPhaseSheet(){
     unlockNote()+
     "<p class='muted small' style='margin:8px 0 0'>You’re in "+esc(curP.name)+", week "+pos.week+" of "+pos.weeks+". Picking another program lets you browse it without changing that.</p>";
   if(p.levels) body+="<p class='eyebrow' style='margin:18px 0 8px'>Level</p><div class='chips'>"+p.levels.map(function(L,i){ return "<button class='chip' data-l='"+i+"' aria-pressed='"+(i===S.profile.plyoLevel)+"'>"+esc(L.name)+" · "+L.s+"×"+esc(L.r)+"</button>"; }).join("")+"</div>";
-  if(p.days.length>=7) body+="<p class='eyebrow' style='margin:18px 0 8px'>Workout for "+esc(prettyDate(S.date,{weekday:"long"}))+"</p><div class='chips'>"+p.days.map(function(x,i){
+  var sdays=daysFor(p,S.date);
+  if(sdays.length>=7) body+="<p class='eyebrow' style='margin:18px 0 8px'>Workout for "+esc(prettyDate(S.date,{weekday:"long"}))+"</p><div class='chips'>"+sdays.map(function(x,i){
     return "<button class='chip' data-w='"+i+"' aria-pressed='"+(i===wd)+"'>"+esc(x.d+" · "+x.title)+"</button>"; }).join("")+"</div>";
   body+=shiftOption();
   if(S.profile.goal){ var MT=S.profile.targets;
