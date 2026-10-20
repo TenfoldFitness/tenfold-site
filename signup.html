@@ -176,15 +176,11 @@
       ? '🔒 Secure payment via Square. You can cancel anytime.'
       : '🔒 Secure payment via Square. This is one payment, not a subscription.';
 
-    // Phone is only needed when there are sessions or check-ins to arrange. Foundation has none.
-    const phoneRequired = tier !== '1' && !!TIER_INFO[tier];
-    if (!phoneRequired) {
-      document.getElementById('su-phone-label').textContent = 'Phone number (optional)';
-      document.getElementById('su-phone').required = false;
-      document.getElementById('su-phone-hint').textContent = 'Only if you would like a text or call about your account.';
-    } else {
-      document.getElementById('su-phone-hint').textContent = 'So we can reach you about your sessions and check-ins.';
-    }
+    // Phone stays required on every plan. The reason shown matches what each plan includes.
+    const phoneRequired = true;
+    document.getElementById('su-phone-hint').textContent = tier === '1'
+      ? 'So we can reach you about your account and your membership.'
+      : 'So we can reach you about your account, sessions and check-ins.';
 
     document.getElementById('change-plan-link').addEventListener('click', function () {
       const compare = document.getElementById('compare-plans');

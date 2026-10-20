@@ -15,9 +15,9 @@
       background: var(--accent); color: #fff; padding: 3px 8px; margin-bottom: 10px; }
     .track-head { margin: 34px 0 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
     .track-head h2 { font-size: 15px; margin: 0 0 3px; }
-    .track-head p { font-size: 13px; color: var(--text-secondary); margin: 0; }
+    .track-head p { font-size: 14px; color: var(--text-secondary); margin: 0; }
     .price-feats { list-style: none; padding: 0; margin: 10px 0 14px; }
-    .price-feats li { font-size: 13px; color: var(--text-secondary); padding-left: 16px; position: relative; margin-bottom: 3px; }
+    .price-feats li { font-size: 15px; color: var(--text-secondary); padding-left: 16px; position: relative; margin-bottom: 3px; }
     .price-feats li::before { content: "–"; position: absolute; left: 0; color: var(--accent); }
     .sliding-box { background: var(--accent-bg); border: 1px solid var(--border); padding: 20px; margin: 24px 0; }
   </style>
@@ -71,17 +71,18 @@
           </tr>
         </thead>
         <tbody>
-          <tr><th scope="row">How you pay</th><td>Monthly</td><td>Monthly</td><td>One payment, 12 weeks</td><td>One payment, 12 weeks</td></tr>
-          <tr><th scope="row">Portal, program, macro tools, session log</th><td>Included</td><td>Included</td><td>Included</td><td>Included</td></tr>
-          <tr><th scope="row">Custom four-week plan</th><td>Not included</td><td>A new one each month</td><td>Included</td><td>Included</td></tr>
-          <tr><th scope="row">Virtual coaching check-ins</th><td>Not included</td><td>Two a month</td><td>Included</td><td>Included</td></tr>
-          <tr><th scope="row">Weekly virtual session</th><td>Not included</td><td>Not included</td><td>12, one a week</td><td>Not included</td></tr>
-          <tr><th scope="row">Full nutrition planning</th><td>Not included</td><td>Not included</td><td>Included</td><td>Included</td></tr>
-          <tr><th scope="row">In-person sessions</th><td>Not included</td><td>Not included</td><td>Not included</td><td>12, 24 or 36</td></tr>
+          <tr><th scope="row">Billing</th><td>Monthly</td><td>Monthly</td><td>One payment</td><td>One payment</td></tr>
+          <tr><th scope="row">Portal, program and tools</th><td><span class="yes"><span aria-hidden="true">&#10003;</span><span class="sr-only">Included</span></span></td><td><span class="yes"><span aria-hidden="true">&#10003;</span><span class="sr-only">Included</span></span></td><td><span class="yes"><span aria-hidden="true">&#10003;</span><span class="sr-only">Included</span></span></td><td><span class="yes"><span aria-hidden="true">&#10003;</span><span class="sr-only">Included</span></span></td></tr>
+          <tr><th scope="row">Custom 4-week plan</th><td><span class="no"><span aria-hidden="true">&#10005;</span><span class="sr-only">Not included</span></span></td><td><span class="yes"><span aria-hidden="true">&#10003;</span><span class="sr-only">Included, a new one each month</span></span></td><td><span class="yes"><span aria-hidden="true">&#10003;</span><span class="sr-only">Included</span></span></td><td><span class="yes"><span aria-hidden="true">&#10003;</span><span class="sr-only">Included</span></span></td></tr>
+          <tr><th scope="row">Coaching check-ins</th><td><span class="no"><span aria-hidden="true">&#10005;</span><span class="sr-only">Not included</span></span></td><td><span class="yes"><span aria-hidden="true">&#10003;</span><span class="sr-only">Included, two a month</span></span></td><td><span class="yes"><span aria-hidden="true">&#10003;</span><span class="sr-only">Included</span></span></td><td><span class="yes"><span aria-hidden="true">&#10003;</span><span class="sr-only">Included</span></span></td></tr>
+          <tr><th scope="row">Weekly virtual session</th><td><span class="no"><span aria-hidden="true">&#10005;</span><span class="sr-only">Not included</span></span></td><td><span class="no"><span aria-hidden="true">&#10005;</span><span class="sr-only">Not included</span></span></td><td><span class="yes"><span aria-hidden="true">&#10003;</span><span class="sr-only">Included, 12 sessions</span></span></td><td><span class="no"><span aria-hidden="true">&#10005;</span><span class="sr-only">Not included</span></span></td></tr>
+          <tr><th scope="row">Nutrition planning</th><td><span class="no"><span aria-hidden="true">&#10005;</span><span class="sr-only">Not included</span></span></td><td><span class="no"><span aria-hidden="true">&#10005;</span><span class="sr-only">Not included</span></span></td><td><span class="yes"><span aria-hidden="true">&#10003;</span><span class="sr-only">Included</span></span></td><td><span class="yes"><span aria-hidden="true">&#10003;</span><span class="sr-only">Included</span></span></td></tr>
+          <tr><th scope="row">In-person sessions</th><td><span class="no"><span aria-hidden="true">&#10005;</span><span class="sr-only">Not included</span></span></td><td><span class="no"><span aria-hidden="true">&#10005;</span><span class="sr-only">Not included</span></span></td><td><span class="no"><span aria-hidden="true">&#10005;</span><span class="sr-only">Not included</span></span></td><td><span class="yes"><span aria-hidden="true">&#10003;</span><span class="sr-only">Included, 12, 24 or 36 sessions</span></span></td></tr>
         </tbody>
       </table>
     </div>
-    <p class="small compare-note"><strong>Monthly plans:</strong> no contract, no cancellation fee. <strong>12-week packages:</strong> one payment, access runs 84 days from purchase, full refund before your first session and none after. <a href="policies.html#refunds" style="color:var(--accent); text-decoration:underline;">Read the details</a>.</p>
+    <p class="small compare-note"><span aria-hidden="true" class="yes">&#10003;</span> included &nbsp; <span aria-hidden="true" class="no">&#10005;</span> not included. Guided adds a new plan each month and two check-ins a month. Virtual Intensive adds 12 weekly sessions. In-Person adds 12, 24 or 36 sessions.</p>
+    <p class="small compare-note"><strong>Monthly plans:</strong> cancel any time. <strong>12-week packages:</strong> one payment, 84 days of access, refundable only before your first session. <a href="policies.html#refunds" style="color:var(--accent); text-decoration:underline;">Details</a></p>
 
     <div class="price-card" style="margin-top:24px; background:var(--surface-2);">
       <div class="price-head"><h2 style="margin:0; font-size:16px;">Free consultation</h2><span class="price-value">$0</span></div>
