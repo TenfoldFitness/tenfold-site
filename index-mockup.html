@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home page mockup — Tenfold Method</title>
+  <meta name="robots" content="noindex" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    /* ---- Mockup only: layout moves borrowed from the founder page ---- */
+    .mock-flag { background:#1E1A2E; color:#F4ECD8; text-align:center; font-size:13px; padding:8px 12px; }
+    .mock-flag strong { color:#E3C477; }
+
+    .jump { position:sticky; top:0; z-index:20; background:rgba(250,249,246,.96); border-bottom:1px solid var(--border); }
+    .jump .wrap { display:flex; gap:6px; overflow-x:auto; padding-top:6px; padding-bottom:6px; }
+    .jump a { white-space:nowrap; font-size:14px; padding:10px 14px; color:var(--text-secondary); border-radius:99px; }
+    .jump a:hover { color:var(--text-primary); background:var(--surface-1); }
+    .jump a.pill { margin-left:auto; border:1px solid var(--text-primary); color:var(--text-primary); font-weight:500; }
+
+    .m-hero { background:#16342D; color:#F4ECD8; padding:72px 0 84px; position:relative; overflow:hidden; border-top:none; }
+    .m-hero::after { content:""; position:absolute; right:-100px; top:-100px; width:420px; height:420px; border-radius:50%; background:radial-gradient(circle, rgba(201,162,75,.22) 0%, transparent 70%); }
+    .m-hero .wrap { position:relative; z-index:1; max-width:880px; }
+    .m-hero .eyebrow-line { color:#E3C477; font-size:13px; letter-spacing:.14em; text-transform:uppercase; margin:0 0 18px; }
+    .m-hero h1 { color:#F4ECD8; font-size:60px; line-height:1.04; max-width:15em; margin:0 0 20px; }
+    .m-hero h1 em { font-style:italic; color:#E3C477; }
+    .m-hero p.lede { color:#D5E0D9; font-size:19px; line-height:1.55; max-width:36em; margin:0 0 28px; }
+    .m-hero .cta-row { display:flex; flex-wrap:wrap; gap:14px; align-items:center; }
+    .m-hero .btn { font-size:16px; padding:15px 28px; }
+    .m-hero .btn-primary { background:#F4ECD8; color:#16342D; border-color:#F4ECD8; }
+    .m-hero .btn-primary:hover { background:transparent; color:#F4ECD8; }
+    .m-hero .quiet { color:#D5E0D9; font-size:15px; text-decoration:underline; }
+    .m-hero .quiet:hover { color:#fff; }
+    .m-hero .fine { color:#B9CBC1; font-size:14px; margin:16px 0 0; }
+
+    /* "In 30 seconds" box */
+    .thirty { margin-top:-44px; position:relative; z-index:2; }
+    .thirty-box { background:var(--surface-2); border:1px solid var(--border); border-top:4px solid var(--accent-gold); box-shadow:0 10px 30px rgba(22,36,31,.08); padding:30px 32px; max-width:880px; margin:0 auto; }
+    .thirty-box .label { font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin:0 0 14px; font-weight:600; }
+    .thirty-box dl { margin:0; display:grid; grid-template-columns:110px 1fr; gap:14px 18px; }
+    .thirty-box dt { color:var(--accent-deep); font-weight:700; font-size:16px; }
+    .thirty-box dd { margin:0; color:var(--text-primary); font-size:17px; line-height:1.5; }
+    .thirty-box dd small { display:block; color:var(--text-secondary); font-size:15px; margin-top:2px; }
+    @media (max-width:640px){ .thirty-box dl { grid-template-columns:1fr; gap:2px; } .thirty-box dd { margin-bottom:12px; } .m-hero h1 { font-size:40px; } }
+
+    .m-sec { padding:84px 0; border-top:none; }
+    .m-sec .wrap { max-width:880px; }
+    .m-sec .kicker-line { color:var(--accent); font-size:13px; letter-spacing:.14em; text-transform:uppercase; font-weight:600; margin:0 0 10px; }
+    .m-sec h2 { font-size:40px; line-height:1.1; max-width:18em; margin:0 0 14px; }
+    .m-sec p.intro { font-size:18px; color:var(--text-secondary); max-width:36em; margin:0 0 34px; }
+
+    /* Five numbered steps */
+    .steps { display:grid; gap:10px; list-style:none; padding:0; margin:0; }
+    .step { display:grid; grid-template-columns:64px 1fr auto; gap:6px 18px; align-items:center; background:var(--surface-2); border:1px solid var(--border); border-radius:14px; padding:18px 22px; }
+    .step .n { font-family:var(--font-display); font-size:44px; line-height:1; color:var(--accent); grid-row:1 / span 2; }
+    .step h3 { font-family:var(--font-body); font-size:19px; font-weight:700; margin:0; color:var(--text-primary); }
+    .step p { font-size:16px; color:var(--text-secondary); margin:0; line-height:1.5; grid-column:2; }
+    .step.free { border-color:var(--accent); background:var(--accent-bg); }
+    .step .tag { grid-column:3; grid-row:1 / span 2; font-size:12px; letter-spacing:.08em; text-transform:uppercase; background:var(--accent); color:#fff; padding:4px 10px; }
+    @media (max-width:560px){ .step { grid-template-columns:44px 1fr; } .step .tag { grid-column:2; grid-row:auto; justify-self:start; } .step .n { font-size:34px; } }
+    .m-band .kicker-line { color:#E3C477; font-size:13px; letter-spacing:.14em; text-transform:uppercase; font-weight:600; margin:0 0 14px; }
+    .steps-foot { margin-top:26px; font-size:17px; color:var(--text-secondary); }
+    .steps-foot a { color:var(--accent); text-decoration:underline; }
+
+    /* Results band: colors set explicitly */
+    .m-band { background:#1E4A40; padding:76px 0; text-align:center; }
+    .m-band .wrap { max-width:760px; }
+    .m-band .kicker-line { color:#E3C477; }
+    .m-band p.big { font-family:var(--font-display); font-size:32px; line-height:1.3; color:#fff; margin:0 0 18px; }
+    .m-band p.src { color:#D9E4DD; font-size:15px; max-width:34em; margin:0 auto; }
+
+    /* Labeled expanders */
+    details.more { border-top:1px solid var(--border); }
+    details.more:last-of-type { border-bottom:1px solid var(--border); }
+    details.more summary { cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center; gap:14px; min-height:56px; padding:14px 4px; font-weight:600; font-size:18px; color:var(--text-primary); }
+    details.more summary::-webkit-details-marker { display:none; }
+    details.more summary .hint { font-weight:400; font-size:15px; color:var(--accent); white-space:nowrap; }
+    details.more summary .hint::after { content:" +"; }
+    details.more[open] summary .hint::after { content:" \2212"; }
+    details.more .body { padding:0 4px 20px; font-size:17px; color:var(--text-secondary); line-height:1.6; max-width:40em; }
+    details.more .body p { font-size:17px; }
+    details.more summary:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+
+    .m-pilot-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:30px 0 26px; }
+    .m-pilot-grid div { background:var(--surface-1); border-radius:12px; padding:20px; }
+    .m-pilot-grid h3 { font-family:var(--font-body); font-size:17px; margin:0 0 6px; }
+    .m-pilot-grid p { font-size:16px; margin:0; color:var(--text-secondary); }
+    @media (max-width:700px){ .m-pilot-grid { grid-template-columns:1fr; } }
+
+    .m-final { background:var(--surface-1); text-align:center; padding:84px 0; }
+    .m-final h2 { margin:0 auto 14px; }
+    .m-final p { font-size:18px; max-width:30em; margin:0 auto 26px; color:var(--text-secondary); }
+    .m-final .btn { font-size:17px; padding:16px 34px; }
+    .m-final .links { margin-top:22px; font-size:16px; }
+    .m-final .links a { color:var(--accent); text-decoration:underline; margin:0 10px; }
+    .m-final .cost { margin-top:34px; font-size:16px; color:var(--text-primary); }
+    .m-final .cost a { color:var(--accent); text-decoration:underline; }
+  </style>
+</head>
+<body>
+
+  <div class="mock-flag"><strong>Design mockup.</strong> Not live. Your current home page is unchanged. Content is real, layout is the proposal.</div>
+
+  <header class="site-header">
+    <div class="wrap">
+      <a href="index.html" class="logo" style="text-decoration:none; color:inherit;">Tenfold</a>
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Menu" aria-expanded="false" aria-controls="primary-nav">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <nav class="primary-nav" id="primary-nav">
+        <a href="framework.html">The Framework</a>
+        <a href="about.html">About</a>
+        <a href="sample-workout.html">Free session</a>
+        <a href="blog.html">Blog</a>
+        <a href="pricing.html">Pricing</a>
+        <a class="portal-link" href="portal-login.html">Client portal</a>
+        <a class="pill-link" href="signup.html?tier=1">Start for $20/mo</a>
+      </nav>
+    </div>
+  </header>
+
+  <nav class="jump" aria-label="On this page">
+    <div class="wrap">
+      <a href="#start">In 30 seconds</a>
+      <a href="#how">How it works</a>
+      <a href="#origin">Where it comes from</a>
+      <a href="#questions">Questions</a>
+      <a class="pill" href="sample-workout.html">Try a free session</a>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- 1. HERO: one headline, one main action -->
+    <section class="m-hero" id="start">
+      <div class="wrap">
+        <p class="eyebrow-line">Tenfold Method</p>
+        <h1>Stay strong, capable and <em>independent.</em> Train body and mind together.</h1>
+        <p class="lede">Strength training and evidence-based skills coaching, built as one program, for adults 40 and over.</p>
+        <div class="cta-row">
+          <a href="sample-workout.html" class="btn btn-primary">Try one session free</a>
+          <a href="signup.html?tier=1" class="quiet">or start for $20 a month</a>
+        </div>
+        <p class="fine">Free session: your email, nothing else. No card, no account.</p>
+      </div>
+    </section>
+
+    <!-- 2. IN 30 SECONDS -->
+    <section style="padding:0; border-top:none;">
+      <div class="wrap thirty">
+        <div class="thirty-box">
+          <p class="label">In 30 seconds</p>
+          <dl>
+            <dt>Who</dt>
+            <dd>Adults 40 and over who want to stay strong, capable and independent for the long game.</dd>
+            <dt>What</dt>
+            <dd>Strength training and skills coaching (motivational interviewing and DBT distress tolerance), designed together.
+              <small>Skills coaching, not therapy. Taught by someone with an M.S.W. and M.B.A. from Boston College, ten years practicing as a social worker, and an ISSA personal training certification.</small></dd>
+            <dt>Cost</dt>
+            <dd>From $20 a month. Cancel anytime.
+              <small>Every price is published, and there is a sliding scale.</small></dd>
+            <dt>Start</dt>
+            <dd>Run one free session, or <a href="consultation.html" style="color:var(--accent); text-decoration:underline;">book a free 15-minute call</a>.</dd>
+          </dl>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. HOW IT WORKS: five numbered steps -->
+    <section class="m-sec" id="how">
+      <div class="wrap">
+        <p class="kicker-line">How it works</p>
+        <h2>Five steps. You decide how far to go.</h2>
+        <p class="intro">Nothing here asks you to commit before you have seen it.</p>
+        <ol class="steps">
+          <li class="step free"><span class="n">1</span><h3>Try a session</h3><p>Monday of the real program, start to finish. Email only.</p><span class="tag">Free</span></li>
+          <li class="step free"><span class="n">2</span><h3>Talk it through</h3><p>A 15-minute call, if you would rather ask questions first.</p><span class="tag">Free</span></li>
+          <li class="step"><span class="n">3</span><h3>Join</h3><p>Plans from $20 a month. Cancel anytime. <a href="pricing.html" style="color:var(--accent); text-decoration:underline;">See pricing</a>.</p></li>
+          <li class="step"><span class="n">4</span><h3>Take your starting assessment</h3><p>A snapshot, not a grade. Your plan is built around it.</p></li>
+          <li class="step"><span class="n">5</span><h3>Train</h3><p>Daily workouts at three tiers, nutrition tools, and your own session log.</p></li>
+        </ol>
+        <p class="steps-foot">Not sure which plan fits? <a href="pricing.html">Compare them side by side</a>.</p>
+      </div>
+    </section>
+
+    <!-- 4. WHERE IT COMES FROM: results band + labeled details -->
+    <section class="m-band" id="origin">
+      <div class="wrap">
+        <p class="kicker-line">Where this comes from</p>
+        <p class="big">Across two years of pilot cohorts, participants reported better emotional control, better sleep, and a better ability to work through a negative thought.</p>
+        <p class="src">Self-reported by women who took part in a pilot in Danbury, CT, from May 2023 to May 2025. A pilot, not a clinical trial.</p>
+      </div>
+    </section>
+    <section class="m-sec" style="padding-top:56px;">
+      <div class="wrap">
+        <div class="m-pilot-grid">
+          <div><h3>What was run</h3><p>Groups of three to six women trained together five sessions a week on twelve-week cycles, with support groups outside the sessions.</p></div>
+          <div><h3>Who took part</h3><p>Four groups. I have not published a total head count, so I do not quote one.</p></div>
+          <div><h3>What it is not</h3><p>Not a clinical trial. Self-reported outcomes from small groups, described exactly as they were collected.</p></div>
+        </div>
+        <details class="more">
+          <summary>How it was measured <span class="hint">See the details</span></summary>
+          <div class="body"><p>Weight and measurements every four weeks, attendance at every session, confidence self-ratings, and a post-program questionnaire at the end of each cycle. Participants could re-enroll for another cycle, and many did.</p></div>
+        </details>
+        <details class="more">
+          <summary>The thinking behind the method <span class="hint">Read the framework</span></summary>
+          <div class="body"><p>Three needs, autonomy, competence and relatedness, from self-determination theory, plus six guiding ideas. Not a ranking and not a score. <a href="framework.html" style="color:var(--accent); text-decoration:underline;">The full framework</a>.</p></div>
+        </details>
+      </div>
+    </section>
+
+    <!-- 5. QUESTIONS -->
+    <section class="m-sec" id="questions" style="padding-top:20px;">
+      <div class="wrap">
+        <p class="kicker-line">Questions</p>
+        <h2>What people ask before starting.</h2>
+        <details class="more">
+          <summary>Is this therapy? <span class="hint">Open</span></summary>
+          <div class="body"><p>No, and I want to be precise about that. Tenfold is skills coaching and physical training, not therapy and not medical care. The skills come from motivational interviewing and DBT distress tolerance. I hold an M.S.W. and an M.B.A. from Boston College with ten years of practice as a social worker behind them. I am not currently licensed and I do not practice clinically here. If something you bring me belongs with a licensed provider, I will tell you so and help you find one.</p></div>
+        </details>
+        <details class="more">
+          <summary>What do I get for $20 a month? <span class="hint">Open</span></summary>
+          <div class="body"><p>Portal access, the full Maximum Strength and Size program day by day with every lift written at three tiers, the fridge-to-recipe and restaurant macro tools, and a session log that keeps your own check-ins. No coaching calls at this level. Cancel anytime, no contract, no cancellation fee.</p></div>
+        </details>
+        <details class="more">
+          <summary>What if I am not "in shape" yet? <span class="hint">Open</span></summary>
+          <div class="body"><p>That is exactly who this is for. Every plan starts from where you actually are, not where you think you should be.</p></div>
+        </details>
+        <details class="more">
+          <summary>Do I need equipment? <span class="hint">Open</span></summary>
+          <div class="body"><p>Not necessarily. Programs can be built around resistance bands, dumbbells, or just your bodyweight.</p></div>
+        </details>
+        <details class="more">
+          <summary>Can I change or cancel later? <span class="hint">Open</span></summary>
+          <div class="body"><p>Monthly plans can be adjusted or cancelled any time. The 12-week packages are one payment, refundable only before your first session. <a href="policies.html#refunds" style="color:var(--accent); text-decoration:underline;">Read the details</a>.</p></div>
+        </details>
+      </div>
+    </section>
+
+    <!-- 6. ONE FINAL ACTION -->
+    <section class="m-final">
+      <div class="wrap" style="max-width:760px;">
+        <h2>Take one real session. See if it fits.</h2>
+        <p>Not a sample and not a teaser: Monday of the Maximum Strength and Size program, exactly as members run it.</p>
+        <a href="sample-workout.html" class="btn btn-primary">Get the free session</a>
+        <p class="links"><a href="consultation.html">Book a free 15-minute call</a><a href="signup.html?tier=1">Start for $20 a month</a></p>
+        <p class="cost"><strong>Cost shouldn't decide who gets to be healthy.</strong> If a price is the reason you are not starting, <a href="consultation.html?topic=sliding-scale">ask about the sliding scale</a>.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <p class="scope-note">Tenfold is skills coaching and physical training. It is not therapy and it is not medical care. Members who need clinical support beyond that scope are referred to a licensed provider.</p>
+  <footer>Tenfold Method &nbsp;&middot;&nbsp; In person &amp; virtual training &nbsp;&middot;&nbsp; <a href="policies.html">Privacy, refunds &amp; terms</a> &nbsp;&middot;&nbsp; <a href="consultation.html">Contact</a></footer>
+
+  <script src="js/nav-toggle.js" defer></script>
+</body>
+</html>

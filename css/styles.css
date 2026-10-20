@@ -529,7 +529,8 @@ ul.credentials li strong { color: var(--text-primary); font-weight: 600; }
 
 /* Booking slot picker */
 .slot-btn {
-  font-size: 13px;
+  font-size: 14px;
+  min-height: 44px;
   padding: 8px 10px;
   border-radius: var(--radius);
   border: 1px solid var(--border);

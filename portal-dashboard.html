@@ -67,7 +67,7 @@
       <div class="tool-box">
         <div class="field">
           <label for="pay-amount">What are you paying for?</label>
-          <select id="pay-amount" style="width:100%; padding:10px 12px; border-radius:var(--radius); border:1px solid var(--border); font-family:var(--font-body); font-size:14px;">
+          <select id="pay-amount" style="width:100%; padding:10px 12px; border-radius:var(--radius); border:1px solid var(--border); font-family:var(--font-body); font-size:16px;">
             <option value="7500">Single session — $75.00</option>
             <option value="35000">5-session package — $350.00</option>
             <option value="65000">10-session package — $650.00</option>
@@ -77,18 +77,6 @@
         <p class="form-error" id="pay-error"></p>
         <p class="small" id="pay-success" style="display:none; color:var(--accent);"></p>
         <button id="card-button" class="btn btn-primary btn-sm">Pay now</button>
-      </div>
-    </section>
-
-    <section id="blog">
-      <div class="section-head">
-        <h2 style="margin:0;">Latest from the blog</h2>
-        <a class='link' href='/blog'>View all</a>
-      </div>
-      <div class="grid" id="blog-list">
-        <div class="card">
-          <p class="blog-tag">Loading...</p>
-        </div>
       </div>
     </section>
 
@@ -111,7 +99,7 @@
 
     <div class="tab-panel" role="tabpanel" id="panel-today" aria-labelledby="tab-today" data-tab-panel="today">
     <!-- First visit only: shown when there is no starting assessment yet -->
-    <div class="card" id="first-run" style="display:none; margin-top:24px;">
+    <div class="card" id="first-run" style="display:none; margin:24px 0 32px;">
       <p class="label">Start here</p>
       <p class="value" style="margin-bottom:6px;">Take your starting assessment</p>
       <p class="small" style="margin-bottom:12px;">It gives your plan a real starting point. Your profile will show up under Progress.</p>
@@ -156,7 +144,7 @@
 
           <div class="field">
             <label for="log-feeling">How did you feel afterward?</label>
-            <select id="log-feeling" style="width:100%; padding:10px 12px; border-radius:var(--radius); border:1px solid var(--border); font-family:var(--font-body); font-size:14px;">
+            <select id="log-feeling" style="width:100%; padding:10px 12px; border-radius:var(--radius); border:1px solid var(--border); font-family:var(--font-body); font-size:16px;">
               <option value="">Select one</option>
               <option value="5">Great</option>
               <option value="4">Good</option>
@@ -168,7 +156,7 @@
 
           <div class="field">
             <label for="log-difficulty">How difficult was it?</label>
-            <select id="log-difficulty" style="width:100%; padding:10px 12px; border-radius:var(--radius); border:1px solid var(--border); font-family:var(--font-body); font-size:14px;">
+            <select id="log-difficulty" style="width:100%; padding:10px 12px; border-radius:var(--radius); border:1px solid var(--border); font-family:var(--font-body); font-size:16px;">
               <option value="">Select one</option>
               <option value="1">Very easy</option>
               <option value="2">Easy</option>
@@ -246,7 +234,10 @@
     </section>
 
     <section id="my-appointments-section">
-      <h2>Your upcoming appointments</h2>
+      <div class="section-head">
+        <h2 style="margin:0;">Your upcoming appointments</h2>
+        <button type="button" class="btn btn-sm btn-primary" id="open-booking-tab">Book a session</button>
+      </div>
       <div id="my-appointments-list" class="tool-box"><p class="small">Loading...</p></div>
     </section>
     </div>
@@ -261,6 +252,19 @@
     </div>
 
     </div>
+
+    <!-- Reading, not the day's job: kept below the tools -->
+    <section id="blog">
+      <div class="section-head">
+        <h2 style="margin:0;">Latest from the blog</h2>
+        <a class='link' href='/blog'>View all</a>
+      </div>
+      <div class="grid" id="blog-list">
+        <div class="card">
+          <p class="blog-tag">Loading...</p>
+        </div>
+      </div>
+    </section>
 
   </main>
 
@@ -849,6 +853,11 @@
       document.getElementById('appt-submit').textContent = 'Confirm booking';
       document.getElementById('booking-section').style.display = 'block';
       document.getElementById('booking-section').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // Same action as the "Book now" card at the top, offered where the appointments are listed
+    document.getElementById('open-booking-tab').addEventListener('click', function () {
+      document.getElementById('open-booking').click();
     });
 
     document.getElementById('appt-submit').addEventListener('click', async function () {

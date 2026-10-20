@@ -7,15 +7,17 @@
   <link rel="stylesheet" href="css/styles.css" />
   <style>
     .assess-q { margin-bottom: 26px; }
-    .assess-q label { display:block; font-weight:600; font-size:14px; margin-bottom:6px; }
-    .assess-q .hint { font-size:12px; color:var(--text-muted); margin-bottom:10px; }
-    .assess-q input[type="number"] { width:120px; }
+    .assess-q label { display:block; font-weight:600; font-size:15px; margin-bottom:6px; }
+    .assess-q .hint { font-size:13px; color:var(--text-muted); margin-bottom:10px; }
+    .assess-q input[type="number"] { width:120px; font-size:16px; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface-2); font-family:var(--font-body); }
+    .assess-q input[type="number"]:focus { outline:2px solid var(--accent); outline-offset:1px; }
+    .back-to-answers { margin:0 0 14px; }
     .rating-row { display:flex; gap:8px; flex-wrap:wrap; }
     .rating-btn {
       width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border);
-      background: var(--surface-2); cursor: pointer; font-size: 13px;
+      background: var(--surface-2); cursor: pointer; font-size: 16px;
     }
-    .scale-ends { display:flex; justify-content:space-between; max-width:288px; font-size:12px; color:var(--text-muted); margin-top:6px; }
+    .scale-ends { display:flex; justify-content:space-between; max-width:288px; font-size:13px; color:var(--text-muted); margin-top:6px; }
     .rating-btn.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
   </style>
 </head>
@@ -31,6 +33,7 @@
     <div style="padding:32px 0 8px;">
       <h1 style="font-size:24px;">Your starting point</h1>
       <p>A few quick tests and honest self-ratings. There's no pass or fail here, just a real snapshot so your plan can be built around where you're actually starting from, not a guess.</p>
+      <p class="small">Your answers are saved to your account and used to build your plan. I can see them, and so can the services that run this site. <a href="policies.html#privacy" style="color:var(--accent); text-decoration:underline;">How your information is handled</a>.</p>
     </div>
 
     <div class="tool-box" id="assess-form">
@@ -106,6 +109,7 @@
     </div>
 
     <div class="tool-box" id="assess-results" style="display:none;">
+      <button type="button" class="back-link back-to-answers" id="back-to-answers">&larr; Change my answers</button>
       <h2 style="font-size:18px; margin-bottom:14px;">Your profile</h2>
       <div id="radar-container" style="text-align:center; margin-bottom:16px;"></div>
       <p id="results-summary" style="margin-bottom:16px;"></p>
@@ -324,6 +328,13 @@
       });
       document.getElementById('assess-form').style.display = 'none';
       document.getElementById('assess-results').style.display = 'block';
+    });
+
+    // Back to the questions with every answer still in place. Nothing has been saved yet at this point.
+    document.getElementById('back-to-answers').addEventListener('click', function () {
+      document.getElementById('assess-results').style.display = 'none';
+      document.getElementById('assess-form').style.display = 'block';
+      document.getElementById('assess-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
     document.getElementById('continue-btn').addEventListener('click', async function () {
