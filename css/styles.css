@@ -609,7 +609,11 @@ table.compare td { text-align: center; }
 table.compare thead th:not(:first-child) { text-align: center; }
 .yes, .no { font-size: 20px; font-weight: 700; line-height: 1; }
 .yes { color: var(--accent); }
-.no { color: #8A8F8C; font-weight: 400; }
+.no { color: #6B7370; font-weight: 400; }
+
+/* The gold "10" mark: lighter on dark bands, brand green on white, so it clears contrast on both */
+.bleed-band .ten-mark-gold { color: #E3C477; }
+.lead-band .ten-mark-gold, .gate-box .ten-mark-gold { color: var(--accent); }
 table.compare .c-price { display: block; font-weight: 500; color: var(--accent); font-size: 12px; margin-top: 2px; }
 .compare-note { margin: 10px 0 0; color: var(--text-secondary); }
 .compare-note .yes, .compare-note .no { font-size: 16px; }
@@ -641,11 +645,12 @@ a:focus-visible, button:focus-visible, .pill-link:focus-visible {
 nav.primary-nav { gap: 18px; }
 @media (max-width: 900px) { nav.primary-nav { gap: 13px; font-size: 12px; } }
 
-/* Evidence band: statement of fact, not an italic pull quote */
-.bleed-band p.big-quote { font-style: normal; font-size: 25px; }
+/* Evidence band: statement of fact, not an italic pull quote.
+   Colors are set explicitly: the global "p" color is dark grey and would be unreadable on this dark green. */
+.bleed-band p.big-quote { font-style: normal; font-size: 25px; color: #FFFFFF; }
 .bleed-band .band-source {
   font-size: 12px; line-height: 1.6; max-width: 560px;
-  margin: 16px auto 0; opacity: 0.72;
+  margin: 16px auto 0; color: #D9E4DD;
 }
 
 /* Alumni quotes */
