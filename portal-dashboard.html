@@ -8,6 +8,9 @@
 </head>
 <body>
 
+  <!-- Shown while the page checks your login. The rest of the page stays hidden until then. -->
+  <p id="auth-wait" role="status" style="visibility:visible; text-align:center; padding:60px 20px; margin:0;">Loading your dashboard...</p>
+
   <header class="site-header">
     <div class="wrap">
       <a class='logo' href='/' style='text-decoration:none; color:inherit;'>Tenfold</a>
@@ -102,11 +105,18 @@
     <nav class="tab-nav" id="dash-tab-nav" role="tablist" aria-label="Dashboard sections">
       <button type="button" class="tab-btn active" role="tab" id="tab-today" aria-controls="panel-today" aria-selected="true" data-tab="today">Today</button>
       <button type="button" class="tab-btn" role="tab" id="tab-meals" aria-controls="panel-meals" aria-selected="false" tabindex="-1" data-tab="meals">Meals</button>
-      <button type="button" class="tab-btn" role="tab" id="tab-book" aria-controls="panel-book" aria-selected="false" tabindex="-1" data-tab="book">Book &amp; Pay</button>
+      <button type="button" class="tab-btn" role="tab" id="tab-book" aria-controls="panel-book" aria-selected="false" tabindex="-1" data-tab="book">Sessions</button>
       <button type="button" class="tab-btn" role="tab" id="tab-progress" aria-controls="panel-progress" aria-selected="false" tabindex="-1" data-tab="progress">Progress</button>
     </nav>
 
     <div class="tab-panel" role="tabpanel" id="panel-today" aria-labelledby="tab-today" data-tab-panel="today">
+    <!-- First visit only: shown when there is no starting assessment yet -->
+    <div class="card" id="first-run" style="display:none; margin-top:24px;">
+      <p class="label">Start here</p>
+      <p class="value" style="margin-bottom:6px;">Take your starting assessment</p>
+      <p class="small" style="margin-bottom:12px;">It gives your plan a real starting point. Your profile will show up under Progress.</p>
+      <a href="assessment.html" class="btn btn-primary btn-sm">Take assessment</a>
+    </div>
     <section>
       <h2>Daily workout</h2>
       <div class="tool-box">
@@ -287,6 +297,11 @@
     const ADMIN_EMAIL = "tenfoldfunctional@gmail.com";
     document.body.style.visibility = 'hidden'; // hide everything until membership is confirmed
 
+    // Escape anything that came from the database or an AI tool before it goes into the page as HTML.
+    function esc(v) {
+      return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
     // Real: require a logged-in session AND an active membership to view
     // the dashboard at all (admin account is exempt from the membership check).
     supabaseClient.auth.getSession().then(async ({ data }) => {
@@ -317,6 +332,7 @@
       }
 
       document.body.style.visibility = 'visible';
+      document.getElementById('auth-wait').style.display = 'none';
       loadWelcome(email);
       if (email === ADMIN_EMAIL) {
         document.getElementById('admin-link').style.display = 'inline';
@@ -327,6 +343,9 @@
       checkMembership(email);
       initWorkoutLog(email);
       loadProfile(email);
+    }).catch(err => {
+      console.error(err);
+      document.getElementById('auth-wait').textContent = "We couldn't load your dashboard. Please check your connection and refresh this page.";
     });
 
     let clientHasMembership = false;
@@ -435,6 +454,7 @@
 
       const box = document.getElementById('profile-box');
       if (!assessments || !assessments.length) {
+        document.getElementById('first-run').style.display = 'block';
         box.innerHTML = `
           <p class="small" style="margin-bottom:12px;">You haven't taken your starting assessment yet.</p>
           <a href="assessment.html" class="btn btn-primary btn-sm">Take assessment</a>
@@ -577,10 +597,10 @@
         return;
       }
       container.innerHTML = posts.map(p => `
-        <a href="post.html?id=${p.id}" style="text-decoration:none; color:inherit;">
+        <a href="post.html?id=${encodeURIComponent(p.id)}" style="text-decoration:none; color:inherit;">
           <div class="card">
-            <p class="blog-tag">${p.tag}</p>
-            <p class="blog-title">${p.title}</p>
+            <p class="blog-tag">${esc(p.tag)}</p>
+            <p class="blog-title">${esc(p.title)}</p>
           </div>
         </a>
       `).join('');
@@ -723,7 +743,8 @@
       const when = new Date(appts[0].appointment_time).toLocaleString([], {
         weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
       });
-      el.innerHTML = `<p class="value">${when}</p><p class="small">Virtual session with Sarah</p>`;
+      const kind = appts[0].location === 'In-person' ? 'In-person session' : 'Virtual session';
+      el.innerHTML = `<p class="value">${esc(when)}</p><p class="small">${kind} with Sarah</p>`;
     }
 
     // Real: load and render this client's full upcoming appointments list
@@ -746,10 +767,10 @@
         });
         return `
           <div class="appt-row">
-            <span style="font-size:14px;">${when} &middot; <span class="small">${a.location || 'Virtual'}</span></span>
+            <span style="font-size:14px;">${esc(when)} &middot; <span class="small">${esc(a.location || 'Virtual')}</span></span>
             <span>
-              <button class="btn btn-sm reschedule-btn" data-id="${a.id}" data-location="${a.location || 'Virtual'}">Reschedule</button>
-              <button class="btn btn-sm cancel-btn" data-id="${a.id}" data-time="${a.appointment_time}">Cancel</button>
+              <button class="btn btn-sm reschedule-btn" data-id="${esc(a.id)}" data-location="${esc(a.location || 'Virtual')}">Reschedule</button>
+              <button class="btn btn-sm cancel-btn" data-id="${esc(a.id)}" data-time="${esc(a.appointment_time)}">Cancel</button>
             </span>
           </div>
         `;
@@ -760,7 +781,15 @@
           const sure = await confirmAction('Cancel this appointment? You can book another time afterwards.', 'Yes, cancel it', 'Keep it');
           if (!sure) return;
           const apptTime = this.dataset.time;
-          await supabaseClient.from('appointments').update({ status: 'cancelled' }).eq('id', this.dataset.id);
+          // Only say it is cancelled once the server confirms a row actually changed
+          const { data: cancelled, error: cancelError } = await supabaseClient
+            .from('appointments').update({ status: 'cancelled' }).eq('id', this.dataset.id).select();
+          if (cancelError || !cancelled || !cancelled.length) {
+            console.error(cancelError);
+            setStatus("Couldn't cancel. Your appointment is still booked.", 'warn');
+            return;
+          }
+          setStatus('Cancelled and saved.', 'saved');
 
           try {
             const authToken = await getAuthToken();
@@ -883,7 +912,9 @@
         console.error('Email send failed:', emailErr);
       }
 
-      successEl.textContent = "Booked! You'll get your Google Meet link by email shortly.";
+      successEl.textContent = selectedLocation === 'In-person'
+        ? 'Booked and saved. Check your email for the details.'
+        : "Booked! You'll get your Google Meet link by email shortly.";
       successEl.style.display = 'block';
       rescheduleApptId = null;
       loadNextAppointment(email);
@@ -1000,13 +1031,13 @@
           const w = payload.workout;
           resultEl.innerHTML = `
             <div class="recipe-card" style="margin-top:6px;">
-              <p class="blog-title" style="margin-bottom:10px;">${w.focus} &middot; ${equipment}</p>
+              <p class="blog-title" style="margin-bottom:10px;">${esc(w.focus)} &middot; ${esc(equipment)}</p>
               ${w.supersets.map((ss, i) => `
                 <p class="small" style="font-weight:600; color:var(--text-primary); margin:10px 0 4px;">Superset ${i + 1} &middot; 3 sets</p>
                 ${ss.exercises.map(ex => `
                   <div style="margin-bottom:6px;">
-                    <p style="font-size:13px; font-weight:600; margin:0;">${ex.name} — ${ex.reps} reps</p>
-                    <p class="small" style="margin:0;">${ex.note}</p>
+                    <p style="font-size:13px; font-weight:600; margin:0;">${esc(ex.name)} — ${esc(ex.reps)} reps</p>
+                    <p class="small" style="margin:0;">${esc(ex.note)}</p>
                   </div>
                 `).join('')}
               `).join('')}
@@ -1180,8 +1211,8 @@
 
         resultsEl.innerHTML = payload.recipes.map(r => `
           <div class="recipe-card">
-            <p class="blog-title" style="margin-bottom:2px;">${r.title}</p>
-            <p class="small">${r.description}</p>
+            <p class="blog-title" style="margin-bottom:2px;">${esc(r.title)}</p>
+            <p class="small">${esc(r.description)}</p>
           </div>
         `).join('');
       } catch (err) {
@@ -1212,12 +1243,12 @@
 
       listEl.innerHTML = data.map(r => `
         <div class="restaurant-entry">
-          <p class="blog-title" style="margin-bottom:4px;">${r.restaurant_name} &middot; ${r.meal_description}</p>
+          <p class="blog-title" style="margin-bottom:4px;">${esc(r.restaurant_name)} &middot; ${esc(r.meal_description)}</p>
           <div class="macro-row">
-            <span>${r.calories ?? '?'} cal</span>
-            <span>${r.protein_g ?? '?'}g protein</span>
-            <span>${r.carbs_g ?? '?'}g carbs</span>
-            <span>${r.fat_g ?? '?'}g fat</span>
+            <span>${esc(r.calories ?? '?')} cal</span>
+            <span>${esc(r.protein_g ?? '?')}g protein</span>
+            <span>${esc(r.carbs_g ?? '?')}g carbs</span>
+            <span>${esc(r.fat_g ?? '?')}g fat</span>
           </div>
         </div>
       `).join('');
