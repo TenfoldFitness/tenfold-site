@@ -117,6 +117,8 @@ function mergeProfile(p,force){
   if(typeof p.onboarded==="boolean") d.onboarded=p.onboarded;
   if(p.goal==="lose"||p.goal==="maintain"||p.goal==="build") d.goal=p.goal;
   ["goalWeight","bf","goalBfLo","goalBfHi"].forEach(function(f){ d[f]=(typeof p[f]==="number"&&isFinite(p[f]))?p[f]:null; });
+  d.cardioBump=(typeof p.cardioBump==="number"&&p.cardioBump>0)?Math.min(p.cardioBump,30):0;
+  ["calAdjAt","cardioBumpAt","planDismissAt"].forEach(function(f){ d[f]=/^\d{4}-\d{2}-\d{2}$/.test(p[f])?p[f]:null; });
   d.updatedAt=+p.updatedAt||0;
   unionCustom(p.custom);
 }
@@ -1111,10 +1113,12 @@ function openPhaseSheet(){
 }
 
 /* ---- weekly cardio goal (4 sessions' worth of minutes, folded into the days left) ---- */
-function cardioPerSession(){
+function baseCardioPerSession(){
   var raw=program().phase&&program().phase.cardio, n=(String(raw||"").match(/\d+/g)||[]).map(Number);
   if(!n.length) return 25; return n.length>1?(n[0]+n[1])/2:n[0];
 }
+/* the phase's cardio, plus any bump you accepted from the Progress tab */
+function cardioPerSession(){ return Math.round(baseCardioPerSession()*(1+(S.profile.cardioBump||0)/100)); }
 function cardioStatus(k){
   var mon=mondayOf(k), target=cardioPerSession()*4, done=0, sessions=0;
   for(var i=0;i<7;i++){ var kk=shiftKey(mon,i); if(kk>k) break; var c=S.days[kk]&&S.days[kk].cardio; if(c&&(c.minutes||c.done)){ done+=(c.minutes||0); sessions++; } }
@@ -1464,6 +1468,72 @@ function strengthCard(){
     "<p class='cap' style='margin:12px 0 0'>The % compares your best set (weight × reps, turned into an estimated one-rep max) with the last week you did that lift. More reps at the same weight counts as stronger. Bodyweight lifts compare reps. Under 2% either way counts as about the same.</p>");
 }
 function card(title,sub,inner,cls){ return "<div class='card"+(cls?" "+cls:"")+"'><h3 class='h2' style='font-size:18px'>"+title+"</h3>"+(sub?"<p class='cap'>"+sub+"</p>":"")+inner+"</div>"; }
+/* ---- goal check + suggested changes: the app only suggests; nothing changes until you tap Accept ---- */
+var CAL_STEP=100, CAL_FLOOR=1400, CARDIO_STEP=10, CARDIO_MAX=30;
+function inLuteal(){ var ci=cycleInfo(S.date); return !ci.none&&phaseFor(ci.day,ci.avg,ci.mens).k==="lut"; }
+function daysSince(k){ return k?daysBetween(k,todayKey()):999; }
+function weeksText(w){ return w<1.5?"about a week":w<=104?"about "+r0(w)+" weeks":"more than two years"; }
+function goalCheck(cw,pace){
+  var P=S.profile, gw=P.goalWeight; if(!gw||cw==null) return "";
+  var gap=cw-gw, need=Math.abs(gap), dir=gap>0?-1:1, b=blockNow(), p="<p class='small' style='margin:0 0 8px'>";
+  if(need<1) return p+"<b>You are within a pound of your goal weight.</b> Hold your plan steady and let the number settle.</p>";
+  var h=p+"<b>"+r1(need)+" lb to "+(dir<0?"lose":"gain")+"</b> to reach "+r1(gw)+" lb.</p>";
+  if(pace){
+    var toward=pace.rate*dir;
+    if(toward>0.05){ var w=need/toward; h+=p+"At your current pace ("+sgn(pace.rate)+" lb a week) you get there in "+weeksText(w)+(w<=104?", around <b>"+fmtD(shiftKey(todayKey(),Math.round(w*7)))+"</b>":"")+".</p>"; }
+    else h+=p+"Your weight is not moving toward the goal right now ("+sgn(pace.rate)+" lb a week).</p>";
+  } else h+=p+"Log 4 or more weigh-ins over about 10 days to see when you would reach it.</p>";
+  var rec=cw*(dir<0?0.005:0.0025);
+  h+=p+"A steady pace that protects muscle is about "+r1(rec)+" lb a week, which would take "+weeksText(need/rec)+".</p>";
+  if(dir<0&&b==="build") h+=p+"<b>Heads up:</b> your plan is in a build phase, which adds weight. To lose toward this goal, switch to a cutting phase.</p>";
+  if(dir>0&&b==="cut") h+=p+"<b>Heads up:</b> your plan is a cut, which lowers weight. To gain toward this goal, switch to a build or maintain phase.</p>";
+  if(P.bf&&P.goalBfLo&&P.goalBfHi){
+    var lean=cw*(1-P.bf/100), bfg=(1-lean/gw)*100;
+    if(bfg>P.goalBfHi+1) h+=p+"At "+r1(gw)+" lb with today's muscle you would be about "+r1(bfg)+"% body fat, above your "+P.goalBfLo+"–"+P.goalBfHi+"% goal. Either the goal weight needs to be lower or you need more muscle.</p>";
+    else if(bfg<P.goalBfLo-1) h+=p+"At "+r1(gw)+" lb with today's muscle you would be about "+r1(bfg)+"% body fat, below your "+P.goalBfLo+"–"+P.goalBfHi+"% goal. A slightly higher goal weight may fit better.</p>";
+  }
+  return h;
+}
+function planSuggestions(cw,pace){
+  var P=S.profile, o={items:[],note:""};
+  if(!pace||cw==null){ o.note="Log 4 or more weigh-ins over about 10 days and I will start suggesting calorie and cardio changes."; return o; }
+  if(daysSince(P.planDismissAt)<7) return o;
+  if(pace.src==="recent"&&inLuteal()){ o.note="You are in the luteal phase, when water hides real change. I will wait to suggest changes until after your period starts."; return o; }
+  var pct=pace.rate/cw*100, b=blockNow(), r=paceBand(), T=P.targets, bump=P.cardioBump||0, delta=0, why="";
+  if(pct>r.hi){
+    delta=-CAL_STEP;
+    why=b==="cut"?"Your weight is not dropping as fast as a cut should ("+sgn(pace.rate)+" lb a week).":b==="build"?"You are gaining faster than a lean build ("+sgn(pace.rate)+" lb a week), which is mostly fat.":"Your weight is drifting up ("+sgn(pace.rate)+" lb a week).";
+  } else if(pct<r.lo){
+    delta=CAL_STEP;
+    why=b==="cut"?"You are losing faster than muscle can be protected ("+sgn(pace.rate)+" lb a week).":b==="build"?"You are gaining slower than a build should ("+sgn(pace.rate)+" lb a week).":"Your weight is drifting down ("+sgn(pace.rate)+" lb a week).";
+  }
+  if(delta&&daysSince(P.calAdjAt)<14){ o.note="You changed calories "+daysSince(P.calAdjAt)+" days ago. Give it two weeks before the next change so the scale can show what it did."; delta=0; }
+  else if(delta<0&&T.k+delta<CAL_FLOOR){ o.note="Your calories are already near the "+CAL_FLOOR+" floor. Add cardio instead of cutting more."; delta=0; }
+  if(delta) o.items.push({kind:"cal",v:delta,head:(delta<0?"Lower":"Raise")+" calories by "+CAL_STEP,msg:why+" Change "+T.k+" to "+(T.k+delta)+" kcal"+(delta<0?"":" and keep protein where it is")+"."});
+  if(b==="cut"&&pct>r.hi&&bump<CARDIO_MAX&&daysSince(P.cardioBumpAt)>=7){
+    var base=baseCardioPerSession()*4, from=Math.round(baseCardioPerSession()*(1+bump/100))*4, to=Math.round(baseCardioPerSession()*(1+(bump+CARDIO_STEP)/100))*4;
+    o.items.push({kind:"cardio",v:bump+CARDIO_STEP,head:"Add "+CARDIO_STEP+"% more cardio",msg:"Weekly cardio would go from "+from+" to "+to+" minutes (base plan "+base+"). Change one thing at a time: take either this or the calorie change first, then give it two weeks."});
+  }
+  if(bump>0&&(pct<r.lo||b!=="cut")) o.items.push({kind:"cardioReset",v:0,head:"Return cardio to the plan",msg:"You added "+bump+"% cardio earlier. "+(b!=="cut"?"You are no longer in a cut.":"Your weight is dropping fast enough now.")+" Go back to the base minutes?"});
+  return o;
+}
+function planCard(cw,pace){
+  var h=goalCheck(cw,pace), sg=planSuggestions(cw,pace), bump=S.profile.cardioBump||0;
+  if(bump>0) h+="<p class='cap' style='margin:0 0 8px'>Cardio is "+bump+"% above the phase plan.</p>";
+  sg.items.forEach(function(it){
+    h+="<div class='note' style='margin-top:10px'><b style='display:block;margin-bottom:3px'>"+esc(it.head)+"</b>"+esc(it.msg)+
+       "<div style='display:flex;gap:8px;margin-top:10px'><button class='btn sm' data-plan='"+it.kind+"' data-v='"+it.v+"'>Accept</button><button class='btn ghost sm' data-plan='dismiss' data-v='0'>Not now</button></div></div>";
+  });
+  if(sg.note) h+="<p class='cap' style='margin:10px 0 0'>"+esc(sg.note)+"</p>";
+  return h?card("Goal check","Based on your 7-day average and pace. I only suggest changes; nothing changes until you tap Accept.",h):"";
+}
+function planAct(kind,v){
+  var P=S.profile, t=P.targets, td=todayKey();
+  if(kind==="cal"){ t.k+=v; t.c=Math.max(0,t.c+Math.round(v/4)); P.calAdjAt=td; toast("Calories now "+t.k); }
+  else if(kind==="cardio"||kind==="cardioReset"){ P.cardioBump=v; P.cardioBumpAt=td; toast(v?"Cardio up "+v+"%":"Cardio back to plan"); }
+  else { P.planDismissAt=td; toast("Okay, I will check again in a week"); }
+  persistProfile(); renderTrend();
+}
 function renderTrend(){
   var keys=lastKeys(21), T=targetsFor(S.date), P=S.profile, d=cur();
   var kc=keys.map(function(k){ return S.days[k]?totals(k).k:null; }), pr=keys.map(function(k){ return S.days[k]?totals(k).p:null; });
@@ -1486,7 +1556,7 @@ function renderTrend(){
   h+="<div class='note "+pv.cls+"' style='margin-top:14px'><b style='display:block;margin-bottom:3px'>"+esc(pv.head)+"</b>"+esc(pv.msg)+"</div>"+
      "<div class='wtform'><input class='field' id='wtIn' type='number' step='0.1' inputmode='decimal' placeholder='Weigh-in for "+esc(S.date===todayKey()?"today":fmtD(S.date))+" (lb)' value='"+(d.weight!=null?d.weight:"")+"' aria-label='Weigh-in in pounds'><button class='btn' id='wtSave'>Log</button></div></div>";
 
-  h+=last7Card()+strengthCard();
+  h+=planCard(cwv,pace)+last7Card()+strengthCard();
 
   /* 2. weight chart */
   h+=card("Weight, last 12 weeks","The green line is your 7-day average, which smooths out daily water swings. Dots are single weigh-ins. Pink bands are your period and the days before it.",weightChart(wk,wt,P.goalWeight),"chartcard");
@@ -1551,6 +1621,7 @@ function renderTrend(){
   $("wtSave").onclick=save; $("wtIn").onkeydown=function(e){ if(e.key==="Enter"){ e.preventDefault(); save(); } };
   var rct=$("recalcT"); if(rct) rct.onclick=function(){ openOnboarding(false); };
   var gb=$("goalBtn"); if(gb) gb.onclick=openGoals;
+  $("panel-trend").querySelectorAll("[data-plan]").forEach(function(b){ b.onclick=function(){ planAct(b.dataset.plan,+b.dataset.v); }; });
   $("periodBtn").onclick=function(){ var dd=cur(); dd.period=!dd.period; persistDay(S.date); renderTrend(); };
   var lg=$("lpGo"); if(lg) lg.onclick=function(){
     var s=$("lpS").value, n=Math.round(num($("lpN").value)||0);
