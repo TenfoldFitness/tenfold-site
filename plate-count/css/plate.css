@@ -297,3 +297,7 @@ body.loggedout .app,body.loggedout .tabs{display:none}
 .entbar a{color:var(--accent-deep);font-weight:600}
 body.ro .addbtn,body.ro .plus,body.ro .tick,body.ro #wtSave,body.ro .numfield{pointer-events:none;opacity:.5}
 .chip:disabled{opacity:.5;cursor:not-allowed}
+
+/* Supersets */
+.pairblk{margin-top:14px;padding-top:12px;border-top:1px dashed var(--border-strong)}
+.pairkcal{margin:8px 0 4px}

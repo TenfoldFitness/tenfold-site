@@ -829,6 +829,54 @@ function openAddEx(rd){
     persistDay(rd); S.openId=id; closeSheet(); toast("Added "+name);
   };
 }
+/* ---- Supersets: a second exercise done back to back with this one, same number of sets ---- */
+var BODY_PARTS=["Chest","Back","Shoulders","Biceps","Triceps","Quads","Hamstrings","Glutes","Calves","Core"];
+function guessPart(n){
+  n=String(n||"").toLowerCase();
+  var R=[["Shoulders",/rear delt|reverse fly|reverse pec|face pull|lateral raise|front raise|shoulder|overhead press|upright row|arnold|shrug/],
+    ["Biceps",/curl(?!.*(leg|hamstring))/],["Triceps",/tricep|pushdown|pressdown|skull|dip|kickback.*(tri|arm)/],
+    ["Calves",/calf|calves/],["Hamstrings",/leg curl|hamstring|romanian|rdl|good morning|glute.?ham/],
+    ["Glutes",/glute|hip thrust|bridge|abduct|monster|lateral walk/],["Quads",/squat|leg press|lunge|leg extension|step-?up|hack|sissy/],
+    ["Core",/plank|crunch|leg raise|ab wheel|rollout|twist|wiper|sit-?up|core|woodchop/],
+    ["Back",/pull-?up|chin-?up|pulldown|row|lat |shrug|pullover|deadlift/],["Chest",/bench|chest|fly|pec|push-?up|press/]];
+  for(var i=0;i<R.length;i++) if(R[i][1].test(n)) return R[i][0];
+  return "";
+}
+function pairKey(parent,pr){ return String(parent.key).split("|")[0]+"|"+slug(pr.n); }
+function pairItem(parent,pr){ return {key:pairKey(parent,pr),n:pr.n,s:parent.s,r:parent.r,rest:parent.rest,bw:false,pair:true}; }
+function pairKcal(done){ return kcalMET(MET_LIFT,done*MIN_PER_SET,lastWeightLb()/2.20462); }
+function openPair(it,rd,allItems){
+  var names=exerciseNames(), sel={n:"",part:""}, mine=[], seen={};
+  var taken={}; (allItems||[]).forEach(function(x){ taken[x.n.toLowerCase()]=1; });
+  /* what this exercise was paired with before, newest first */
+  Object.keys(S.days).sort().reverse().forEach(function(k){
+    var P=(S.days[k]||{}).pairs||{}; Object.keys(P).forEach(function(pk){
+      var seg=pk.split("|"); if(seg[1]!==slug(it.n)||!P[pk]||!P[pk].n) return;
+      var lk=P[pk].n.toLowerCase(); if(!seen[lk]&&!taken[lk]){ seen[lk]=1; mine.push(P[pk]); }
+    });
+  });
+  openSheet("Pair with another exercise","<p class='muted small' style='margin:0 0 10px'>You do one set of "+esc(it.n)+", then one set of this, back to back. Each keeps its own weights and reps.</p>"+
+    (mine.length?"<p class='eyebrow' style='margin:0 0 6px'>Paired before</p><div class='chips' id='pbefore'>"+mine.slice(0,6).map(function(m,i){ return "<button class='chip' type='button' data-b='"+i+"'>"+esc(m.n)+"</button>"; }).join("")+"</div>":"")+
+    "<input class='field' id='pn' placeholder='Search or type an exercise…' autocomplete='off' style='margin-top:12px'><div class='list' id='pl' style='margin-top:10px'></div>"+
+    "<p class='eyebrow' style='margin:14px 0 8px'>Body part</p><div class='chips' id='pp'>"+BODY_PARTS.map(function(b){ return "<button class='chip' type='button' data-p='"+b+"' aria-pressed='false'>"+b+"</button>"; }).join("")+"</div>",
+    "<button class='btn' id='pgo'>Pair them</button>");
+  var inp=$("pn");
+  function paint(){ $("pp").querySelectorAll(".chip").forEach(function(c){ c.setAttribute("aria-pressed",c.dataset.p===sel.part?"true":"false"); }); }
+  function list(){
+    var q=inp.value.trim().toLowerCase(), m=names.filter(function(n){ return n.toLowerCase()!==it.n.toLowerCase()&&(!q||n.toLowerCase().indexOf(q)>=0); }).slice(0,6);
+    $("pl").innerHTML=m.map(function(n,i){ return "<button class='item' type='button' data-i='"+i+"'><span class='t'>"+esc(n)+"</span><span class='plus'>+</span></button>"; }).join("");
+    $("pl").querySelectorAll("[data-i]").forEach(function(b){ b.onclick=function(){ inp.value=m[+b.dataset.i]; sel.part=guessPart(inp.value)||sel.part; paint(); list(); }; });
+  }
+  inp.oninput=function(){ var g=guessPart(inp.value); if(g&&!sel.touched) sel.part=g; paint(); list(); }; list();
+  $("pp").querySelectorAll(".chip").forEach(function(c){ c.onclick=function(){ sel.part=(sel.part===c.dataset.p)?"":c.dataset.p; sel.touched=true; paint(); }; });
+  var pb=$("pbefore"); if(pb) pb.querySelectorAll("[data-b]").forEach(function(b){ b.onclick=function(){ var m=mine[+b.dataset.b]; inp.value=m.n; sel.part=m.bodyPart||guessPart(m.n); paint(); list(); }; });
+  $("pgo").onclick=function(){
+    var name=inp.value.trim().slice(0,60); if(!name){ toast("Type or pick an exercise"); return; }
+    if(taken[name.toLowerCase()]||name.toLowerCase()===it.n.toLowerCase()){ toast("That exercise is already on this workout"); return; }
+    var dd=day(rd); dd.pairs=dd.pairs||{}; dd.pairs[it.key]={n:name,bodyPart:sel.part||guessPart(name)};
+    persistDay(rd); closeSheet(); renderTrain(); toast("Paired with "+name);
+  };
+}
 var CHECK="<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M5 12.5l4.5 4.5L19 7.5'/></svg>";
 /* Cardio for the day: pick the machine you actually used, then log minutes and miles. */
 function cardioCard(d,rd,p){
@@ -888,7 +936,7 @@ function renderTrain(){
     if(isOpen){
       var prev=(prevIdx||{})[it.key.slice(it.key.indexOf("|")+1)+"|"], pmap={}; if(prev) prev.sets.forEach(function(x){ pmap[x.i]=x; });
       var pr=(day(rd).pairs||{})[it.key];
-      h+="<div class='ex-body'>"+(pr?"<p class='lastline' style='margin-bottom:10px'><b>Paired</b><span>"+esc(pr.n)+"</span></p>":"")+
+      h+="<div class='ex-body'>"+
         (it.cue?"<p class='cue'>"+esc(it.cue)+"</p>":"")+(it.tech?"<p class='tech'>"+esc(it.tech)+"</p>":"")+
         (it.warm&&it.warm!=="0"?"<p class='small muted' style='margin:0 0 8px'>"+esc(it.warm)+" warm-up set"+(it.warm==="1"?"":"s")+" first</p>":"")+
         (prev?"<div class='lastline'><b>Last</b><span>"+esc(prettyDate(prev.date,{month:"short",day:"numeric"}))+"</span><span>"+prev.sets.map(function(x){ return (x.w!=null?x.w:"?")+"×"+(x.reps!=null?x.reps:"?"); }).join(", ")+"</span></div>":"")+
@@ -900,8 +948,24 @@ function renderTrain(){
           "<input class='numfield"+(g.reps!=null?" ghost":"")+"' type='number' inputmode='numeric' enterkeyhint='done' data-f='reps' placeholder='"+(g.reps!=null?g.reps:esc(String(it.r).split("-")[0]))+"' value='"+(v.reps!=null?v.reps:"")+"' aria-label='"+esc(it.n)+" set "+(si+1)+" reps'>"+
           "<button class='tick' aria-pressed='"+!!v.done+"' aria-label='Mark set "+(si+1)+" done'>"+CHECK+"</button></div>";
       }
+      if(pr){
+        var pit=pairItem(it,pr), pprev=(prevIdx||{})[pit.key.slice(pit.key.indexOf("|")+1)+"|"], ppm={}, pdone=0; if(pprev) pprev.sets.forEach(function(x){ ppm[x.i]=x; });
+        for(var q=0;q<it.s;q++) if((sets[pit.key+"|"+q]||{}).done) pdone++;
+        h+="<div class='pairblk'><div class='lastline'><b>Paired</b><span>"+esc(pr.n)+"</span>"+(pr.bodyPart?"<span>· "+esc(pr.bodyPart)+"</span>":"")+"</div>"+
+          (pprev?"<div class='lastline'><b>Last</b><span>"+esc(prettyDate(pprev.date,{month:"short",day:"numeric"}))+"</span><span>"+pprev.sets.map(function(x){ return (x.w!=null?x.w:"?")+"×"+(x.reps!=null?x.reps:"?"); }).join(", ")+"</span></div>":"")+
+          "<div class='sethd'><span></span><span>Weight</span><span>Reps</span><span></span></div>";
+        for(var pi=0;pi<it.s;pi++){
+          var pk2=pit.key+"|"+pi, pv=sets[pk2]||{}, pg=ghost(pit,pi,ppm,sets);
+          h+="<div class='setrow"+(pv.done?" done":"")+"' data-key='"+esc(pk2)+"' data-ix='"+ix+"' data-pair='1'><span class='i'>"+(pi+1)+"</span>"+
+            "<input class='numfield"+(pg.w!=null?" ghost":"")+"' type='number' inputmode='decimal' enterkeyhint='next' data-f='w' placeholder='"+(pg.w!=null?pg.w:"lb")+"' value='"+(pv.w!=null?pv.w:"")+"' aria-label='"+esc(pr.n)+" set "+(pi+1)+" weight'>"+
+            "<input class='numfield"+(pg.reps!=null?" ghost":"")+"' type='number' inputmode='numeric' enterkeyhint='done' data-f='reps' placeholder='"+(pg.reps!=null?pg.reps:esc(String(it.r).split("-")[0]))+"' value='"+(pv.reps!=null?pv.reps:"")+"' aria-label='"+esc(pr.n)+" set "+(pi+1)+" reps'>"+
+            "<button class='tick' aria-pressed='"+!!pv.done+"' aria-label='Mark paired set "+(pi+1)+" done'>"+CHECK+"</button></div>";
+        }
+        h+="<p class='pairkcal muted small'>"+(pdone?"About "+r0(pairKcal(pdone))+" extra kcal from "+pdone+" paired set"+(pdone===1?"":"s")+" so far.":"Paired sets add to today’s estimated burn.")+(pr.bodyPart?" Works your "+esc(pr.bodyPart.toLowerCase())+".":"")+"</p>"+
+          "<button class='linkbtn' data-unpair='"+ix+"'>Unpair "+esc(pr.n)+"</button></div>";
+      }
       var opts=[it.origN].concat(it.sw||[]);
-      h+="<div class='ex-foot'>"+(it.extra?"<button class='linkbtn' data-rmx='"+esc(it.xid)+"'>Remove this exercise</button>":"<button class='linkbtn' data-swap='"+ix+"'>"+(it.n!==it.origN?"Doing: "+esc(it.n)+" — change":"Did something else? Swap")+"</button>")+"</div></div>";
+      h+="<div class='ex-foot'>"+(pr?"":"<button class='linkbtn' data-openpair='"+ix+"'>Pair with another exercise</button>")+(it.extra?"<button class='linkbtn' data-rmx='"+esc(it.xid)+"'>Remove this exercise</button>":"<button class='linkbtn' data-swap='"+ix+"'>"+(it.n!==it.origN?"Doing: "+esc(it.n)+" — change":"Did something else? Swap")+"</button>")+"</div></div>";
     }
     h+="</div>";
   });
@@ -926,9 +990,22 @@ function wireTrain(panel,rd,items,sets,wd){
     var el=panel.querySelector(".ex[data-ix='"+ix+"']"); if(el&&S.openEx===ix) el.scrollIntoView({block:"nearest",behavior:"smooth"});
   }; });
   panel.querySelectorAll("[data-swap]").forEach(function(b){ b.onclick=function(){ openSwap(items[+b.dataset.swap],rd); }; });
+  panel.querySelectorAll("[data-openpair]").forEach(function(b){ b.onclick=function(){ openPair(items[+b.dataset.openpair],rd,items); }; });
+  panel.querySelectorAll("[data-unpair]").forEach(function(b){ b.onclick=function(){
+    var base=items[+b.dataset.unpair], dd=day(rd); if(dd.pairs) delete dd.pairs[base.key];
+    persistDay(rd); renderTrain(); toast("Unpaired. What you logged is kept.");
+  }; });
+  /* A paired row works on the second exercise's own sets but shares the main exercise's set count and rest. */
+  function rowItem(row){ var base=items[+row.dataset.ix]; return row.dataset.pair?pairItem(base,(day(rd).pairs||{})[base.key]):base; }
+  function cntDone(x){ var n=0; for(var i=0;i<x.s;i++) if((sets[x.key+"|"+i]||{}).done) n++; return n; }
   function setUI(row){
-    var key=row.dataset.key, v=sets[key]||{}, it=items[+row.dataset.ix];
+    var key=row.dataset.key, v=sets[key]||{}, it=rowItem(row);
     row.classList.toggle("done",!!v.done); row.querySelector(".tick").setAttribute("aria-pressed",v.done?"true":"false");
+    if(row.dataset.pair){
+      var kc=row.closest(".pairblk").querySelector(".pairkcal"), nd=cntDone(it), prx=(day(rd).pairs||{})[items[+row.dataset.ix].key];
+      if(kc) kc.textContent=(nd?"About "+r0(pairKcal(nd))+" extra kcal from "+nd+" paired set"+(nd===1?"":"s")+" so far.":"Paired sets add to today’s estimated burn.")+(prx&&prx.bodyPart?" Works your "+prx.bodyPart.toLowerCase()+".":"");
+      return nd;
+    }
     var pips=row.closest(".ex").querySelectorAll(".pips i"), cnt=0;
     for(var i=0;i<it.s;i++){ if((sets[it.key+"|"+i]||{}).done){ cnt++; } if(pips[i]) pips[i].className=((sets[it.key+"|"+i]||{}).done)?"on":""; }
     var tot=0,dn=0; items.forEach(function(x){ for(var i=0;i<x.s;i++){ tot++; if((sets[x.key+"|"+i]||{}).done) dn++; } });
@@ -936,7 +1013,7 @@ function wireTrain(panel,rd,items,sets,wd){
     return cnt;
   }
   panel.querySelectorAll(".setrow").forEach(function(row){
-    var key=row.dataset.key, it=items[+row.dataset.ix], inW=row.querySelector("[data-f='w']"), inR=row.querySelector("[data-f='reps']"), tick=row.querySelector(".tick");
+    var key=row.dataset.key, it=rowItem(row), isPair=!!row.dataset.pair, hasPair=!!(day(rd).pairs||{})[items[+row.dataset.ix].key], inW=row.querySelector("[data-f='w']"), inR=row.querySelector("[data-f='reps']"), tick=row.querySelector(".tick");
     function rec(){ return sets[key]=sets[key]||{w:null,reps:null,done:false}; }
     [inW,inR].forEach(function(inp){
       inp.oninput=function(){ rec()[inp.dataset.f]=inp.value===""?null:+inp.value; persistDay(rd); };
@@ -944,7 +1021,7 @@ function wireTrain(panel,rd,items,sets,wd){
     });
     /* weight + reps both filled = set done, no extra tap (updated in place, never re-rendered mid-typing) */
     inR.onchange=function(){
-      var r=rec(); if(r.w!=null&&r.reps!=null&&!r.done){ r.done=true; persistDay(rd); setUI(row); startRest(parseRest(it.rest)); }
+      var r=rec(); if(r.w!=null&&r.reps!=null&&!r.done){ r.done=true; persistDay(rd); setUI(row); if(isPair||!hasPair) startRest(parseRest(it.rest)); }   /* in a superset, rest after the second exercise */
     };
     tick.onclick=function(){
       var r=rec();
@@ -952,9 +1029,9 @@ function wireTrain(panel,rd,items,sets,wd){
       var pm={}, prev=(prevIdx||{})[it.key.slice(it.key.indexOf("|")+1)+"|"]; if(prev) prev.sets.forEach(function(x){ pm[x.i]=x; });
       var si=+key.split("|").pop(), g=ghost(it,si,pm,sets);
       if(r.w==null&&g.w!=null) r.w=g.w; if(r.reps==null&&g.reps!=null) r.reps=g.reps;
-      r.done=true; persistDay(rd); startRest(parseRest(it.rest));
-      var cnt=0; for(var i=0;i<it.s;i++) if((sets[it.key+"|"+i]||{}).done) cnt++;
-      if(cnt===it.s){ var nx=-1; items.forEach(function(x,i){ if(nx<0&&i>+row.dataset.ix){ for(var s=0;s<x.s;s++) if(!(sets[x.key+"|"+s]||{}).done){ nx=i; break; } } }); S.openEx=nx; }
+      r.done=true; persistDay(rd); if(isPair||!hasPair) startRest(parseRest(it.rest));
+      var base=items[+row.dataset.ix], bp=(day(rd).pairs||{})[base.key];
+      if(cntDone(base)===base.s&&(!bp||cntDone(pairItem(base,bp))===base.s)){ var nx=-1; items.forEach(function(x,i){ if(nx<0&&i>+row.dataset.ix){ for(var s=0;s<x.s;s++) if(!(sets[x.key+"|"+s]||{}).done){ nx=i; break; } } }); S.openEx=nx; }
       renderTrain(); renderWeek();
     };
   });
