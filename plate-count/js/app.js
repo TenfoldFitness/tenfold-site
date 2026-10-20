@@ -113,7 +113,7 @@ function mergeProfile(p,force){
   if(/^\d{4}-\d{2}-\d{2}$/.test(p.programStart)) d.programStart=p.programStart;
   if(typeof p.programIdx==="number") d.programIdx=p.programIdx;
   if(typeof p.plyoLevel==="number") d.plyoLevel=p.plyoLevel;
-  d.proteinPerLb=(typeof p.proteinPerLb==="number"&&p.proteinPerLb>0)?p.proteinPerLb:null;
+  d.proteinPerLb=(typeof p.proteinPerLb==="number"&&p.proteinPerLb>=0)?p.proteinPerLb:null;
   if(typeof p.onboarded==="boolean") d.onboarded=p.onboarded;
   if(p.goal==="lose"||p.goal==="maintain"||p.goal==="build") d.goal=p.goal;
   ["goalWeight","bf","goalBfLo","goalBfHi"].forEach(function(f){ d[f]=(typeof p[f]==="number"&&isFinite(p[f]))?p[f]:null; });
@@ -421,10 +421,12 @@ function weeklyWeight(k){
   var pick=null; ks.forEach(function(x){ if(x<=sat) pick=x; });   /* Saturday itself, else the latest weigh-in before it */
   return S.days[pick||ks[0]].weight;
 }
+/* Protein follows bodyweight by default (1 g per lb). 0 means "use my fixed number instead". */
+function perLb(){ var v=S.profile.proteinPerLb; return v===0?0:(v>0?v:1); }
 function targetsFor(k){
-  var P=S.profile, t=P.targets; if(!P.proteinPerLb) return t;
+  var P=S.profile, t=P.targets, pl=perLb(); if(!pl) return t;
   var wt=weeklyWeight(k); if(!wt) return t;
-  var p=Math.round(wt*P.proteinPerLb), c=Math.max(0,Math.round((t.k-p*4-t.f*9)/4/5)*5);
+  var p=Math.ceil(wt*pl-0.0001), c=Math.max(0,Math.round((t.k-p*4-t.f*9)/4/5)*5);
   return {k:t.k,p:p,c:c,f:t.f};
 }
 function kcalMET(met,min,kg){ return met*3.5*kg/200*min; }
@@ -1613,7 +1615,7 @@ function renderTrend(){
      "<div class='stat'><div class='eyebrow'>On target</div><div class='v'>"+(logged.length?within+"/"+logged.length:"—")+"</div><div class='u'>days within 10%</div></div></div>";
   h+=card("Calories vs target","Last 3 weeks. The dashed line is your daily target. Faded bars fell more than 10% short.",barChart(keys,kc,T.k,"var(--m-kcal)"),"chartcard")+
      card("Protein vs target","Hitting protein is the most protective habit while building. Over is fine.",barChart(keys,pr,T.p,"var(--m-pro)"),"chartcard");
-  h+="<div class='card'><h3 class='h2' style='font-size:18px'>Daily targets</h3><div class='tgt4'><div><b>"+T.k+"</b><span>kcal</span></div><div><b>"+T.p+"</b><span>protein</span></div><div><b>"+T.c+"</b><span>carbs</span></div><div><b>"+T.f+"</b><span>fat</span></div></div><p class='muted small' style='margin:10px 0 0'>"+(P.proteinPerLb&&weeklyWeight(S.date)?"This week’s protein is "+P.proteinPerLb+" g per lb of your Saturday weight ("+r1(weeklyWeight(S.date))+" lb). ":"")+(P.goal?"Set from your weight and goal. You can change the calories to any number you like.":"Set by your phase. Change them from the phase button on Train.")+"</p>"+(P.goal?"<button class='btn ghost sm' id='recalcT' style='margin-top:10px'>Update weight &amp; targets</button>":"")+"</div>"+
+  h+="<div class='card'><h3 class='h2' style='font-size:18px'>Daily targets</h3><div class='tgt4'><div><b>"+T.k+"</b><span>kcal</span></div><div><b>"+T.p+"</b><span>protein</span></div><div><b>"+T.c+"</b><span>carbs</span></div><div><b>"+T.f+"</b><span>fat</span></div></div><p class='muted small' style='margin:10px 0 0'>"+(perLb()&&weeklyWeight(S.date)?"This week’s protein is "+perLb()+" g per lb of your Saturday weight ("+r1(weeklyWeight(S.date))+" lb). ":"")+(P.goal?"Set from your weight and goal. You can change the calories to any number you like.":"Set by your phase. Change them from the phase button on Train.")+"</p>"+(P.goal?"<button class='btn ghost sm' id='recalcT' style='margin-top:10px'>Update weight &amp; targets</button>":"")+"</div>"+
      "<p class='foot' id='syncNote'></p><p class='foot'><button class='linkbtn' id='signOut'>Sign out</button></p>";
   $("panel-trend").innerHTML=h;
 
@@ -1658,8 +1660,8 @@ function openOnboarding(first){
     "<label class='eyebrow' for='op' style='display:block;margin-bottom:6px'>Daily protein in grams (change it to any number you like)</label>"+
     "<input class='field' id='op' type='number' inputmode='numeric' step='5' placeholder='Worked out from your weight' value='"+(first?"":esc(S.profile.targets.p))+"' style='margin-bottom:14px'>"+
     "<label class='eyebrow' for='opl' style='display:block;margin-bottom:6px'>Or set protein by bodyweight: grams per lb</label>"+
-    "<input class='field' id='opl' type='number' inputmode='decimal' step='0.1' placeholder='e.g. 1 = 1 g per lb (leave empty to use the number above)' value='"+esc(S.profile.proteinPerLb||"")+"' style='margin-bottom:6px'>"+
-    "<p class='muted small' style='margin:0 0 14px'>When this is filled in, each week’s protein is your Saturday weigh-in × this number, starting the Monday after. Log your weight on Saturdays.</p>"+
+    "<input class='field' id='opl' type='number' inputmode='decimal' step='0.1' placeholder='1 = 1 g per lb. Enter 0 to use the fixed number above' value='"+esc(S.profile.proteinPerLb===null||S.profile.proteinPerLb===undefined?"":S.profile.proteinPerLb)+"' style='margin-bottom:6px'>"+
+    "<p class='muted small' style='margin:0 0 14px'>Protein follows your weight: each week’s goal is your Saturday weigh-in × this number (1 g per lb unless you change it), starting the Monday after. Log your weight on Saturdays. Enter 0 to use a fixed number instead.</p>"+
     "<p class='eyebrow' style='margin:0 0 8px'>Your goal</p><div class='chips' id='og'>"+Object.keys(GOALS).map(function(k){
       return "<button class='chip' type='button' data-g='"+k+"' aria-pressed='"+(k===goal)+"'>"+GOALS[k].label+"</button>"; }).join("")+"</div>"+
     "<p class='muted small' id='oblurb' style='margin:8px 0 0'></p><div id='oprev'></div>"+
@@ -1672,8 +1674,9 @@ function openOnboarding(first){
   function calc(){
     var wt=num(inp.value), ko=kEdited?num(kin.value):null, po=pEdited?num(pin.value):null, pl=num($("opl").value);
     if(ko!=null&&(ko<1000||ko>5000)) ko=null; if(po!=null&&(po<30||po>500)) po=null;
-    if(pl!=null&&(pl<0.3||pl>3)) pl=null;
-    if(pl&&wt) po=Math.round(wt*pl);
+    if(pl!=null&&pl!==0&&(pl<0.3||pl>3)) pl=null;
+    if(pl==null) pl=perLb()||1;   /* empty box = the 1 g per lb default */
+    if(pl&&wt) po=Math.ceil(wt*pl-0.0001);
     var T=wt&&wt>=70&&wt<=600?calcTargets(wt,goal,ko,po):null;
     if(T&&!kEdited) kin.placeholder="Suggested: "+calcTargets(wt,goal).k;
     if(T&&!pEdited) pin.placeholder="Suggested: "+calcTargets(wt,goal).p;
@@ -1689,7 +1692,7 @@ function openOnboarding(first){
   $("osave").onclick=function(){
     var T=calc(), wt=num(inp.value); if(!T) return;
     S.profile.targets=T; S.profile.goal=goal; S.profile.onboarded=true;
-    var plv=num($("opl").value); S.profile.proteinPerLb=(plv!=null&&plv>=0.3&&plv<=3)?plv:null;
+    var plv=num($("opl").value); S.profile.proteinPerLb=plv===0?0:((plv!=null&&plv>=0.3&&plv<=3)?plv:null);
     var td=todayKey(); day(td).weight=wt; persistDay(td);
     persistProfile(); closeSheet(); toast("Targets set: "+T.k+" kcal · "+T.p+" g protein");
   };
