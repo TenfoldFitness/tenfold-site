@@ -233,7 +233,8 @@
       clearFieldErrors();
 
       const name = document.getElementById('su-name').value.trim();
-      const email = document.getElementById('su-email').value.trim();
+      // Lowercased on purpose: the login system stores emails in lowercase, and every row and rule is matched on that.
+      const email = document.getElementById('su-email').value.trim().toLowerCase();
       const phone = document.getElementById('su-phone').value.trim();
       const priority = document.getElementById('su-priority').value;
       const password = document.getElementById('su-password').value;
