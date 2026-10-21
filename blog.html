@@ -71,7 +71,7 @@
     async function loadAllPosts() {
       const { data: posts, error } = await supabaseClient
         .from('posts')
-        .select('*')
+        .select('id, title, tag, preview, created_at')
         .order('created_at', { ascending: false });
 
       const container = document.getElementById('blog-list-full');
@@ -85,7 +85,7 @@
           <div class="card" style="margin-bottom:14px;">
             <p class="blog-tag">${p.tag}</p>
             <p class="blog-title" style="margin-bottom:6px;">${p.title}</p>
-            <p class="small" style="margin:0;">${getExcerpt(p.content)}</p>
+            <p class="small" style="margin:0;">${getExcerpt(p.preview)}</p>
           </div>
         </a>
       `).join('');

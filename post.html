@@ -92,35 +92,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-client.js"></script>
   <script>
-    const ADMIN_EMAIL = "tenfoldfunctional@gmail.com";
-
-    async function checkHasMembership() {
-      const { data: sessionData } = await supabaseClient.auth.getSession();
-      if (!sessionData.session) return false;
-
-      const email = sessionData.session.user.email;
-      if (email === ADMIN_EMAIL) return true;
-
-      const { data: memberships } = await supabaseClient
-        .from('memberships')
-        .select('*')
-        .eq('client_email', email)
-        .eq('status', 'active')
-        .order('tier', { ascending: false })
-        .limit(1);
-
-      const active = memberships && memberships.length ? memberships[0] : null;
-      return !!(active && (!active.expires_at || new Date(active.expires_at) > new Date()));
-    }
-
-    function getPreviewHtml(fullHtml) {
-      // A <!--more--> marker sets where the free preview ends; otherwise show the first paragraph.
-      const cut = fullHtml.indexOf('<!--more-->');
-      if (cut > 0) return fullHtml.slice(0, cut);
-      const match = fullHtml.match(/<p[^>]*>[\s\S]*?<\/p>/);
-      return match ? match[0] : fullHtml.slice(0, 400);
-    }
-
+    // The full text only comes back from the get-post function if the visitor
+    // is a member (or the admin). Everyone else receives just the preview.
     async function loadPost() {
       const params = new URLSearchParams(window.location.search);
       const postId = params.get('id');
@@ -131,11 +104,8 @@
         return;
       }
 
-      const { data: post, error } = await supabaseClient
-        .from('posts')
-        .select('*')
-        .eq('id', postId)
-        .single();
+      const { data, error } = await supabaseClient.functions.invoke('get-post', { body: { id: postId } });
+      const post = data && data.post;
 
       if (error || !post) {
         contentEl.innerHTML = '<p class="small">Post not found.</p>';
@@ -147,12 +117,10 @@
       document.getElementById('post-title').textContent = post.title;
       document.getElementById('post-byline').textContent = 'Sarah · Tenfold Method';
 
-      const hasMembership = await checkHasMembership();
-
-      if (hasMembership) {
-        contentEl.innerHTML = post.content;
+      if (!post.locked) {
+        contentEl.innerHTML = post.html;
       } else {
-        contentEl.innerHTML = getPreviewHtml(post.content) + `
+        contentEl.innerHTML = post.html + `
           <div class="card center" style="margin-top:20px;">
             <h2 style="margin-bottom:6px; font-size:18px;">Continue reading with a membership</h2>
             <p class="small" style="margin-bottom:14px;">Full articles come with Tenfold Method membership, $20 a month, cancel anytime. You also get the full training program and the nutrition tools.</p>

@@ -80,7 +80,7 @@
     async function loadPosts() {
       const { data: posts, error } = await supabaseClient
         .from('posts')
-        .select('*')
+        .select('id, title, tag, created_at')
         .order('created_at', { ascending: false });
 
       const container = document.getElementById('existing-posts');
