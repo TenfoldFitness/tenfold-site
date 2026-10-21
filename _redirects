@@ -1,0 +1,5 @@
+# Netlify reads this file when the site is published.
+# These files stay in the project but are not served to visitors.
+# The "!" forces the rule even though the file exists.
+/supabase-functions/*   /404.html   404!
+/index-mockup.html      /404.html   404!
