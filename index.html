@@ -7,8 +7,71 @@
   <meta name="description" content="Elite coaching and mental acuity support, grounded in The Method and the Tenfold Framework: autonomy, competence, and relatedness." />
   <script>document.documentElement.classList.add('js');</script>
   <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .choose-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; max-width:880px; margin:0 auto; }
+    .choose-btn { font:inherit; text-align:left; cursor:pointer; background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:20px 18px; min-height:112px; display:flex; flex-direction:column; justify-content:space-between; gap:14px; transition:border-color .15s ease, box-shadow .15s ease; color:var(--text-primary); }
+    .choose-btn:hover { border-color:var(--accent); box-shadow:0 6px 18px rgba(22,36,31,.08); }
+    .choose-btn[aria-pressed="true"] { border-color:var(--accent); background:var(--accent-bg); box-shadow:inset 0 3px 0 var(--accent); }
+    .choose-main { font-family:var(--font-display); font-size:21px; line-height:1.2; }
+    .choose-sub { font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--accent-deep); font-weight:600; }
+    .choose-panel { max-width:880px; margin:16px auto 0; background:var(--surface-2); border:1px solid var(--border); border-top:3px solid var(--accent-gold); padding:26px 28px; text-align:center; }
+    .choose-panel[hidden] { display:none; }
+    .panel-line { font-size:19px; color:var(--text-primary); margin:0 0 16px; }
+    .choose-panel .quiz-box { border:none; background:transparent; padding:0; max-width:none; margin:0; text-align:left; }
+    @media (max-width:760px){ .choose-grid { grid-template-columns:1fr 1fr; } }
+    @media (max-width:420px){ .choose-grid { grid-template-columns:1fr; } .choose-btn { min-height:0; } }
+    .trust-line-row { list-style:none; display:grid; grid-template-columns:repeat(2,max-content); justify-content:center; gap:12px 56px; padding:0; margin:0 0 34px; }
+    .trust-line-row li { font-size:15px; color:var(--text-primary); padding-left:24px; position:relative; }
+    .trust-line-row li::before { content:"\2713"; position:absolute; left:0; color:var(--accent); font-weight:700; }
+    .sarah-strip { display:flex; align-items:center; gap:18px; justify-content:center; max-width:640px; margin:0 auto; }
+    .sarah-strip img { width:96px; height:96px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+    .sarah-strip p { margin:0; font-size:17px; color:var(--text-secondary); line-height:1.5; }
+    .sarah-strip a { color:var(--accent); text-decoration:underline; white-space:nowrap; }
+    details.pilot-more { max-width:700px; margin:0 auto; border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+    details.pilot-more summary { cursor:pointer; list-style:none; display:flex; justify-content:space-between; gap:14px; align-items:center; min-height:56px; font-weight:600; font-size:17px; color:var(--text-primary); }
+    details.pilot-more summary::-webkit-details-marker { display:none; }
+    details.pilot-more summary span { font-weight:400; font-size:15px; color:var(--accent); }
+    details.pilot-more summary span::after { content:" +"; }
+    details.pilot-more[open] summary span::after { content:" \2212"; }
+    details.pilot-more p { font-size:16px; color:var(--text-secondary); margin:0 0 18px; }
+      /* Circles instead of boxes */
+    .choose-grid { display:flex; flex-wrap:wrap; justify-content:center; gap:28px; max-width:880px; margin:0 auto; }
+    .choose-btn { width:204px; height:204px; min-height:0; border-radius:50%; padding:28px; align-items:center; justify-content:center; text-align:center; gap:12px; }
+    .choose-btn:hover { border-color:var(--accent); box-shadow:0 8px 22px rgba(22,36,31,.10); }
+    .choose-btn[aria-pressed="true"] { background:var(--accent-bg); border:2px solid var(--accent); box-shadow:0 0 0 5px rgba(47,111,99,.14); }
+    .choose-main { font-size:22px; }
+    @media (max-width:760px){ .choose-grid { gap:20px; } .choose-btn { width:176px; height:176px; padding:22px; } .choose-main { font-size:20px; } }
+    @media (max-width:420px){ .choose-btn { width:150px; height:150px; padding:16px; } .choose-main { font-size:18px; } .choose-sub { font-size:12px; } }
+    .cost-block { max-width:560px; margin:0 auto; }
+    .cost-block h2 { font-size:30px; margin:0 0 10px; }
+    .cost-block p { font-size:17px; color:var(--text-secondary); margin:0 0 16px; }
+    .cost-block .sliding { font-size:16px; margin:18px 0 0; }
+    .cost-block .sliding a { color:var(--accent); text-decoration:underline; }      /* Meet Sarah: a fourth circle, centered, lower down */
+    .meet-row { display:flex; justify-content:center; margin-top:6px; }
+    .choose-btn.meet-circle { position:relative; overflow:hidden; padding:0; }
+    .meet-circle img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+    .meet-label { position:absolute; left:50%; bottom:20px; transform:translateX(-50%); background:rgba(255,255,255,.94); color:var(--text-primary); font-family:var(--font-display); font-size:19px; padding:6px 16px; border-radius:99px; white-space:nowrap; }
+    .choose-btn.meet-circle[aria-pressed="true"] { background:var(--accent-bg); }      /* Sarah: one box, photo in the circle with its ring, one line, one link */
+    .sarah-box { max-width:560px; margin:8px auto 0; background:var(--surface-2); border:1px solid var(--border); border-top:3px solid var(--accent-gold); padding:30px 28px 28px; text-align:center; }
+    .sarah-box img { display:block; width:140px; height:140px; border-radius:50%; object-fit:cover; margin:0 auto 18px; border:2px solid var(--accent); box-shadow:0 0 0 5px rgba(47,111,99,.14); }
+    .sarah-hi { font-family:var(--font-display); font-size:28px; line-height:1.1; color:var(--text-primary); margin:0 0 6px; }
+    .sarah-tag { font-size:17px; color:var(--text-secondary); margin:0 0 12px; }
+    .sarah-link { font-size:16px; color:var(--accent); text-decoration:underline; font-weight:500; }      /* What's in $20 */
+    .price-mini { background:var(--surface-2); border:1px solid var(--border); border-top:3px solid var(--accent-gold); padding:26px 26px 24px; text-align:left; margin:0 0 14px; }
+    .pm-head { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:14px; }
+    .pm-price { font-family:var(--font-display); font-size:44px; line-height:1; color:var(--accent-deep); }
+    .pm-price small { font-family:var(--font-body); font-size:16px; color:var(--text-secondary); margin-left:4px; }
+    .pm-name { font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); font-weight:600; }
+    .pm-list { list-style:none; padding:0; margin:0 0 14px; }
+    .pm-list li { position:relative; padding-left:26px; margin-bottom:9px; font-size:16px; color:var(--text-primary); line-height:1.45; }
+    .pm-list li::before { content:"\2713"; position:absolute; left:0; color:var(--accent); font-weight:700; }
+    .pm-note { font-size:15px; color:var(--text-secondary); margin:0 0 16px; }
+    .pm-more { margin:0 0 6px; font-size:16px; }
+    .pm-more a { color:var(--accent); text-decoration:underline; }
+    .cost-block { max-width:520px; }  </style>
 </head>
 <body>
+
 
   <header class="site-header">
     <div class="wrap">
@@ -42,120 +105,39 @@
         <p class="sub" style="font-size:16px; max-width:470px; line-height:1.6; margin:0 0 12px;">Not fitness coaching with a mindset tip attached. Strength training and evidence-based skills coaching, built as one program, by someone formally trained in both.</p>
         <p class="sub" style="font-size:13px; max-width:470px; line-height:1.6; margin:0 0 26px; opacity:0.8;">M.S.W. and M.B.A., Boston College &middot; ten years practicing as a social worker &middot; ISSA certified personal trainer &middot; skills coaching, not therapy</p>
         <div>
-          <a href="signup.html?tier=1" class="btn btn-primary">Start for $20/mo</a>
-          <a href="sample-workout.html" class="btn" style="margin-left:8px;">Try a free session first</a>
+          <a href="sample-workout.html" class="btn btn-primary">Try a free session first</a>
+          <a href="signup.html?tier=1" class="btn" style="margin-left:8px;">Start for $20/mo</a>
         </div>
-        <p class="reassure-line">Cancel anytime. Or <a href="consultation.html" style="color:inherit; text-decoration:underline;">book a free 15-minute call</a> if you would rather talk first.</p>
+        <p class="reassure-line">Your email, nothing else. No card, no account. Or <a href="consultation.html" style="color:inherit; text-decoration:underline;">book a free 15-minute call</a> if you would rather talk first.</p>
         <div class="mark-line">
           <span class="ten-mark ten-mark-gold" style="font-size:24px;">10</span>
-          <span class="mark-label">Every plan is built around three needs and six ideas: body, mind, and the people around you.</span>
+          <span class="mark-label">Built on three needs: autonomy, competence, relatedness. <a href="framework.html" style="color:inherit; text-decoration:underline;">Read the framework</a></span>
         </div>
       </div>
     </section>
 
-    <!-- STAT STRIP -->
-    <section style="padding-top:0;">
+        <!-- START HERE: the visitor chooses what they want -->
+    <section id="start" class="reveal">
       <div class="wrap">
-        <div class="stat-strip">
-          <div class="stat-cell">
-            <p class="stat-num">2</p>
-            <p class="stat-label">Years of pilot cohorts, 2023&ndash;2025</p>
-          </div>
-          <div class="stat-cell">
-            <p class="stat-num">12</p>
-            <p class="stat-label">Week cycles, five sessions a week</p>
-          </div>
-          <div class="stat-cell">
-            <p class="stat-num">10</p>
-            <p class="stat-label">Years practicing as a social worker</p>
-          </div>
-        </div>
-      </div>
-    </section>
+        <p class="section-label center"><span class="ten-mark">10</span>START HERE</p>
+        <h2 class="center" style="font-size:34px; margin-bottom:22px;">What would help you most right now?</h2>
 
-    <!-- UNEXPECTED FULL-BLEED MOMENT -->
-    <section class="reveal" id="results" style="border-top:none; padding:0;">
-      <div class="bleed-band">
-        <span class="ten-mark ten-mark-gold" style="font-size:22px;">10</span>
-        <p class="big-quote">Across two years of pilot cohorts, participants reported better emotional control, better sleep, and a better ability to work through a negative thought.</p>
-        <p class="band-source">Self-reported by participants in the 2023 to 2025 pilot. Measured with post-program questionnaires, confidence self-ratings, measurements every four weeks, and attendance at every session.</p>
-      </div>
-    </section>
-
-    <!-- WHY + HOW: THE TENFOLD FRAMEWORK (merged) -->
-    <section id="framework" class="reveal">
-      <div class="wrap">
-        <p class="section-label"><span class="ten-mark">10</span>THE TENFOLD FRAMEWORK</p>
-        <h2 style="font-size:34px;">One method, three pillars</h2>
-        <p style="max-width:520px; margin:0 0 32px; font-size:15px;">Grounded in research. Built through small, consistent action. Never done alone. That thinking shows up in your coaching through three equally essential parts &mdash; not a ranking, not a score.</p>
-
-        <div class="index-grid cols-3">
-          <div class="index-card">
-            <p class="index-num">01</p>
-            <p class="index-name">Autonomy</p>
-            <p class="index-copy">You're in the driver's seat. Programs are built around your life, not handed down to you.</p>
-          </div>
-          <div class="index-card">
-            <p class="index-num">02</p>
-            <p class="index-name">Competence</p>
-            <p class="index-copy">Progress you can actually feel, calibrated so confidence builds alongside strength.</p>
-          </div>
-          <div class="index-card">
-            <p class="index-num">03</p>
-            <p class="index-name">Relatedness</p>
-            <p class="index-copy">A real relationship, not just a client number scheduled and billed.</p>
-          </div>
+        <div class="choose-grid" role="group" aria-label="Choose where to start">
+          <button type="button" class="choose-btn" data-panel="p-session" aria-pressed="false" aria-controls="p-session"><span class="choose-main">See what a session is like</span><span class="choose-sub">Free</span></button>
+          <button type="button" class="choose-btn" data-panel="p-call" aria-pressed="false" aria-controls="p-call"><span class="choose-main">Ask a question first</span><span class="choose-sub">Free call</span></button>
+          <button type="button" class="choose-btn" data-panel="p-fit" aria-pressed="false" aria-controls="p-fit"><span class="choose-main">Find the right plan for me</span><span class="choose-sub">3 questions</span></button>
         </div>
 
-        <p style="margin-top:1.5rem;">
-          <a href="framework.html" style="font-size:14px; color:var(--accent); font-weight:500;">Read the full framework &rarr;</a>
-        </p>
-      </div>
-    </section>
-
-
-    <!-- WHERE THIS COMES FROM: the pilot -->
-    <section class="reveal" id="pilot">
-      <div class="wrap">
-        <p class="section-label"><span class="ten-mark">10</span>WHERE THIS COMES FROM</p>
-        <h2 style="font-size:34px;">Two years of running it before selling it</h2>
-        <p style="max-width:540px; margin:0 0 26px; font-size:15px;">From May 2023 to May 2025 I ran this method as a pilot in Danbury, CT. Groups of three to six women trained together five sessions a week on twelve-week cycles, four groups running back to back, with support groups held outside the training sessions. Participants could re-enrol for another cycle, and many did. What you get in the portal is that program, written down.</p>
-
-        <div class="index-grid cols-3">
-          <div class="index-card">
-            <p class="index-num">01</p>
-            <p class="index-name">What was measured</p>
-            <p class="index-copy">Weight and measurements every four weeks, attendance at every session, confidence self-ratings, and a post-program questionnaire.</p>
-          </div>
-          <div class="index-card">
-            <p class="index-num">02</p>
-            <p class="index-name">Who took part</p>
-            <p class="index-copy">Women in groups of three to six, across four groups. I have not published a total head count, so I do not quote one.</p>
-          </div>
-          <div class="index-card">
-            <p class="index-num">03</p>
-            <p class="index-name">What it is not</p>
-            <p class="index-copy">A pilot, not a clinical trial. Self-reported outcomes from small groups, described here exactly as they were collected.</p>
-          </div>
+        <div class="choose-panel" id="p-session" hidden>
+          <p class="panel-line">Monday of the real program, start to finish. Your email, nothing else.</p>
+          <a href="sample-workout.html" class="btn btn-primary">Get the free session</a>
         </div>
-
-        <!-- Alumni quotes: when you have them, add one block per quote below the cards.
-        <figure class="alumni-quote">
-          <blockquote>Her words, exactly as she said them.</blockquote>
-          <figcaption>First name &middot; 2024 cohort, three cycles</figcaption>
-        </figure>
-        -->
-
-      </div>
-    </section>
-
-    <!-- DECIDE: QUIZ -->
-    <section class="reveal">
-      <div class="wrap">
-        <p class="section-label center"><span class="ten-mark">10</span>NOT SURE WHERE TO START?</p>
-        <h2 class="center" style="margin-bottom:1.25rem;">Find your fit in 3 questions</h2>
-
-        <div class="quiz-box" id="quiz-box">
+        <div class="choose-panel" id="p-call" hidden>
+          <p class="panel-line">A free 15-minute call. No cost, no pressure.</p>
+          <a href="consultation.html" class="btn btn-primary">Book the call</a>
+        </div>
+        <div class="choose-panel" id="p-fit" hidden>
+<div class="quiz-box" id="quiz-box">
           <div class="quiz-q" data-q="1">
             <p class="label">1. What's your main focus right now?</p>
             <div class="quiz-choices" role="group">
@@ -186,100 +168,51 @@
             <p id="quiz-focus" style="font-size:15px; font-weight:600; margin-bottom:10px;"></p>
             <p class="small" style="margin-bottom:6px;">Based on your answers, you'd likely thrive in:</p>
             <p id="quiz-tier-name" style="font-size:20px; font-weight:600; margin-bottom:6px; color:var(--accent);"></p>
+            <p id="quiz-includes" class="small" style="margin:0 0 10px;"></p>
             <p id="quiz-clarifier" class="small" style="display:none; margin-bottom:14px;"></p>
             <a href="#" id="quiz-cta" class="btn btn-primary btn-sm">See this package</a>
           </div>
         </div>
+
+        </div>
       </div>
     </section>
 
-
-    <!-- FREE SAMPLE WORKOUT -->
-    <section class="reveal">
+    <!-- TRUST: one line each -->
+    <section style="padding:8px 0 40px; border-top:none;">
       <div class="wrap">
-        <div class="lead-band">
-          <p class="section-label"><span class="ten-mark ten-mark-gold">10</span>BEFORE YOU PAY ANYTHING</p>
-          <h2 style="font-size:30px; margin-bottom:10px;">Take one real session for free</h2>
-          <p style="max-width:520px; margin:0 0 20px; font-size:15px;">Not a sample, not a teaser. This is Monday of the Maximum Strength and Size program exactly as members run it: the check-in, the mobility prep, three blocks at all three tiers, the cues, the optional abs, the ten-minute stretch, and the check-out. Run it this week and see whether the method fits you.</p>
-          <a href="sample-workout.html" class="btn btn-primary">Get the free session</a>
-          <p class="small" style="margin:12px 0 0; color:var(--text-muted);">Your email, nothing else. No card, no account.</p>
+        <ul class="trust-line-row">
+          <li>Every price published</li>
+          <li>Cancel anytime</li>
+          <li>Not therapy, said plainly</li>
+          <li>Results shown with their limits</li>
+        </ul>
+        <div class="sarah-box">
+          <img src="images/sarah-lookout-face.jpg" alt="Portrait of Sarah, founder of Tenfold Method" />
+          <p class="sarah-hi">Hi, I'm Sarah.</p>
+          <p class="sarah-tag">I help people find the strength they already have.</p>
+          <a href="about.html" class="sarah-link">Read my story &rarr;</a>
         </div>
       </div>
     </section>
+<!-- UNEXPECTED FULL-BLEED MOMENT -->
+    <section class="reveal" id="results" style="border-top:none; padding:0;">
+      <div class="bleed-band">
+        <span class="ten-mark ten-mark-gold" style="font-size:22px;">10</span>
+        <p class="big-quote">Across two years of pilot cohorts, participants reported better emotional control, better sleep, and a better ability to work through a negative thought.</p>
+        <p class="band-source">Self-reported by women in a 2023 to 2025 pilot in Danbury, CT. A pilot, not a clinical trial.</p>
+      </div>
+    </section>
 
-    <!-- WHAT: SERVICES -->
-    <section id="services">
+        <section style="padding:34px 0 10px; border-top:none;">
       <div class="wrap">
-        <p class="section-label center"><span class="ten-mark">10</span>BEGIN YOUR JOURNEY</p>
-        <h2 class="center" style="margin-bottom:0.75rem;">Explore the method</h2>
-        <div class="center" style="margin-bottom:1.5rem;">
-          <span class="eyebrow" style="margin-bottom:0;">In person &amp; virtual training</span>
-        </div>
-        <div class="grid">
-          <div class="card">
-            <div class="icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:28px; height:28px;">
-                <rect x="1.5" y="9" width="3" height="6" rx="1"/>
-                <rect x="19.5" y="9" width="3" height="6" rx="1"/>
-                <line x1="4.5" y1="12" x2="7" y2="12"/>
-                <line x1="17" y1="12" x2="19.5" y2="12"/>
-                <rect x="7" y="7" width="2.2" height="10" rx="0.6"/>
-                <rect x="14.8" y="7" width="2.2" height="10" rx="0.6"/>
-                <line x1="9.2" y1="12" x2="14.8" y2="12"/>
-              </svg>
-            </div>
-            <h3>Functional Movement Training</h3>
-            <p class="small">Resistance, weights, and bodyweight work, built around you</p>
-          </div>
-          <div class="card">
-            <div class="icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:28px; height:28px;">
-                <path d="M9.5 3.5a3.5 3.5 0 0 0-3.5 3.5v.2A3.3 3.3 0 0 0 4 10.3v.4a3.3 3.3 0 0 0 1.3 2.6 3.5 3.5 0 0 0 3.4 4.2h.3v2.5"/>
-                <path d="M14.5 3.5a3.5 3.5 0 0 1 3.5 3.5v.2a3.3 3.3 0 0 1 2 3.1v.4a3.3 3.3 0 0 1-1.3 2.6 3.5 3.5 0 0 1-3.4 4.2h-.3v2.5"/>
-                <path d="M9.5 3.5c1 0 1.5 1 1.5 2v11c0 1-.5 2.5-1.5 2.5"/>
-                <path d="M14.5 3.5c-1 0-1.5 1-1.5 2v11c0 1 .5 2.5 1.5 2.5"/>
-              </svg>
-            </div>
-            <h3>Mental Acuity</h3>
-            <p class="small">Motivational interviewing and DBT distress tolerance skills, built into the session itself</p>
-          </div>
-          <div class="card">
-            <div class="icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:28px; height:28px;">
-                <path d="M12 3c-1 1.8-1 3 0 4"/>
-                <path d="M12 7c-4.5 0-7 3.5-7 7.5S8.5 21 12 21s7-2.5 7-6.5S16.5 7 12 7Z"/>
-                <path d="M9 12c1-1 5-1 6 0"/>
-              </svg>
-            </div>
-            <h3>Nutrition</h3>
-            <p class="small">Sustainable, not restrictive</p>
-          </div>
-          <div class="card">
-            <div class="icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:28px; height:28px;">
-                <rect x="2.5" y="6" width="13" height="12" rx="2"/>
-                <path d="M15.5 10.5 21 7.5v9l-5.5-3Z"/>
-              </svg>
-            </div>
-            <h3>Virtual Consultations</h3>
-            <p class="small">Anywhere, on your schedule</p>
-          </div>
-        </div>
+        <details class="pilot-more">
+          <summary>About the pilot <span>See the details</span></summary>
+          <p>Groups of three to six women trained together five sessions a week on twelve-week cycles, from May 2023 to May 2025. Four groups took part. I measured weight and measurements every four weeks, attendance at every session, confidence self-ratings and a post-program questionnaire. I have not published a head count.</p>
+        </details>
       </div>
     </section>
-
-    <!-- COST REASSURANCE -->
-    <section class="reveal">
-      <div class="wrap">
-        <div class="cost-banner">
-          <p style="font-weight:600; margin-bottom:6px;">Cost shouldn't decide who gets to be healthy.</p>
-          <p class="small" style="margin-bottom:12px;">I offer sliding-scale pricing for people with limited financial means, no one should be priced out of feeling strong and supported.</p>
-          <a href="pricing.html" style="font-size:13px; color:var(--accent); font-weight:500;">See pricing &amp; sliding scale &rarr;</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- FAQ: objections before trust -->
+<!-- FAQ: objections before trust -->
     <section class="reveal">
       <div class="wrap">
         <h2 class="center" style="margin-bottom:1.25rem;">Questions people ask before starting</h2>
@@ -306,15 +239,26 @@
       </div>
     </section>
 
-    <!-- FINAL CTA -->
-    <section class="reveal center">
+            <section class="reveal center" style="padding:56px 0 64px;">
       <div class="wrap">
-        <p style="margin-bottom:6px; font-size:18px;">Start today for $20 a month.</p>
-        <p class="small" style="margin-bottom:18px;">Cancel anytime. Or <a href="sample-workout.html" style="color:var(--accent);">run one free session</a> first, or <a href="consultation.html" style="color:var(--accent);">book a free 15-minute call</a>.</p>
-        <a href="signup.html?tier=1" class="btn btn-primary">Start for $20/mo</a>
+        <div class="cost-block">
+          <h2>What does it cost?</h2>
+          <div class="price-mini">
+            <div class="pm-head"><span class="pm-price">$20<small>/month</small></span><span class="pm-name">Foundation</span></div>
+            <ul class="pm-list">
+              <li>The full Maximum Strength and Size program, day by day</li>
+              <li>Every lift at three tiers, so a limitation changes the lift, not the plan</li>
+              <li>Fridge-to-recipe and restaurant macro tools</li>
+              <li>A session log that keeps your own check-ins</li>
+            </ul>
+            <p class="pm-note">Cancel anytime. No contract, no cancellation fee. Coaching calls are on the higher plans.</p>
+            <a href="signup.html?tier=1" class="btn btn-primary">Start for $20/mo</a>
+          </div>
+          <p class="pm-more"><a href="pricing.html">Compare all plans and prices &rarr;</a></p>
+          <p class="sliding"><strong>Cost shouldn't decide who gets to be healthy.</strong><br><a href="consultation.html?topic=sliding-scale">Ask about the sliding scale</a></p>
+        </div>
       </div>
-    </section>
-  </main>
+    </section>  </main>
 
   <p class="scope-note">Tenfold is skills coaching and physical training. It is not therapy and it is not medical care. Members who need clinical support beyond that scope are referred to a licensed provider.</p>
 
@@ -387,6 +331,13 @@
       document.getElementById('quiz-focus').textContent = FOCUS_INFO[focus].line;
       ctaHref += (ctaHref.indexOf('?') === -1 ? '?' : '&') + 'focus=' + encodeURIComponent(focus);
       document.getElementById('quiz-tier-name').textContent = tierLabel;
+      const INCLUDES = {
+        'Foundation': 'The full program, every lift at three tiers, recipe and macro tools, and your own session log.',
+        'Guided': 'Everything in Foundation, a new custom four-week plan each month, and two coaching check-ins a month.',
+        'Virtual Intensive': 'Everything in Guided, 12 weekly virtual sessions, and full nutrition planning.',
+        'In-Person Starter': 'Everything in Guided, full nutrition planning, and 12 in-person sessions.'
+      };
+      document.getElementById('quiz-includes').textContent = INCLUDES[tierLabel.split(' \u2014 ')[0]] || '';
       document.getElementById('quiz-cta').href = ctaHref;
       document.getElementById('quiz-cta').textContent = ctaText;
       const clarifierEl = document.getElementById('quiz-clarifier');
@@ -398,5 +349,27 @@
   </script>
 
   <script src="js/nav-toggle.js" defer></script>
+
+  <script>
+    // Chooser: one answer open at a time, tap again to close
+    (function () {
+      const btns = document.querySelectorAll('.choose-btn');
+      const panels = document.querySelectorAll('.choose-panel');
+      btns.forEach(function (b) {
+        b.addEventListener('click', function () {
+          const target = document.getElementById(b.dataset.panel);
+          const wasOpen = !target.hidden;
+          panels.forEach(function (p) { p.hidden = true; });
+          btns.forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
+          if (!wasOpen) {
+            target.hidden = false;
+            b.setAttribute('aria-pressed', 'true');
+            target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        });
+      });
+      var h = location.hash.slice(1); var hb = h && document.querySelector('[data-panel="' + h + '"]'); if (hb) hb.click();
+    })();
+  </script>
 </body>
 </html>

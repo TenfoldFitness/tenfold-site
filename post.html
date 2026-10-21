@@ -114,6 +114,9 @@
     }
 
     function getPreviewHtml(fullHtml) {
+      // A <!--more--> marker sets where the free preview ends; otherwise show the first paragraph.
+      const cut = fullHtml.indexOf('<!--more-->');
+      if (cut > 0) return fullHtml.slice(0, cut);
       const match = fullHtml.match(/<p[^>]*>[\s\S]*?<\/p>/);
       return match ? match[0] : fullHtml.slice(0, 400);
     }
