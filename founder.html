@@ -610,14 +610,14 @@ footer .fine a{color:inherit}
   if(!box||!window.fetch) return;
   var base='https://aeoqczhdhzlggivkgaob.supabase.co/rest/v1/posts';
   var key='sb_publishable_l4RAXBIi_a_793wz2-k04g_vA2ispQu';
-  fetch(base+'?select=id,title,tag,content,created_at&order=created_at.desc&limit=6',{headers:{apikey:key}})
+  fetch(base+'?select=id,title,tag,preview,created_at&order=created_at.desc&limit=6',{headers:{apikey:key}})
     .then(function(r){ if(!r.ok) throw 0; return r.json(); })
     .then(function(posts){
       if(!posts||!posts.length) return;
       var frag=document.createDocumentFragment();
       posts.forEach(function(p){
-        var m=(p.content||'').match(/<p[^>]*>([\s\S]*?)<\/p>/);
-        var d=document.createElement('div'); d.innerHTML=m?m[1]:(p.content||'');
+        var m=(p.preview||'').match(/<p[^>]*>([\s\S]*?)<\/p>/);
+        var d=document.createElement('div'); d.innerHTML=m?m[1]:(p.preview||'');
         var ex=(d.textContent||'').trim(); if(ex.length>160) ex=ex.slice(0,160).trim()+'…';
         var row=document.createElement('div'); row.className='piece';
         var lab=document.createElement('div'); lab.className='label';
