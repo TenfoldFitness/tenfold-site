@@ -49,7 +49,12 @@
     .cost-block h2 { font-size:30px; margin:0 0 10px; }
     .cost-block p { font-size:17px; color:var(--text-secondary); margin:0 0 16px; }
     .cost-block .sliding { font-size:16px; margin:18px 0 0; }
-    .cost-block .sliding a { color:var(--accent); text-decoration:underline; }  </style>
+    .cost-block .sliding a { color:var(--accent); text-decoration:underline; }      /* Meet Sarah: a fourth circle, centered, lower down */
+    .meet-row { display:flex; justify-content:center; margin-top:6px; }
+    .choose-btn.meet-circle { position:relative; overflow:hidden; padding:0; }
+    .meet-circle img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+    .meet-label { position:absolute; left:50%; bottom:20px; transform:translateX(-50%); background:rgba(255,255,255,.94); color:var(--text-primary); font-family:var(--font-display); font-size:19px; padding:6px 16px; border-radius:99px; white-space:nowrap; }
+    .choose-btn.meet-circle[aria-pressed="true"] { background:var(--accent-bg); }  </style>
 </head>
 <body>
   <div class="mock-flag"><strong>Design mockup.</strong> Not live. Your current home page is unchanged.</div>
@@ -168,9 +173,16 @@
           <li>Not therapy, said plainly</li>
           <li>Results shown with their limits</li>
         </ul>
-        <div class="sarah-strip">
-          <img src="images/sarah-lookout-face.jpg" alt="Portrait of Sarah, founder of Tenfold Method" />
-          <p><strong>Hi, I'm Sarah.</strong> Real change comes from feeling like the plan is yours. <a href="about.html">My story &rarr;</a></p>
+        <div class="meet-row">
+          <button type="button" class="choose-btn meet-circle" data-panel="p-sarah" aria-pressed="false" aria-controls="p-sarah">
+            <img src="images/sarah-lookout-face.jpg" alt="" />
+            <span class="meet-label">Meet Sarah</span>
+          </button>
+        </div>
+        <div class="choose-panel" id="p-sarah" hidden>
+          <p class="panel-line"><strong>Hi, I'm Sarah.</strong> Real change comes from feeling like the plan is yours.</p>
+          <p class="small" style="margin:0 0 16px;">M.S.W. and M.B.A., Boston College &middot; ten years practicing as a social worker &middot; ISSA certified personal trainer</p>
+          <a href="about.html" class="btn btn-primary">Read my story</a>
         </div>
       </div>
     </section>
