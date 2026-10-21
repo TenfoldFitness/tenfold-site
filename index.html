@@ -68,7 +68,12 @@
     .pm-note { font-size:15px; color:var(--text-secondary); margin:0 0 16px; }
     .pm-more { margin:0 0 6px; font-size:16px; }
     .pm-more a { color:var(--accent); text-decoration:underline; }
-    .cost-block { max-width:520px; }  </style>
+    .cost-block { max-width:520px; }      /* Phones: stack the hero buttons, shrink the headline a little, and give the trust checklist one column */
+    @media (max-width:560px){
+      .dark-hero h1 { font-size:42px !important; }
+      .dark-hero .btn { display:block; width:100%; text-align:center; margin:0 0 10px 0 !important; }
+      .trust-line-row { grid-template-columns:1fr; justify-content:start; gap:10px; padding-left:8px; }
+    }  </style>
 </head>
 <body>
 
