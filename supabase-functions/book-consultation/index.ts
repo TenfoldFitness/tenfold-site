@@ -12,7 +12,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const GOOGLE_MEET_LINK = "https://meet.google.com/vje-qgzr-urq";
 const TRAINER_EMAIL = "tenfoldfunctional@gmail.com";
-const FROM_ADDRESS = "Tenfold Method <onboarding@resend.dev>";
+// Sends from the verified tenfoldframework.com domain. Replies go to Sarah's inbox.
+const FROM_ADDRESS = "Sarah at Tenfold <hello@tenfoldframework.com>";
+const REPLY_TO = "tenfoldfunctional@gmail.com";
 
 const supabaseAdmin = createClient(
   Deno.env.get("SUPABASE_URL"),
@@ -26,7 +28,7 @@ async function sendEmail(resendApiKey, to, subject, html) {
       "Authorization": `Bearer ${resendApiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ from: FROM_ADDRESS, to: [to], subject, html }),
+    body: JSON.stringify({ from: FROM_ADDRESS, reply_to: REPLY_TO, to: [to], subject, html }),
   });
   return { ok: res.ok, json: await res.json() };
 }

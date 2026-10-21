@@ -10,10 +10,9 @@ import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
 const GOOGLE_MEET_LINK = "https://meet.google.com/vje-qgzr-urq";
 const TRAINER_EMAIL = "tenfoldfunctional@gmail.com";
 
-// While the domain isn't verified with Resend yet, this default sender
-// works for testing. Once Tenfold Method's real domain is live, this can
-// be swapped to something like "Tenfold Method <bookings@tenfoldmethod.com>".
-const FROM_ADDRESS = "Tenfold Method <onboarding@resend.dev>";
+// Sends from the verified tenfoldframework.com domain. Replies go to Sarah's inbox.
+const FROM_ADDRESS = "Sarah at Tenfold <hello@tenfoldframework.com>";
+const REPLY_TO = "tenfoldfunctional@gmail.com";
 
 async function sendEmail(resendApiKey, to, subject, html) {
   const res = await fetch("https://api.resend.com/emails", {
@@ -22,7 +21,7 @@ async function sendEmail(resendApiKey, to, subject, html) {
       "Authorization": `Bearer ${resendApiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ from: FROM_ADDRESS, to: [to], subject, html }),
+    body: JSON.stringify({ from: FROM_ADDRESS, reply_to: REPLY_TO, to: [to], subject, html }),
   });
   return { ok: res.ok, json: await res.json() };
 }
