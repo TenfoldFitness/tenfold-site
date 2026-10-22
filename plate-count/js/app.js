@@ -19,6 +19,15 @@ function firstName(){
   return n?n.charAt(0).toUpperCase()+n.slice(1):"there";
 }
 
+/* Warm color drift: --warm goes from 0 (top of the page) to 1 (bottom) as you scroll; the stylesheet blends the backdrop colors with it. */
+(function(){
+  var queued=false;
+  function update(){ queued=false; var max=Math.max(1,document.documentElement.scrollHeight-window.innerHeight);
+    document.documentElement.style.setProperty("--warm",Math.min(1,Math.max(0,window.scrollY/max)).toFixed(3)); }
+  window.addEventListener("scroll",function(){ if(!queued){ queued=true; requestAnimationFrame(update); } },{passive:true});
+  window.addEventListener("resize",update); update();
+})();
+
 /* ================= tiny helpers ================= */
 function $(id){ return document.getElementById(id); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }

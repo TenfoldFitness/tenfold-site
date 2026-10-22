@@ -1,20 +1,26 @@
 /* Plate Count — Tenfold Method client portal app
    Tokens follow the Tenfold site palette (cream, deep green, gold) with a dark theme. */
 :root{
-  --bg:#FAF9F6; --surface:#FFFFFF; --surface-2:#F1F0EA; --surface-3:#E8E6DC;
-  --text:#16241F; --text-2:#4F5E59; --text-3:#66706B;
-  --accent:#2F6F63; --accent-deep:#1E4A40; --accent-bg:#E3EFEA; --on-accent:#FFFFFF;
-  --gold:#C9A24B; --gold-bg:#F6EDD6;
-  --border:#D8D3C4; --border-strong:#B9B3A0;
-  --m-kcal:#1E4A40; --m-pro:#2F6F63; --m-carb:#C9A24B; --m-fat:#B5654A;
-  --good:#2F6F63; --warn:#B5654A; --warn-bg:#F6E4DC;
-  --shadow:0 1px 2px rgba(22,36,31,.06),0 6px 18px rgba(22,36,31,.06);
+  /* Warmer Tenfold palette. --warm runs 0 to 1 as the page scrolls (set in app.js); only the backdrop drifts, text and buttons stay fixed. */
+  --warm:0;
+  --bg:color-mix(in srgb,#FBF6EC calc((1 - var(--warm))*100%),#F4E4CB);
+  --surface:#FFFDF8;
+  --surface-2:color-mix(in srgb,#F5EEDF calc((1 - var(--warm))*100%),#EEDCBE);
+  --surface-3:color-mix(in srgb,#ECE3CF calc((1 - var(--warm))*100%),#E6D3B0);
+  --text:#1F2A22; --text-2:#4A554C; --text-3:#5A645A;
+  --accent:#33694F; --accent-deep:#244A38; --on-accent:#FFFFFF;
+  --accent-bg:color-mix(in srgb,#E8F0E4 calc((1 - var(--warm))*100%),#F3E3C0);
+  --gold:#B7852B; --gold-bg:color-mix(in srgb,#F7EBD0 calc((1 - var(--warm))*100%),#F1DDB0);
+  --border:color-mix(in srgb,#E0D6BF calc((1 - var(--warm))*100%),#D9C49C); --border-strong:#B0A07F;
+  --m-kcal:#244A38; --m-pro:#33694F; --m-carb:#B7852B; --m-fat:#B5654A;
+  --good:#33694F; --warn:#B5654A; --warn-bg:#F6E4DC;
+  --shadow:0 1px 2px rgba(60,40,10,.06),0 6px 18px rgba(60,40,10,.05);
   --r:14px; --r-sm:10px;
   --f-display:'Newsreader',Georgia,serif;
   --f-body:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   --tabh:64px;
 }
-@media (prefers-color-scheme:dark){
+@media (prefers-reduced-motion:reduce){ :root{ --warm:.35 !important } }@media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
     --bg:#0F1815; --surface:#16221E; --surface-2:#1D2B26; --surface-3:#26372F;
     --text:#EEF1EE; --text-2:#B4C0BA; --text-3:#8D9B94;
