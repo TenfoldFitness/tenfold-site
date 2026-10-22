@@ -336,3 +336,9 @@ textarea.field{padding-top:12px;font-family:inherit;resize:vertical}
 .sp-t a{color:var(--text);text-decoration:none;font-weight:600}
 .sp-live{font-size:11px;font-weight:600;color:var(--on-accent);background:var(--accent);padding:2px 8px;border-radius:999px;margin-left:6px}
 .sp-list{margin:6px 0 0;padding-left:20px;font-size:14px;line-height:1.5}
+/* collapsible meals */
+.mealtog{display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:0;min-height:44px;cursor:pointer;color:inherit;font:inherit;text-align:left}
+.mealtog svg{width:18px;height:18px;flex:none;stroke:var(--text-2);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s}
+.meal.shut .mealtog svg{transform:rotate(-90deg)}
+.entries[hidden]{display:none}
+.meal-h .mealtog{flex:1}

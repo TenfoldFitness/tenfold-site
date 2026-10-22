@@ -221,8 +221,8 @@ function pull(){
   if(DEV||!uid) { S.pulled=true; return Promise.resolve(); }
   setSync("busy","Syncing…");
   return Promise.all([
-    supabaseClient.from("plate_days").select("day,data").order("day",{ascending:false}).limit(400),
-    supabaseClient.from("plate_profile").select("data").maybeSingle()
+    supabaseClient.from("plate_days").select("day,data").eq("user_id",uid).order("day",{ascending:false}).limit(400),
+    supabaseClient.from("plate_profile").select("data").eq("user_id",uid).maybeSingle()
   ]).then(function(res){
     var dr=res[0], pr=res[1];
     var missing=function(e){ return e&&(e.code==="42P01"||e.code==="PGRST205"||/does not exist|schema cache/i.test(e.message||"")); };
@@ -566,8 +566,11 @@ function renderFuel(){
     "<div class='note "+st.cls+"'>"+esc(st.msg)+sub+"</div></div>";
   MEALS.forEach(function(mn){
     var items=d.entries.filter(function(e){ return e.meal===mn; }), kc=items.reduce(function(a,e){ return a+e.k; },0);
-    h+="<section class='meal'><div class='meal-h'><h2 class='h2'>"+mn+"</h2>"+(items.length?"<span class='kc'>"+r0(kc)+" kcal</span>":"")+
-       "<button class='addbtn' data-meal='"+mn+"' aria-label='Add food to "+mn+"'>+ Add</button></div><div class='entries'>";
+    var shut=!!(S.mealShut||{})[mn]&&items.length>0;
+    h+="<section class='meal"+(shut?" shut":"")+"'><div class='meal-h'>"+
+       "<button class='mealtog' data-mt='"+mn+"' aria-expanded='"+!shut+"' aria-label='"+(shut?"Show":"Hide")+" "+mn+" foods'><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M6 9l6 6 6-6'/></svg><h2 class='h2'>"+mn+"</h2></button>"+
+       (items.length?"<span class='kc'>"+(shut?items.length+" item"+(items.length===1?"":"s")+" · ":"")+r0(kc)+" kcal</span>":"")+
+       "<button class='addbtn' data-meal='"+mn+"' aria-label='Add food to "+mn+"'>+ Add</button></div><div class='entries'"+(shut?" hidden":"")+">";
     if(!items.length) h+="<div class='empty-meal'>Nothing logged.</div>";
     items.forEach(function(e){
       var i=d.entries.indexOf(e);
@@ -581,6 +584,7 @@ function renderFuel(){
   var p=$("panel-fuel"); p.innerHTML=h;
   var fg=$("fuelGoal"); if(fg) fg.onclick=function(){ openOnboarding(!S.profile.onboarded); };
   var wsp=$("welcomeSp"); if(wsp) wsp.onclick=function(){ PCSpotify.connect(); };
+  p.querySelectorAll(".mealtog").forEach(function(b){ b.onclick=function(){ S.mealShut=S.mealShut||{}; S.mealShut[b.dataset.mt]=!S.mealShut[b.dataset.mt]; renderFuel(); }; });
   var wx=$("welcomeX"); if(wx) wx.onclick=function(){ S.welcomeOff=true; renderFuel(); };
   p.querySelectorAll(".addbtn").forEach(function(b){ b.onclick=function(){ openAdd(b.dataset.meal); }; });
   p.querySelectorAll(".del").forEach(function(b){
@@ -590,7 +594,7 @@ function renderFuel(){
     };
   });
 }
-function logEntry(o){ var k=S.date; day(k).entries.push(o); persistDay(k); }
+function logEntry(o){ var k=S.date; day(k).entries.push(o); if(S.mealShut) S.mealShut[o.meal]=false; persistDay(k); }
 
 /* ---- search ---- */
 function escRe(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"); }
@@ -1705,7 +1709,7 @@ function renderTrend(){
 function seenKey(){ return "pc_msgseen_"+uid; }
 function loadMsgs(){
   if(DEV||!uid||!isStarter()) return Promise.resolve();
-  return supabaseClient.from("plate_messages").select("id,from_coach,body,created_at").order("created_at",{ascending:true}).limit(100).then(function(r){
+  return supabaseClient.from("plate_messages").select("id,from_coach,body,created_at").eq("user_id",uid).order("created_at",{ascending:true}).limit(100).then(function(r){
     if(r.error) return;
     S.msgs=r.data||[];
     var last=S.msgs.length?S.msgs[S.msgs.length-1]:null, seen=0; try{ seen=+localStorage.getItem(seenKey())||0; }catch(e){}
