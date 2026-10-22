@@ -531,6 +531,11 @@ function statusMsg(t,burn){
 }
 /* ---- Welcome and goal prompts for coach-provisioned (starter) accounts ---- */
 function trained(k){ var s=(S.days[k]||{}).sets||{}; return Object.keys(s).some(function(x){ return s[x].done; }); }
+/* Clients without the welcome card still get told when the coach has replied. */
+function replyNote(){
+  if(isStarter()||!S.coachReply) return "";
+  return "<div class='card welcome'><b>Your coach replied to your question.</b> Open the Progress tab to read it.</div>";
+}
 function welcomeCard(){
   if(!isStarter()||S.welcomeOff||S.date!==todayKey()) return "";
   var t=todayKey(), hr=new Date().getHours(), tod=hr<12?"Good morning":hr<17?"Good afternoon":"Good evening", nm=firstName(), gap=S.visitGap, head;
@@ -572,7 +577,7 @@ function renderFuel(){
     var p=tg>0?Math.min(100,v/tg*100):0;
     return "<div class='mac "+cls+"'><div class='row1'><span>"+label+"</span><span><b>"+r0(v)+"</b> / "+r0(tg)+" g</span></div><div class='bar'><i style='width:"+p.toFixed(1)+"%'></i></div></div>";
   }
-  var h=welcomeCard()+fuelGoalCard()+"<div class='card'><div class='hero'>"+
+  var h=welcomeCard()+replyNote()+fuelGoalCard()+"<div class='card'><div class='hero'>"+
     "<div class='ring'><svg viewBox='0 0 132 132' aria-hidden='true'><circle class='trk' cx='66' cy='66' r='56' fill='none' stroke-width='12'/>"+
     "<circle class='val' cx='66' cy='66' r='56' fill='none' stroke-width='12' stroke-linecap='round' stroke-dasharray='"+C.toFixed(1)+"' stroke-dashoffset='"+(C*(1-Math.min(pct,1))).toFixed(1)+"'/></svg>"+
     "<div class='mid'><div class='big'>"+(left>=0?r0(left).toLocaleString():"+"+r0(-left).toLocaleString())+"</div><div class='cap'>"+(left>=0?"kcal left":"kcal over")+"</div></div></div>"+
