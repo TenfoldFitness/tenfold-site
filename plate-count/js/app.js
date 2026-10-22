@@ -1076,8 +1076,58 @@ function renderTrain(){
 }
 /* Workout-music card (spotify.js). Only the coach and starter accounts get it, and only once a Spotify Client ID is set. */
 function mountMusic(panel){
-  if(!window.PCSpotify) return;
-  var d=document.createElement("div"); d.id="musicBox"; panel.insertBefore(d,panel.firstChild); PCSpotify.mount(d);   /* top of the Train tab */
+  if(window.PCSpotify){
+    var d=document.createElement("div"); d.id="musicBox"; panel.insertBefore(d,panel.firstChild); PCSpotify.mount(d);   /* top of the Train tab */
+  }
+  safe(function(){ mountBuddy(panel); });
+}
+/* Workout buddy: a small one-line toggle. You and your coach see each other's recent workouts (name, day, sets done).
+   Nothing else is shared: no food, weight, notes or injuries. Saved to plate_shared (starter-buddy.sql). */
+var buddy={others:[],saved:"",timer:0,open:false};
+function buddyOn(){ return !DEV&&uid&&(isStarter()||userEmail===ADMIN_EMAIL); }
+function buddyTitle(k){
+  try{
+    var pp=PROGRAMS[programPos(k).idx]||program(), pd=daysFor(pp,k), x=pd.length<7?pd[0]:pd[workoutIdx(k)];
+    return (x&&!x.rest&&(x.title||x.name))||"Extra workout";
+  }catch(e){ return "Workout"; }
+}
+function buddyMine(){
+  var out=[], today=todayKey();
+  for(var i=0;i<14;i++){
+    var k=shiftKey(today,-i), d=S.days[k]; if(!d) continue;
+    var n=0; Object.keys(d.sets||{}).forEach(function(x){ if(d.sets[x]&&d.sets[x].done) n++; });
+    var c=d.cardio;
+    if(n) out.push({d:k,t:buddyTitle(k),n:n});
+    else if(c&&(c.done||c.minutes)) out.push({d:k,t:"Walk"+(c.minutes?" · "+c.minutes+" min":""),n:0});
+  }
+  return out;
+}
+function buddySave(){
+  var mine=buddyMine(), s=JSON.stringify(mine); if(s===buddy.saved) return; buddy.saved=s;
+  supabaseClient.from("plate_shared").upsert({user_id:uid,name:isStarter()?firstName():"Sarah",is_coach:userEmail===ADMIN_EMAIL,items:mine,updated_at:new Date().toISOString()})
+    .then(function(r){ if(r&&r.error) buddy.saved=""; },function(){ buddy.saved=""; });
+}
+function buddyPull(){
+  supabaseClient.from("plate_shared").select("name,is_coach,items").neq("user_id",uid).order("updated_at",{ascending:false}).limit(5)
+    .then(function(r){ if(r&&!r.error&&r.data) buddy.others=r.data; paintBuddy(); },function(){});
+}
+function paintBuddy(){
+  var el=$("buddyBox"); if(!el) return;
+  var wk=mondayOf(todayKey()), cnt=function(a){ return (a||[]).filter(function(x){ return x.d>=wk; }).length; };
+  var sum="You "+cnt(buddyMine())+buddy.others.map(function(o){ return " · "+esc(o.name||"Buddy")+" "+cnt(o.items); }).join("");
+  var body=buddy.others.length?buddy.others.map(function(o){
+    var rows=(o.items||[]).slice(0,5).map(function(x){ return "<li>"+esc(prettyDate(x.d,{weekday:"short"}))+" · "+esc(x.t)+(x.n?" · "+x.n+" sets":"")+" ✓</li>"; }).join("");
+    return "<p style='margin:0 0 4px'><b>"+esc(o.name||"Buddy")+"</b></p>"+(rows?"<ul style='margin:0 0 8px;padding-left:18px'>"+rows+"</ul>":"<p class='muted small' style='margin:0 0 8px'>No workouts logged yet.</p>");
+  }).join(""):"<p class='muted small' style='margin:0'>Nothing to show yet. Workouts you each finish will appear here.</p>";
+  el.innerHTML="<details class='fold buddy'"+(buddy.open?" open":"")+"><summary>Workout buddy<span class='r'>This week: "+sum+"</span></summary><div class='inner'>"+body+"<p class='muted small' style='margin:6px 0 0'>Only workout names and days are shared.</p></div></details>";
+  var dt=el.querySelector("details"); if(dt) dt.ontoggle=function(){ buddy.open=dt.open; };
+}
+function mountBuddy(panel){
+  if(!buddyOn()) return;
+  var d=document.createElement("div"), mb=$("musicBox"); d.id="buddyBox";
+  panel.insertBefore(d,mb?mb.nextSibling:panel.firstChild);
+  paintBuddy(); buddySave(); buddyPull();
+  if(!buddy.timer) buddy.timer=setInterval(function(){ if(document.hidden||!$("buddyBox")) return; buddySave(); buddyPull(); },60000);
 }
 /* Suggested values: this set's number last session, else the set before it today. */
 function ghost(it,si,pmap,sets){
