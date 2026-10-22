@@ -186,20 +186,23 @@
     const r0 = n => Math.round(n);
     function pcKey(d) { const p = n => (n < 10 ? '0' : '') + n; return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
     function pcShort(k) { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }); }
-    function pcPosition(start) {
+    // Starter clients run 3 cycles of 4 weeks; everyone else runs the 6-phase, 24-week program.
+    function pcPosition(start, starter) {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(start || '')) return 'Not started';
       const [y, m, d] = start.split('-').map(Number);
       const wk = Math.floor(Math.max(0, (Date.now() - new Date(y, m - 1, d)) / 864e5) / 7);
-      if (wk >= 12) return 'Finished all 3 cycles';
-      return 'Cycle ' + (Math.floor(wk / 4) + 1) + ', week ' + (wk % 4 + 1) + ' of 4';
+      const n = starter ? 3 : 6, label = starter ? 'Cycle ' : 'Phase ';
+      if (wk >= n * 4) return starter ? 'Finished all 3 cycles' : 'Finished all 6 phases';
+      return label + (Math.floor(wk / 4) + 1) + ', week ' + (wk % 4 + 1) + ' of 4';
     }
 
     async function loadPlateClients() {
       const empty = document.getElementById('pc-empty');
       const { data, error } = await supabaseClient.from('plate_profile').select('user_id,data,updated_at');
       if (error) { empty.textContent = 'Could not load Plate Count clients. Run plate-count/starter-setup.sql in Supabase first.'; return; }
-      pcClients = (data || []).filter(r => r.data && r.data.track === 'starter');
-      if (!pcClients.length) { empty.textContent = 'No starter clients have opened Plate Count yet. Adrienne will appear here after her first sign-in.'; return; }
+      // Anyone whose profile has an email (the app records it at sign-in), plus starter accounts. Your own profile has none, so it is left out.
+      pcClients = (data || []).filter(r => r.data && (r.data.email || r.data.track === 'starter'));
+      if (!pcClients.length) { empty.textContent = 'No clients have opened the updated Plate Count yet. They appear here after their next sign-in.'; return; }
       empty.style.display = 'none';
       // Who is waiting on an answer: clients whose newest message is from them, not from you.
       const waiting = new Set();
@@ -239,7 +242,7 @@
 
       const stat = (v, l) => `<div style="flex:1 1 120px;"><div style="font-size:20px;font-weight:600;">${v}</div><div class="small">${l}</div></div>`;
       let h = `<div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:14px;">` +
-        stat(escapeHtml(pcPosition(P.programStart)), 'Program position') +
+        stat(escapeHtml(pcPosition(P.programStart, P.track === 'starter')), 'Program position') +
         stat(weigh.length ? weigh[0].w + ' lb' : '—', 'Latest weigh-in' + (weigh.length ? ' (' + escapeHtml(pcShort(weigh[0].day)) + ')' : '')) +
         stat(escapeHtml(goal), 'Goal' + (P.goalWeight ? ' · target ' + P.goalWeight + ' lb' : '')) +
         stat(t.k ? `${t.k} kcal · ${t.p}p ${t.c}c ${t.f}f` : '—', 'Daily targets') +
