@@ -86,6 +86,7 @@ function normDay(d){
     var v=d.pairs[kk]; if(v&&typeof v==="object"&&typeof v.n==="string") out.pairs[kk]={n:v.n,bodyPart:typeof v.bodyPart==="string"?v.bodyPart:""};
   });
   if(typeof d.wd==="number"&&d.wd>=0&&d.wd<7) out.wd=d.wd;
+  out.free=!!d.free;   /* "Freestyle": you did your own workout instead of the planned one */
   if(d.cardio&&typeof d.cardio==="object"){
     out.cardio.done=!!d.cardio.done; out.cardio.miles=num(d.cardio.miles); out.cardio.minutes=num(d.cardio.minutes);
     out.cardio.type=typeof d.cardio.type==="string"?d.cardio.type:"";
@@ -585,6 +586,7 @@ function renderFuel(){
     "<div class='note "+st.cls+"'>"+esc(st.msg)+sub+"</div></div>";
   MEALS.forEach(function(mn){
     var items=d.entries.filter(function(e){ return e.meal===mn; }), kc=items.reduce(function(a,e){ return a+e.k; },0);
+    loadShut();
     var shut=!!(S.mealShut||{})[mn]&&items.length>0;
     h+="<section class='meal"+(shut?" shut":"")+"'><div class='meal-h'>"+
        "<button class='mealtog' data-mt='"+mn+"' aria-expanded='"+!shut+"' aria-label='"+(shut?"Show":"Hide")+" "+mn+" foods'><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M6 9l6 6 6-6'/></svg><h2 class='h2'>"+mn+"</h2></button>"+
@@ -603,7 +605,7 @@ function renderFuel(){
   var p=$("panel-fuel"); p.innerHTML=h;
   var fg=$("fuelGoal"); if(fg) fg.onclick=function(){ openOnboarding(!S.profile.onboarded); };
   var wsp=$("welcomeSp"); if(wsp) wsp.onclick=function(){ PCSpotify.connect(); };
-  p.querySelectorAll(".mealtog").forEach(function(b){ b.onclick=function(){ S.mealShut=S.mealShut||{}; S.mealShut[b.dataset.mt]=!S.mealShut[b.dataset.mt]; renderFuel(); }; });
+  p.querySelectorAll(".mealtog").forEach(function(b){ b.onclick=function(){ loadShut(); S.mealShut[b.dataset.mt]=!S.mealShut[b.dataset.mt]; saveShut(); renderFuel(); }; });
   var wx=$("welcomeX"); if(wx) wx.onclick=function(){ S.welcomeOff=true; renderFuel(); };
   p.querySelectorAll(".addbtn").forEach(function(b){ b.onclick=function(){ openAdd(b.dataset.meal); }; });
   p.querySelectorAll(".del").forEach(function(b){
@@ -613,7 +615,13 @@ function renderFuel(){
     };
   });
 }
-function logEntry(o){ var k=S.date; day(k).entries.push(o); if(S.mealShut) S.mealShut[o.meal]=false; persistDay(k); }
+/* Which meals are collapsed is remembered on this device, so it stays collapsed when you come back. */
+function loadShut(){
+  if(S.mealShutLoaded) return; S.mealShutLoaded=true;
+  try{ S.mealShut=JSON.parse(localStorage.getItem("pc_mealshut_"+uid)||"{}")||{}; }catch(e){ S.mealShut={}; }
+}
+function saveShut(){ try{ localStorage.setItem("pc_mealshut_"+uid,JSON.stringify(S.mealShut||{})); }catch(e){} }
+function logEntry(o){ var k=S.date; day(k).entries.push(o); loadShut(); S.mealShut[o.meal]=false; saveShut(); persistDay(k); }
 
 /* ---- search ---- */
 function escRe(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"); }
@@ -899,8 +907,8 @@ function openAddEx(rd){
   var names=exerciseNames(), nsets=3;
   openSheet("Add an exercise","<p class='muted small' style='margin:0 0 10px'>Adds it to "+esc(rd===todayKey()?"today":prettyDate(rd,{month:"short",day:"numeric"}))+" only. Your sets and weights save like any other exercise.</p>"+
     "<input class='field' id='xn' placeholder='Search or type an exercise…' autocomplete='off'><div class='list' id='xl' style='margin-top:10px'></div>"+
-    "<p class='eyebrow' style='margin:14px 0 8px'>Sets</p><div class='chips' id='xs'>"+[1,2,3,4,5].map(function(n){ return "<button class='chip' type='button' data-n='"+n+"' aria-pressed='"+(n===nsets)+"'>"+n+"</button>"; }).join("")+"</div>",
-    "<button class='btn' id='xa'>Add to workout</button>");
+    "<p class='eyebrow' style='margin:14px 0 8px'>Sets</p><div class='chips' id='xs'>"+[1,2,3,4,5,6].map(function(n){ return "<button class='chip' type='button' data-n='"+n+"' aria-pressed='"+(n===nsets)+"'>"+n+"</button>"; }).join("")+"</div>",
+    "<button class='btn' id='xa'>"+(day(rd).free?"Add exercise":"Add to workout")+"</button>"+(day(rd).free?" <button class='btn ghost' id='xa2'>Add and add another</button>":""));
   var inp=$("xn");
   function list(){
     var q=inp.value.trim().toLowerCase(), m=names.filter(function(n){ return !q||n.toLowerCase().indexOf(q)>=0; }).slice(0,8);
@@ -909,13 +917,16 @@ function openAddEx(rd){
   }
   inp.oninput=list; list();
   $("xs").querySelectorAll(".chip").forEach(function(b){ b.onclick=function(){ nsets=+b.dataset.n; $("xs").querySelectorAll(".chip").forEach(function(o){ o.setAttribute("aria-pressed",o===b?"true":"false"); }); }; });
-  $("xa").onclick=function(){
+  function addIt(more){
     var name=inp.value.trim(); if(!name){ toast("Type or pick an exercise"); return; }
     var dd=day(rd), id=slug(name)||("x"+Date.now());
     if((dd.extras||[]).some(function(x){ return x.id===id; })){ toast("That one is already on this workout"); return; }
     dd.extras=dd.extras||[]; dd.extras.push({id:id,name:name.slice(0,60),s:nsets});
     persistDay(rd); S.openId=id; closeSheet(); toast("Added "+name);
-  };
+    if(more){ renderTrain(); setTimeout(function(){ openAddEx(rd); },50); }
+  }
+  $("xa").onclick=function(){ addIt(false); };
+  var xa2=$("xa2"); if(xa2) xa2.onclick=function(){ addIt(true); };
 }
 /* ---- Supersets: a second exercise done back to back with this one, same number of sets ---- */
 var BODY_PARTS=["Chest","Back","Shoulders","Biceps","Triceps","Quads","Hamstrings","Glutes","Calves","Core"];
@@ -993,6 +1004,8 @@ function renderTrain(){
   var pdays=daysFor(p,rd);
   if(pdays.length<7) wd=0;
   var d=pdays[Math.min(wd,pdays.length-1)]||pdays[0];
+  var free=!!day(rd).free;
+  if(free) d={title:"Freestyle workout",ex:[]};
   var chip="<button class='phasechip' id='phaseBtn' aria-label='Change phase or workout'>"+esc(p.name)+(p.phase&&isNow?" · Wk "+pos.week+"/"+pos.weeks:"")+
     "<svg viewBox='0 0 24 24'><path d='M6 9l6 6 6-6'/></svg></button>";
   var h="";
@@ -1000,7 +1013,7 @@ function renderTrain(){
     if(!(day(rd).extras||[]).length){
       h="<div class='card'><div class='session'><div class='ttl'><div class='eyebrow'>"+esc(prettyDate(rd,{weekday:"long"}))+"</div><h1 class='h1'>"+esc(d.title)+"</h1></div>"+chip+"</div></div>"+
         "<div class='restday'>"+esc(d.rest)+"</div>"+
-        "<div class='card' style='margin-top:12px'><p class='muted small' style='margin:0 0 10px'>Training anyway? Add the exercises you did, or log cardio below.</p><button class='btn ghost' id='addEx'>+ Add an exercise</button></div>"+
+        "<div class='card' style='margin-top:12px'><p class='muted small' style='margin:0 0 10px'>Training anyway? Add the exercises you did, or log cardio below.</p><button class='btn ghost' id='addEx'>+ Add an exercise</button> <button class='btn ghost' id='freeOn'>Freestyle: I did my own thing</button></div>"+
         cardioCard(d,rd,p);
       var rp=$("panel-train"); rp.innerHTML=h; wireTrain(rp,rd,[],day(rd).sets,wd); mountMusic(rp); return;
     }
@@ -1013,8 +1026,10 @@ function renderTrain(){
   h+="<div class='card'><div class='session'><div class='ttl'><div class='eyebrow'>"+esc(prettyDate(rd,{weekday:"long"}))+(wd!==wdIndex(rd)?" · swapped":"")+"</div><h1 class='h1'>"+esc(d.title||d.name)+"</h1></div>"+chip+"</div>"+
      "<div class='progress' role='progressbar' aria-valuemin='0' aria-valuemax='"+total+"' aria-valuenow='"+done+"'><i id='progFill' style='width:"+(total?done/total*100:0)+"%'></i></div>"+
      "<div class='progtxt'><span id='progTxt'>"+done+" of "+total+" sets done</span><span>"+items.length+" exercises</span></div>"+
-     (p.note?"<details class='fold' style='border:0;margin-top:8px'><summary style='padding:0;min-height:40px;font-size:13px;color:var(--text-2)'>About this phase</summary><div class='inner' style='padding:0 0 4px'><p style='margin:0 0 8px'>"+esc(p.note)+"</p>"+(p.phase&&p.phase.tech?"<p class='tech'>"+esc(p.phase.tech)+"</p>":"")+"</div></details>":"")+"</div>";
+     (p.note&&!free?"<details class='fold' style='border:0;margin-top:8px'><summary style='padding:0;min-height:40px;font-size:13px;color:var(--text-2)'>About this phase</summary><div class='inner' style='padding:0 0 4px'><p style='margin:0 0 8px'>"+esc(p.note)+"</p>"+(p.phase&&p.phase.tech?"<p class='tech'>"+esc(p.phase.tech)+"</p>":"")+"</div></details>":"")+"</div>";
 
+  h+=free?"<p class='muted small' style='margin:10px 4px 0'>Your own workout. Add each exercise you did, then log sets and weights like usual. <button class='linkbtn' id='freeOff'>Back to the planned workout</button></p>"
+         :"<button class='linkbtn' id='freeOn' style='margin:10px 4px 0'>I did my own thing today (Freestyle)</button>";
   h+=injuryNote();
   var cardioHtml=cardioCard(d,rd,p);
   if(d.bands||d.warmup||d.bosu){
@@ -1087,6 +1102,7 @@ var buddy={others:[],saved:"",timer:0,open:false};
 function buddyOn(){ return !DEV&&uid&&(isStarter()||userEmail===ADMIN_EMAIL); }
 function buddyTitle(k){
   try{
+    if(S.days[k]&&S.days[k].free) return "Freestyle workout";
     var pp=PROGRAMS[programPos(k).idx]||program(), pd=daysFor(pp,k), x=pd.length<7?pd[0]:pd[workoutIdx(k)];
     return (x&&!x.rest&&(x.title||x.name))||"Extra workout";
   }catch(e){ return "Workout"; }
@@ -1190,6 +1206,8 @@ function wireTrain(panel,rd,items,sets,wd){
     };
   });
   var ax=$("addEx"); if(ax) ax.onclick=function(){ openAddEx(rd); };
+  var fo=$("freeOn"); if(fo) fo.onclick=function(){ day(rd).free=true; persistDay(rd); S.openEx=null; renderTrain(); renderWeek(); openAddEx(rd); };
+  var ff=$("freeOff"); if(ff) ff.onclick=function(){ day(rd).free=false; persistDay(rd); S.openEx=null; renderTrain(); renderWeek(); };
   panel.querySelectorAll("[data-rmx]").forEach(function(b){ b.onclick=function(){
     var dd=day(rd), id=b.dataset.rmx; dd.extras=(dd.extras||[]).filter(function(x){ return x.id!==id; });
     Object.keys(dd.sets).forEach(function(k){ if(k.indexOf("x|"+id+"|")===0) delete dd.sets[k]; });
