@@ -75,11 +75,11 @@ function parseNow(j){
 }
 function save(){
   if(!me) return Promise.resolve();
-  var key=(me.id||"")+"|"+me.is_playing, now=Date.now();
+  var key=(me.id||"")+"|"+me.is_playing+"|"+(recent[0]||""), now=Date.now();
   if(key===lastSaved.key&&now-lastSaved.at<SAVE_MS) return Promise.resolve();
   lastSaved={key:key,at:now};
   return ctx.sb.from("plate_listening").upsert({user_id:ctx.uid,name:ctx.name,is_coach:ctx.isCoach,track:me.track,artist:me.artist,art:me.art,url:me.url,
-    is_playing:me.is_playing,recent:recent.slice(0,5),updated_at:new Date().toISOString()},{onConflict:"user_id"}).then(function(){},function(){});
+    is_playing:me.is_playing,recent:recent.slice(0,6),updated_at:new Date().toISOString()},{onConflict:"user_id"}).then(function(){},function(){});
 }
 function pollOthers(){
   var q=ctx.sb.from("plate_listening").select("user_id,name,is_coach,track,artist,art,url,is_playing,recent,updated_at").neq("user_id",ctx.uid).order("updated_at",{ascending:false}).limit(5);
@@ -90,15 +90,15 @@ function poll(){
   busy=true;
   var p=api("/me/player/currently-playing").then(function(r){
     if(!r) return;
-    if(r.status===204){ if(me) me.is_playing=false; return; }
+    if(r.status===204){ if(me&&me.is_playing) lastRecent=0; if(me) me.is_playing=false; return; }
     if(r.status===401){ return; }
     if(r.status===403){ err="Spotify says this account hasn’t been added yet. Ask Sarah to add your Spotify email."; return; }
     if(!r.ok) return;
-    err=""; return r.json().then(function(j){ var n=parseNow(j); if(n) me=n; else if(me) me.is_playing=false; });
+    err=""; return r.json().then(function(j){ var was=me&&me.is_playing, n=parseNow(j); if(n) me=n; else if(me) me.is_playing=false; if(was&&!(me&&me.is_playing)) lastRecent=0; });
   }).then(function(){
     if(Date.now()-lastRecent<RECENT_MS) return;
     lastRecent=Date.now();
-    return api("/me/player/recently-played?limit=5").then(function(r){ return r&&r.ok?r.json():null; }).then(function(j){
+    return api("/me/player/recently-played?limit=6").then(function(r){ return r&&r.ok?r.json():null; }).then(function(j){
       if(j&&j.items) recent=j.items.map(function(i){ return i.track.name+" · "+(i.track.artists[0]||{}).name; });
     });
   }).then(save).then(pollOthers).catch(function(){}).then(function(){ busy=false; paint(); });
@@ -110,31 +110,40 @@ function ago(iso){
   var m=Math.round((Date.now()-Date.parse(iso))/60000);
   if(isNaN(m)) return ""; if(m<2) return "just now"; if(m<60) return m+" min ago"; var h=Math.round(m/60); return h<24?h+" hr ago":Math.round(h/24)+" days ago";
 }
-function line(who,t,fresh,when){
-  if(!t||!t.track) return "<div class='sp-row'><div class='sp-t'><b>"+esc(who)+"</b><span class='muted small'>Nothing playing yet</span></div></div>";
-  var live=t.is_playing&&fresh;
+function liveRow(who,t,when){
   return "<div class='sp-row'>"+(t.art?"<img src='"+esc(t.art)+"' alt='' width='48' height='48'>":"<span class='sp-noart'></span>")+
-    "<div class='sp-t'><b>"+esc(who)+(live?" <span class='sp-live'>listening now</span>":" <span class='muted small'>last played "+esc(when||"")+"</span>")+"</b>"+
+    "<div class='sp-t'><b>"+esc(who)+" <span class='sp-live'>listening now</span></b>"+
     "<span>"+(t.url?"<a href='"+esc(t.url)+"' target='_blank' rel='noopener'>"+esc(t.track)+"</a>":esc(t.track))+"</span><span class='muted small'>"+esc(t.artist)+"</span></div></div>";
+}
+/* Someone else's feed: the song playing right now, otherwise their last 6 songs. */
+function feed(o){
+  var who=o.name||"Someone", fresh=Date.now()-Date.parse(o.updated_at)<10*60000;
+  if(o.is_playing&&fresh&&o.track) return liveRow(who,o);
+  var songs=(o.recent||[]).slice(0,6);
+  if(!songs.length&&o.track) songs=[o.track+" · "+(o.artist||"")];
+  if(!songs.length) return "<div class='sp-row'><div class='sp-t'><b>"+esc(who)+"</b><span class='muted small'>Nothing played yet</span></div></div>";
+  return "<div class='sp-t' style='padding:10px 0;border-top:1px solid var(--border)'><b>"+esc(who)+" <span class='muted small'>isn’t playing right now. Last "+songs.length+" song"+(songs.length===1?"":"s")+(o.updated_at?" · "+esc(ago(o.updated_at)):"")+"</span></b>"+
+    "<ol class='sp-list'>"+songs.map(function(s){ return "<li>"+esc(s)+"</li>"; }).join("")+"</ol></div>";
 }
 function paint(){
   if(!el||!document.body.contains(el)) return;
-  var h="<div class='card'><div class='eyebrow'>Workout music</div>";
+  var h="<div class='card'><div class='eyebrow'>Workout music</div>"+others.map(feed).join("");
   if(!connected()){
-    h+="<h3 class='h2' style='font-size:18px;margin:4px 0 6px'>Share a playlist, share the workout</h3>"+
-      "<p class='muted small' style='margin:0 0 12px'>Connect Spotify to see what "+(ctx.isCoach?"your clients are":"your coach is")+" listening to while you train, and let them see what you’re playing. Only the song, artist and artwork are shared, and only while Plate Count is open.</p>"+
+    h+="<h3 class='h2' style='font-size:18px;margin:12px 0 6px'>Share your music too</h3>"+
+      "<p class='muted small' style='margin:0 0 12px'>Connect Spotify and "+(ctx.isCoach?"your clients":"your coach")+" can see what you’re playing while you train. Only the song, artist and artwork are shared, and only while Plate Count is open.</p>"+
       "<button class='btn' id='spConnect'>Connect Spotify</button>"+(err?"<p class='err' style='margin-top:10px'>"+esc(err)+"</p>":"");
   } else {
-    h+=line("You",me,true,"")+others.map(function(o){
-      var fresh=Date.now()-Date.parse(o.updated_at)<10*60000;
-      return line(o.name||"Someone",o,fresh,ago(o.updated_at));
-    }).join("");
+    h+=(me&&me.track?(me.is_playing?liveRow("You",me):"<p class='muted small' style='margin:10px 0 0'>You: nothing playing right now.</p>"):"<p class='muted small' style='margin:10px 0 0'>You: play something on Spotify and it shows here.</p>");
     if(!others.length) h+="<p class='muted small' style='margin:10px 0 0'>When the other person connects Spotify, you’ll see what they’re playing here.</p>";
     h+=(err?"<p class='err' style='margin-top:10px'>"+esc(err)+"</p>":"")+"<button class='linkbtn' id='spOff' style='margin-top:10px'>Disconnect Spotify</button>";
   }
   el.innerHTML=h+"</div>";
   var c=el.querySelector("#spConnect"); if(c) c.onclick=connect;
   var o=el.querySelector("#spOff"); if(o) o.onclick=disconnect;
+}/* Connected: report my own playback and read the others. Not connected: just read the others, so the feed is live for viewers too. */
+function tick(){
+  if(!ctx||document.hidden) return;
+  if(connected()) poll(); else pollOthers().then(paint);
 }
 function disconnect(){
   try{ localStorage.removeItem(tokKey()); }catch(e){}
@@ -147,12 +156,12 @@ window.PCSpotify={
   /* c = {sb, uid, name, isCoach, enabled} */
   init:function(c){
     ctx=c; if(!SPOTIFY_CLIENT_ID||!c.enabled) { ctx=null; return; }
-    handleReturn().then(function(){ paint(); poll(); clearInterval(timer); timer=setInterval(poll,POLL_MS); });
-    document.addEventListener("visibilitychange",function(){ if(!document.hidden) poll(); });
+    handleReturn().then(function(){ paint(); tick(); clearInterval(timer); timer=setInterval(tick,POLL_MS); });
+    document.addEventListener("visibilitychange",function(){ if(!document.hidden) tick(); });
   },
   /* true when Spotify sharing is on for this account but this device isn't connected yet */
   needsConnect:function(){ return !!ctx&&!connected(); },
   connect:function(){ if(ctx) connect(); },
-  mount:function(node){ if(!ctx) return; el=node; paint(); if(connected()) pollOthers().then(paint); }
+  mount:function(node){ if(!ctx) return; el=node; paint(); pollOthers().then(paint); }
 };
 })();
