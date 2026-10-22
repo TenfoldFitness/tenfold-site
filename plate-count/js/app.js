@@ -1057,7 +1057,7 @@ function renderTrain(){
 /* Workout-music card (spotify.js). Only the coach and starter accounts get it, and only once a Spotify Client ID is set. */
 function mountMusic(panel){
   if(!window.PCSpotify) return;
-  var d=document.createElement("div"); d.id="musicBox"; panel.appendChild(d); PCSpotify.mount(d);
+  var d=document.createElement("div"); d.id="musicBox"; panel.insertBefore(d,panel.firstChild); PCSpotify.mount(d);   /* top of the Train tab */
 }
 /* Suggested values: this set's number last session, else the set before it today. */
 function ghost(it,si,pmap,sets){

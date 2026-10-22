@@ -122,7 +122,7 @@ function feed(o){
   var songs=(o.recent||[]).slice(0,6);
   if(!songs.length&&o.track) songs=[o.track+" · "+(o.artist||"")];
   if(!songs.length) return "<div class='sp-row'><div class='sp-t'><b>"+esc(who)+"</b><span class='muted small'>Nothing played yet</span></div></div>";
-  return "<div class='sp-t' style='padding:10px 0;border-top:1px solid var(--border)'><b>"+esc(who)+" <span class='muted small'>isn’t playing right now. Last "+songs.length+" song"+(songs.length===1?"":"s")+(o.updated_at?" · "+esc(ago(o.updated_at)):"")+"</span></b>"+
+  return "<div class='sp-t' style='padding:10px 0;border-top:1px solid var(--border)'><b>"+esc(who)+" <span class='muted small'>"+(who==="You"?"aren’t":"isn’t")+" playing right now. Last "+songs.length+" song"+(songs.length===1?"":"s")+(o.updated_at?" · "+esc(ago(o.updated_at)):"")+"</span></b>"+
     "<ol class='sp-list'>"+songs.map(function(s){ return "<li>"+esc(s)+"</li>"; }).join("")+"</ol></div>";
 }
 function paint(){
@@ -133,7 +133,9 @@ function paint(){
       "<p class='muted small' style='margin:0 0 12px'>Connect Spotify and "+(ctx.isCoach?"your clients":"your coach")+" can see what you’re playing while you train. Only the song, artist and artwork are shared, and only while Plate Count is open.</p>"+
       "<button class='btn' id='spConnect'>Connect Spotify</button>"+(err?"<p class='err' style='margin-top:10px'>"+esc(err)+"</p>":"");
   } else {
-    h+=(me&&me.track?(me.is_playing?liveRow("You",me):"<p class='muted small' style='margin:10px 0 0'>You: nothing playing right now.</p>"):"<p class='muted small' style='margin:10px 0 0'>You: play something on Spotify and it shows here.</p>");
+    if(me&&me.track&&me.is_playing) h+=liveRow("You",me);
+    else if(recent.length) h+=feed({name:"You",is_playing:false,recent:recent,updated_at:""});
+    else h+="<p class='muted small' style='margin:10px 0 0'>You: play something on Spotify and it shows here.</p>";
     if(!others.length) h+="<p class='muted small' style='margin:10px 0 0'>When the other person connects Spotify, you’ll see what they’re playing here.</p>";
     h+=(err?"<p class='err' style='margin-top:10px'>"+esc(err)+"</p>":"")+"<button class='linkbtn' id='spOff' style='margin-top:10px'>Disconnect Spotify</button>";
   }
