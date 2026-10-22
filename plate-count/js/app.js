@@ -221,8 +221,8 @@ function pull(){
   if(DEV||!uid) { S.pulled=true; return Promise.resolve(); }
   setSync("busy","Syncing…");
   return Promise.all([
-    supabaseClient.from("plate_days").select("day,data").order("day",{ascending:false}).limit(400),
-    supabaseClient.from("plate_profile").select("data").maybeSingle()
+    supabaseClient.from("plate_days").select("day,data").eq("user_id",uid).order("day",{ascending:false}).limit(400),
+    supabaseClient.from("plate_profile").select("data").eq("user_id",uid).maybeSingle()
   ]).then(function(res){
     var dr=res[0], pr=res[1];
     var missing=function(e){ return e&&(e.code==="42P01"||e.code==="PGRST205"||/does not exist|schema cache/i.test(e.message||"")); };
@@ -1705,7 +1705,7 @@ function renderTrend(){
 function seenKey(){ return "pc_msgseen_"+uid; }
 function loadMsgs(){
   if(DEV||!uid||!isStarter()) return Promise.resolve();
-  return supabaseClient.from("plate_messages").select("id,from_coach,body,created_at").order("created_at",{ascending:true}).limit(100).then(function(r){
+  return supabaseClient.from("plate_messages").select("id,from_coach,body,created_at").eq("user_id",uid).order("created_at",{ascending:true}).limit(100).then(function(r){
     if(r.error) return;
     S.msgs=r.data||[];
     var last=S.msgs.length?S.msgs[S.msgs.length-1]:null, seen=0; try{ seen=+localStorage.getItem(seenKey())||0; }catch(e){}
