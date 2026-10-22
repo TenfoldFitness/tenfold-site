@@ -910,10 +910,25 @@ function openAddEx(rd){
     "<p class='eyebrow' style='margin:14px 0 8px'>Sets</p><div class='chips' id='xs'>"+[1,2,3,4,5,6].map(function(n){ return "<button class='chip' type='button' data-n='"+n+"' aria-pressed='"+(n===nsets)+"'>"+n+"</button>"; }).join("")+"</div>",
     "<button class='btn' id='xa'>"+(day(rd).free?"Add exercise":"Add to workout")+"</button>"+(day(rd).free?" <button class='btn ghost' id='xa2'>Add and add another</button>":""));
   var inp=$("xn");
+  /* Common choices: what you added before, then this phase's own exercises. Everything else is grouped by body part. */
+  var common=[]; function addC(n){ if(n&&common.length<8&&common.indexOf(n)<0) common.push(n); }
+  Object.keys(S.days).sort().reverse().forEach(function(k){ ((S.days[k]||{}).extras||[]).forEach(function(x){ if(common.length<3) addC(x.name); }); });
+  (program().days||[]).forEach(function(dd){ (dd.ex||[]).forEach(function(e){ addC(e.n); }); });
+  function btn(n){ return "<button class='item' type='button' data-nm='"+esc(n)+"'><span class='t'>"+esc(n)+"</span><span class='plus'>+</span></button>"; }
   function list(){
-    var q=inp.value.trim().toLowerCase(), m=names.filter(function(n){ return !q||n.toLowerCase().indexOf(q)>=0; }).slice(0,8);
-    $("xl").innerHTML=m.map(function(n,i){ return "<button class='item' type='button' data-i='"+i+"'><span class='t'>"+esc(n)+"</span><span class='plus'>+</span></button>"; }).join("");
-    $("xl").querySelectorAll("[data-i]").forEach(function(b){ b.onclick=function(){ inp.value=m[+b.dataset.i]; list(); }; });
+    var q=inp.value.trim().toLowerCase(), h="";
+    if(q){
+      var m=names.filter(function(n){ return n.toLowerCase().indexOf(q)>=0; }).slice(0,12);
+      h=m.map(btn).join("")||"<p class='muted small' style='margin:4px 0'>Not on the list? No problem, “Add” will use exactly what you typed.</p>";
+    } else {
+      h="<p class='eyebrow' style='margin:0 0 6px'>Common choices</p><div class='chips' style='margin-bottom:10px;display:flex;flex-wrap:wrap;gap:6px;overflow:visible'>"+common.map(function(n){ return "<button class='chip' type='button' style='white-space:normal;text-align:left' data-nm='"+esc(n)+"'>"+esc(n)+"</button>"; }).join("")+"</div><p class='eyebrow' style='margin:0 0 2px'>Or browse by body part</p>";
+      BODY_PARTS.concat(["Other"]).forEach(function(part){
+        var arr=names.filter(function(n){ return (guessPart(n)||"Other")===part; });
+        if(arr.length) h+="<details class='fold'><summary>"+part+"<span class='r'>"+arr.length+"</span></summary><div class='inner'>"+arr.map(btn).join("")+"</div></details>";
+      });
+    }
+    $("xl").innerHTML=h;
+    $("xl").querySelectorAll("[data-nm]").forEach(function(b){ b.onclick=function(){ inp.value=b.dataset.nm; list(); }; });
   }
   inp.oninput=list; list();
   $("xs").querySelectorAll(".chip").forEach(function(b){ b.onclick=function(){ nsets=+b.dataset.n; $("xs").querySelectorAll(".chip").forEach(function(o){ o.setAttribute("aria-pressed",o===b?"true":"false"); }); }; });
@@ -1130,11 +1145,11 @@ function buddyPull(){
 function paintBuddy(){
   var el=$("buddyBox"); if(!el) return;
   var wk=mondayOf(todayKey()), cnt=function(a){ return (a||[]).filter(function(x){ return x.d>=wk; }).length; };
-  var sum="You "+cnt(buddyMine())+buddy.others.map(function(o){ return " · "+esc(o.name||"Buddy")+" "+cnt(o.items); }).join("");
+  var sum="You "+cnt(buddyMine())+(buddy.others.length?buddy.others.map(function(o){ return " · "+esc(o.name||"Buddy")+" "+cnt(o.items); }).join(""):" · no buddy yet");
   var body=buddy.others.length?buddy.others.map(function(o){
     var rows=(o.items||[]).slice(0,5).map(function(x){ return "<li>"+esc(prettyDate(x.d,{weekday:"short"}))+" · "+esc(x.t)+(x.n?" · "+x.n+" sets":"")+" ✓</li>"; }).join("");
     return "<p style='margin:0 0 4px'><b>"+esc(o.name||"Buddy")+"</b></p>"+(rows?"<ul style='margin:0 0 8px;padding-left:18px'>"+rows+"</ul>":"<p class='muted small' style='margin:0 0 8px'>No workouts logged yet.</p>");
-  }).join(""):"<p class='muted small' style='margin:0'>Nothing to show yet. Workouts you each finish will appear here.</p>";
+  }).join(""):"<p class='muted small' style='margin:0'>Your buddy shows up here once they open the Train tab in the newest version of Plate Count. Then you can see each other’s workouts.</p>";
   el.innerHTML="<details class='fold buddy'"+(buddy.open?" open":"")+"><summary>Workout buddy<span class='r'>This week: "+sum+"</span></summary><div class='inner'>"+body+"<p class='muted small' style='margin:6px 0 0'>Only workout names and days are shared.</p></div></details>";
   var dt=el.querySelector("details"); if(dt) dt.ontoggle=function(){ buddy.open=dt.open; };
 }
