@@ -18,6 +18,8 @@ function loadTok(){ try{ return JSON.parse(localStorage.getItem(tokKey())||"null
 function saveTok(t){ try{ localStorage.setItem(tokKey(),JSON.stringify(t)); }catch(e){} }
 function redirectUri(){ return location.origin+location.pathname; }
 function connected(){ return !!loadTok(); }
+function isShut(){ try{ return localStorage.getItem("pc_sp_shut")==="1"; }catch(e){ return false; } }
+function setShut(v){ try{ localStorage.setItem("pc_sp_shut",v?"1":"0"); }catch(e){} }
 
 /* ---- PKCE helpers ---- */
 function rand(n){ var a=new Uint8Array(n); crypto.getRandomValues(a); return Array.prototype.map.call(a,function(b){ return ("0"+b.toString(16)).slice(-2); }).join(""); }
@@ -127,7 +129,17 @@ function feed(o){
 }
 function paint(){
   if(!el||!document.body.contains(el)) return;
-  var h="<div class='card'><div class='eyebrow'>Workout music</div>"+others.map(feed).join("");
+  /* The card can be folded away; the choice is remembered on this device. */
+  var shut=isShut(), live=others.filter(function(o){ return o.is_playing&&o.track&&Date.now()-Date.parse(o.updated_at)<10*60000; })[0];
+  var head="<button class='sp-head' id='spTog' type='button' aria-expanded='"+!shut+"' aria-label='"+(shut?"Show":"Hide")+" workout music'><span class='eyebrow'>Workout music</span>"+
+    (shut&&live?"<span class='sp-peek'>"+esc(live.name||"")+" · "+esc(live.track)+"</span>":"")+
+    "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M6 9l6 6 6-6'/></svg></button>";
+  if(shut){
+    el.innerHTML="<div class='card sp-shut'>"+head+"</div>";
+    el.querySelector("#spTog").onclick=function(){ setShut(false); paint(); };
+    return;
+  }
+  var h="<div class='card'>"+head+others.map(feed).join("");
   if(!connected()){
     h+="<h3 class='h2' style='font-size:18px;margin:12px 0 6px'>Share your music too</h3>"+
       "<p class='muted small' style='margin:0 0 12px'>Connect Spotify and "+(ctx.isCoach?"your clients":"your coach")+" can see what you’re playing while you train. Only the song, artist and artwork are shared, and only while Plate Count is open.</p>"+
@@ -140,6 +152,7 @@ function paint(){
     h+=(err?"<p class='err' style='margin-top:10px'>"+esc(err)+"</p>":"")+"<button class='linkbtn' id='spOff' style='margin-top:10px'>Disconnect Spotify</button>";
   }
   el.innerHTML=h+"</div>";
+  var tg=el.querySelector("#spTog"); if(tg) tg.onclick=function(){ setShut(true); paint(); };
   var c=el.querySelector("#spConnect"); if(c) c.onclick=connect;
   var o=el.querySelector("#spOff"); if(o) o.onclick=disconnect;
 }/* Connected: report my own playback and read the others. Not connected: just read the others, so the feed is live for viewers too. */

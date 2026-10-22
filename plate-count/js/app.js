@@ -14,6 +14,8 @@ var ENT = null;   /* what this client is entitled to see; null = no limits (dev)
 var TRACK = "";   /* "starter" = coach-provisioned account on the 3-cycle starter program (set from app_metadata at sign-in) */
 var META = {};    /* the signed-in user's user_metadata (first_name, must_change_password) */
 function isStarter(){ return TRACK==="starter"; }
+/* Every client can send the coach a question; the coach's own account has nobody to ask. */
+function canAskCoach(){ return !!userEmail&&userEmail!==ADMIN_EMAIL; }
 function firstName(){
   var n=(META.first_name||S.profile.name||userEmail.split("@")[0]||"").toString().trim();
   return n?n.charAt(0).toUpperCase()+n.slice(1):"there";
@@ -532,7 +534,7 @@ function trained(k){ var s=(S.days[k]||{}).sets||{}; return Object.keys(s).some(
 function welcomeCard(){
   if(!isStarter()||S.welcomeOff||S.date!==todayKey()) return "";
   var t=todayKey(), hr=new Date().getHours(), tod=hr<12?"Good morning":hr<17?"Good afternoon":"Good evening", nm=firstName(), gap=S.visitGap, head;
-  if(gap==null) head="Welcome, "+nm+"! We’re so glad you’re here.";
+  if(gap==null) head="Welcome, "+nm+"! I’m so glad you’re here.";
   else if(gap>=2) head="So glad you came back, "+nm+".";
   else head=tod+", "+nm+".";
   var pos=programPos(t), p=PROGRAMS[pos.idx], pd=daysFor(p,t), d=pd[Math.min(workoutIdx(t),pd.length-1)]||pd[0];
@@ -1577,7 +1579,7 @@ function goalCheck(cw,pace){
 }
 function planSuggestions(cw,pace){
   var P=S.profile, o={items:[],note:""};
-  if(!pace||cw==null){ o.note="Log 4 or more weigh-ins over about 10 days and I will start suggesting calorie and cardio changes."; return o; }
+  if(!pace||cw==null){ o.note="Log 4 or more weigh-ins over about 10 days and I will start suggesting "+(isStarter()?"calorie changes":"calorie and cardio changes")+"."; return o; }
   if(daysSince(P.planDismissAt)<7) return o;
   if(pace.src==="recent"&&inLuteal()){ o.note="You are in the luteal phase, when water hides real change. I will wait to suggest changes until after your period starts."; return o; }
   var pct=pace.rate/cw*100, b=blockNow(), r=paceBand(), T=P.targets, bump=P.cardioBump||0, delta=0, why="";
@@ -1695,11 +1697,11 @@ function renderTrend(){
   h+=card("Calories vs target","Last 3 weeks. The dashed line is your daily target. Faded bars fell more than 10% short.",barChart(keys,kc,T.k,"var(--m-kcal)"),"chartcard")+
      card("Protein vs target","Hitting protein is the most protective habit while building. Over is fine.",barChart(keys,pr,T.p,"var(--m-pro)"),"chartcard");
   h+="<div class='card'><h3 class='h2' style='font-size:18px'>Daily targets</h3><div class='tgt4'><div><b>"+T.k+"</b><span>kcal</span></div><div><b>"+T.p+"</b><span>protein</span></div><div><b>"+T.c+"</b><span>carbs</span></div><div><b>"+T.f+"</b><span>fat</span></div></div><p class='muted small' style='margin:10px 0 0'>"+(perLb()&&weeklyWeight(S.date)?"This week’s protein is "+perLb()+" g per lb of your Saturday weight ("+r1(weeklyWeight(S.date))+" lb). ":"")+(P.goal?"Set from your weight and goal. You can change the calories to any number you like.":"Set by your phase. Change them from the phase button on Train.")+"</p>"+(P.goal?"<button class='btn ghost sm' id='recalcT' style='margin-top:10px'>Update weight &amp; targets</button>":"")+"</div>"+
-     (isStarter()?"<div id='coachBox'></div>":"")+
+     (canAskCoach()?"<div id='coachBox'></div>":"")+
      "<p class='foot' id='syncNote'></p><p class='foot'><button class='linkbtn' id='chgPw'>Change password</button> &nbsp;·&nbsp; <button class='linkbtn' id='signOut'>Sign out</button></p>";
   $("panel-trend").innerHTML=h;
   $("chgPw").onclick=function(){ if(!DEV) changePassword(false); };
-  if(isStarter()) renderCoach();
+  if(canAskCoach()) renderCoach();
 
   var save=function(){ var v=num($("wtIn").value); if(v==null) return; cur().weight=v; persistDay(S.date); renderTrend(); toast("Weight saved"); };
   $("wtSave").onclick=save; $("wtIn").onkeydown=function(e){ if(e.key==="Enter"){ e.preventDefault(); save(); } };
@@ -1721,12 +1723,20 @@ function renderTrend(){
 /* Questions and replies live in plate_messages. The coach reads and answers them on the admin dashboard. */
 function seenKey(){ return "pc_msgseen_"+uid; }
 function loadMsgs(){
-  if(DEV||!uid||!isStarter()) return Promise.resolve();
+  if(DEV||!uid||!canAskCoach()) return Promise.resolve();
   return supabaseClient.from("plate_messages").select("id,from_coach,body,created_at").eq("user_id",uid).order("created_at",{ascending:true}).limit(100).then(function(r){
     if(r.error) return;
     S.msgs=r.data||[];
     var last=S.msgs.length?S.msgs[S.msgs.length-1]:null, seen=0; try{ seen=+localStorage.getItem(seenKey())||0; }catch(e){}
     S.coachReply=!!(last&&last.from_coach&&Date.parse(last.created_at)>seen);
+  }).catch(function(){});
+}
+/* Emails the coach about the question just sent. Fire and forget: if it fails, the question is still saved and shows on the dashboard. */
+function notifyCoach(){
+  supabaseClient.auth.getSession().then(function(r){
+    var tok=r.data&&r.data.session&&r.data.session.access_token; if(!tok) return;
+    return fetch(SUPABASE_URL+"/functions/v1/notify-coach-message",{method:"POST",
+      headers:{"Authorization":"Bearer "+tok,"apikey":SUPABASE_PUBLISHABLE_KEY,"Content-Type":"application/json"},body:"{}"});
   }).catch(function(){});
 }
 function renderCoach(){
@@ -1745,6 +1755,7 @@ function renderCoach(){
     supabaseClient.from("plate_messages").insert({user_id:uid,from_coach:false,body:v.slice(0,1000)}).then(function(r){
       if(r.error){ $("coachSend").disabled=false; toast("Couldn’t send that. Try again in a moment."); return; }
       (S.msgs=S.msgs||[]).push({from_coach:false,body:v,created_at:new Date().toISOString()}); renderCoach(); toast("Sent. Your coach will reply here.");
+      notifyCoach();
     });
   };
 }
@@ -1980,7 +1991,11 @@ function start(u){
   maybeAdvance(); renderAll();
   pull().then(function(){
     if(!S.profile.programStart) S.profile.programStart=todayKey();
-    if(isStarter()&&(S.profile.name!==firstName()||S.profile.email!==userEmail||S.profile.track!=="starter")){ S.profile.name=firstName(); S.profile.email=userEmail; S.profile.track="starter"; persistProfile(); }   /* so the coach dashboard can list her */
+    /* Everyone's name and email go on their profile so the coach dashboard can list them and show their questions. */
+    if(userEmail!==ADMIN_EMAIL){
+      var wantTrack=isStarter()?"starter":(S.profile.track||"");
+      if(S.profile.name!==firstName()||S.profile.email!==userEmail||(S.profile.track||"")!==wantTrack){ S.profile.name=firstName(); S.profile.email=userEmail; if(wantTrack) S.profile.track=wantTrack; persistProfile(); }
+    }
     maybeAdvance(); maybeOnboard();
     return loadMsgs().then(function(){ if(S.coachReply) softRender(); });
   });

@@ -1,7 +1,7 @@
 /* Plate Count service worker — app shell works offline; data calls always go to the network. */
-var VERSION = "pc-v17";   /* when you change app files, bump this AND the ?v= numbers in index.html */
+var VERSION = "pc-v19";   /* when you change app files, bump this AND the ?v= numbers in index.html */
 var SHELL = [
-  "index.html","css/plate.css?v=17","js/app.js?v=17","foods.js?v=17","programs.js?v=17","starter-program.js?v=17","spotify.js?v=17",
+  "index.html","css/plate.css?v=19","js/app.js?v=19","foods.js?v=19","programs.js?v=19","starter-program.js?v=19","spotify.js?v=19",
   "manifest.webmanifest","icons/icon-192.png","icons/icon-512.png","icons/icon-180.png","../js/supabase-client.js"
 ];
 var CDN = /^https:\/\/(cdn\.jsdelivr\.net|fonts\.googleapis\.com|fonts\.gstatic\.com)\//;

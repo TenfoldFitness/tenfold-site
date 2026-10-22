@@ -348,3 +348,11 @@ textarea.field{padding-top:12px;font-family:inherit;resize:vertical}
 .meal.shut .mealtog svg{transform:rotate(-90deg)}
 .entries[hidden]{display:none}
 .meal-h .mealtog{flex:1}
+
+/* collapsible workout music */
+.sp-head{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;padding:0;min-height:36px;cursor:pointer;color:inherit;font:inherit;text-align:left}
+.sp-head .eyebrow{flex:none}
+.sp-peek{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;color:var(--text-2)}
+.sp-head svg{width:18px;height:18px;flex:none;margin-left:auto;stroke:var(--text-2);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s}
+.sp-shut .sp-head svg{transform:rotate(-90deg)}
+.sp-shut{padding-top:8px;padding-bottom:8px}

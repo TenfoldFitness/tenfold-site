@@ -38,6 +38,7 @@
       <div style="padding:28px 0 8px;">
         <h1 style="font-size:24px;">Admin dashboard</h1>
         <p>Everything clients see and do, in one place for you.</p>
+        <a id="pc-alert" href="#pc-section" style="display:none; margin-top:10px; padding:10px 14px; border-radius:8px; background:#f3e3c0; color:#1F2A22; font-weight:600; text-decoration:none;"></a>
       </div>
 
       <section style="border-top:none; padding-top:0;">
@@ -200,8 +201,19 @@
       pcClients = (data || []).filter(r => r.data && r.data.track === 'starter');
       if (!pcClients.length) { empty.textContent = 'No starter clients have opened Plate Count yet. Adrienne will appear here after her first sign-in.'; return; }
       empty.style.display = 'none';
+      // Who is waiting on an answer: clients whose newest message is from them, not from you.
+      const waiting = new Set();
+      const { data: allMsgs } = await supabaseClient.from('plate_messages').select('user_id,from_coach,created_at').order('created_at', { ascending: false });
+      const seen = new Set();
+      (allMsgs || []).forEach(m => { if (!seen.has(m.user_id)) { seen.add(m.user_id); if (!m.from_coach) waiting.add(m.user_id); } });
+      const waitNames = pcClients.filter(c => waiting.has(c.user_id)).map(c => c.data.name || c.data.email || 'A client');
+      const alertEl = document.getElementById('pc-alert');
+      if (waitNames.length) {
+        alertEl.textContent = waitNames.length === 1 ? waitNames[0] + ' has a new question. Tap to read and reply.' : waitNames.join(', ') + ' have new questions. Tap to read and reply.';
+        alertEl.style.display = 'inline-block';
+      }
       const pick = document.getElementById('pc-pick');
-      pick.innerHTML = pcClients.map((c, i) => `<option value="${i}">${escapeHtml(c.data.name || c.data.email || c.user_id)}</option>`).join('');
+      pick.innerHTML = pcClients.map((c, i) => `<option value="${i}">${escapeHtml(c.data.name || c.data.email || c.user_id)}${waiting.has(c.user_id) ? ' (new question)' : ''}</option>`).join('');
       pick.style.display = 'block'; document.getElementById('pc-pick-label').style.display = 'block';
       pick.onchange = () => showPlateClient(+pick.value);
       showPlateClient(0);
