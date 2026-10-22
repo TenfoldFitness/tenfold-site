@@ -150,6 +150,9 @@ window.PCSpotify={
     handleReturn().then(function(){ paint(); poll(); clearInterval(timer); timer=setInterval(poll,POLL_MS); });
     document.addEventListener("visibilitychange",function(){ if(!document.hidden) poll(); });
   },
+  /* true when Spotify sharing is on for this account but this device isn't connected yet */
+  needsConnect:function(){ return !!ctx&&!connected(); },
+  connect:function(){ if(ctx) connect(); },
   mount:function(node){ if(!ctx) return; el=node; paint(); if(connected()) pollOthers().then(paint); }
 };
 })();

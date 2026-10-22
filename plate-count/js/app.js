@@ -528,11 +528,12 @@ function welcomeCard(){
   var mon=mondayOf(t), done=0, planned=0;
   for(var i=0;i<7;i++){ if(pd[i]&&!pd[i].rest){ planned++; if(trained(shiftKey(mon,i))) done++; } }
   var more=gap!=null&&gap>=2?"Every day you show up counts, and today is a fresh start.":(done?done+" of "+planned+" workouts done this week. Keep it going.":"Your week starts with one workout. That is all it takes.");
+  var sp=(window.PCSpotify&&PCSpotify.needsConnect())?"<div style='margin-top:12px'><p class='small' style='margin:0 0 8px'><b>Bring your workout music.</b> Connect Spotify and you and your coach can see what each other is playing while you train.</p><button class='btn sm' id='welcomeSp'>Connect Spotify</button></div>":"";
   var reply=S.coachReply?"<br><b>Your coach replied to your question.</b> Open the Progress tab to read it.":"";
   return "<div class='card welcome'><button class='x' id='welcomeX' aria-label='Dismiss' style='float:right'>&times;</button>"+
     "<div class='eyebrow'>"+esc(p.name)+" · Week "+pos.week+" of "+pos.weeks+"</div>"+
     "<h2 class='h2' style='font-size:24px;margin:4px 0 8px'>"+esc(head)+"</h2>"+
-    "<p style='margin:0'>"+line+" <span class='muted'>"+more+"</span>"+reply+"</p></div>";
+    "<p style='margin:0'>"+line+" <span class='muted'>"+more+"</span>"+reply+"</p>"+sp+"</div>";
 }
 function fuelGoalCard(){
   if(!isStarter()) return "";
@@ -579,6 +580,7 @@ function renderFuel(){
   h+="<p class='foot'>Database values are USDA-derived. Barcode matches also draw on <a href='https://www.opennutrition.app' target='_blank' rel='noopener'>OpenNutrition</a> and <a href='https://world.openfoodfacts.org' target='_blank' rel='noopener'>Open Food Facts</a> contributors (ODbL). Photo and text estimates are approximate.</p>";
   var p=$("panel-fuel"); p.innerHTML=h;
   var fg=$("fuelGoal"); if(fg) fg.onclick=function(){ openOnboarding(!S.profile.onboarded); };
+  var wsp=$("welcomeSp"); if(wsp) wsp.onclick=function(){ PCSpotify.connect(); };
   var wx=$("welcomeX"); if(wx) wx.onclick=function(){ S.welcomeOff=true; renderFuel(); };
   p.querySelectorAll(".addbtn").forEach(function(b){ b.onclick=function(){ openAdd(b.dataset.meal); }; });
   p.querySelectorAll(".del").forEach(function(b){
@@ -1944,8 +1946,8 @@ function start(u){
   if(isLockedProgram(S.profile.programIdx)) S.profile.programIdx=lastUnlockedIdx();
   document.body.style.visibility="visible";
   if(!S.profile.programStart) S.profile.programStart=todayKey();   /* a new client's Week 1 starts the day they begin */
-  maybeAdvance(); renderAll();
   if(window.PCSpotify&&!DEV) PCSpotify.init({sb:supabaseClient,uid:uid,name:isStarter()?firstName():"Sarah",isCoach:userEmail===ADMIN_EMAIL,enabled:isStarter()||userEmail===ADMIN_EMAIL});
+  maybeAdvance(); renderAll();
   pull().then(function(){
     if(!S.profile.programStart) S.profile.programStart=todayKey();
     if(isStarter()&&(S.profile.name!==firstName()||S.profile.email!==userEmail||S.profile.track!=="starter")){ S.profile.name=firstName(); S.profile.email=userEmail; S.profile.track="starter"; persistProfile(); }   /* so the coach dashboard can list her */
