@@ -6,7 +6,7 @@
      then paste its Client ID into SPOTIFY_CLIENT_ID below. Until then the card stays hidden. */
 (function(){
 "use strict";
-var SPOTIFY_CLIENT_ID = "";   /* <- paste the Client ID from developer.spotify.com here */
+var SPOTIFY_CLIENT_ID = "af8eefe8b12e4eb6be31e25f0a0de1c8";   /* public Client ID of the "Plate Count" app at developer.spotify.com */
 var SCOPES = "user-read-currently-playing user-read-recently-played";
 var POLL_MS = 20000, RECENT_MS = 5*60000, SAVE_MS = 60000;
 
