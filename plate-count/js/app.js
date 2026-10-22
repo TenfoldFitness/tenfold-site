@@ -11,6 +11,13 @@ var MEALS = ["Breakfast","Lunch","Dinner","Snacks"];
 var DEF_TARGETS = {k:2100,p:140,c:258,f:56};
 var uid = null, userEmail = "";
 var ENT = null;   /* what this client is entitled to see; null = no limits (dev) */
+var TRACK = "";   /* "starter" = coach-provisioned account on the 3-cycle starter program (set from app_metadata at sign-in) */
+var META = {};    /* the signed-in user's user_metadata (first_name, must_change_password) */
+function isStarter(){ return TRACK==="starter"; }
+function firstName(){
+  var n=(META.first_name||S.profile.name||userEmail.split("@")[0]||"").toString().trim();
+  return n?n.charAt(0).toUpperCase()+n.slice(1):"there";
+}
 
 /* ================= tiny helpers ================= */
 function $(id){ return document.getElementById(id); }
@@ -119,6 +126,7 @@ function mergeProfile(p,force){
   ["goalWeight","bf","goalBfLo","goalBfHi"].forEach(function(f){ d[f]=(typeof p[f]==="number"&&isFinite(p[f]))?p[f]:null; });
   d.cardioBump=(typeof p.cardioBump==="number"&&p.cardioBump>0)?Math.min(p.cardioBump,30):0;
   ["calAdjAt","cardioBumpAt","planDismissAt"].forEach(function(f){ d[f]=/^\d{4}-\d{2}-\d{2}$/.test(p[f])?p[f]:null; });
+  ["name","email","track"].forEach(function(f){ if(typeof p[f]==="string") d[f]=p[f].slice(0,120); });
   d.updatedAt=+p.updatedAt||0;
   unionCustom(p.custom);
 }
@@ -263,6 +271,11 @@ PROGRAMS.push({
     {n:"Speed Glute Ham Drops",s:2,r:"5",cue:"Resist the fall, do not free-fall into it."},
     {n:"Pull Up Drop",s:2,r:"5",cue:"Catch at the top position and resist the drop."}]}]
 });
+/* The starter track replaces the whole program list with the 3 starter cycles. */
+function useStarterPrograms(){
+  PROGRAMS.length=0;
+  (window.STARTER_PHASES||[]).forEach(function(ph){ PROGRAMS.push({id:ph.id,name:ph.name,sub:ph.sub,note:ph.note,phase:ph,metric:{label:"Weight",ph:"lb"},days:window.STARTER_DAYS}); });
+}
 var DEF_FOCUS={ph1:"h",ph2:"h",ph3:"s",ph4:"h",ph5:"s",ph6:"s"};
 function program(){ return PROGRAMS[S.profile.programIdx]||PROGRAMS[0]; }
 /* The Phase 2 to 6 weekly split changed. Days before this date keep the split they were logged under,
@@ -317,7 +330,7 @@ function renderEntBar(){
   } else if(ENT&&ENT.nextUnlock&&pos.held){
     msg="You’ve finished your unlocked weeks. Phase "+(ENT.allowed+1)+" unlocks on "+fmtDate(ENT.nextUnlock)+(ENT.kind==="subscription"?" if you keep your membership":"")+".";
   } else if(pos.done&&!pos.held&&(!ENT||ENT.allowed>=phaseCount())){
-    msg="You’ve finished all six phases. The next cycle of workouts is being written. Keep logging in the meantime.";
+    msg=isStarter()?"You finished all 3 cycles. Amazing work! Your coach will set up what comes next. Keep logging in the meantime.":"You’ve finished all six phases. The next cycle of workouts is being written. Keep logging in the meantime.";
   }
   el.innerHTML=msg; el.hidden=!msg;
 }
@@ -502,6 +515,36 @@ function statusMsg(t,burn){
   if(diff<=400) return {cls:"ok",msg:dt+" against target. "+pm};
   return {cls:"ok",msg:dt+". Read the weekly average, not any single day."};
 }
+/* ---- Welcome and goal prompts for coach-provisioned (starter) accounts ---- */
+function trained(k){ var s=(S.days[k]||{}).sets||{}; return Object.keys(s).some(function(x){ return s[x].done; }); }
+function welcomeCard(){
+  if(!isStarter()||S.welcomeOff||S.date!==todayKey()) return "";
+  var t=todayKey(), hr=new Date().getHours(), tod=hr<12?"Good morning":hr<17?"Good afternoon":"Good evening", nm=firstName(), gap=S.visitGap, head;
+  if(gap==null) head="Welcome, "+nm+"! We’re so glad you’re here.";
+  else if(gap>=2) head="So glad you came back, "+nm+".";
+  else head=tod+", "+nm+".";
+  var pos=programPos(t), p=PROGRAMS[pos.idx], pd=daysFor(p,t), d=pd[Math.min(workoutIdx(t),pd.length-1)]||pd[0];
+  var line=d.rest?"Today is a rest day. Recovery is part of the plan, so enjoy it.":"Today: <b>"+esc(d.title)+"</b>. You’ve got this.";
+  var mon=mondayOf(t), done=0, planned=0;
+  for(var i=0;i<7;i++){ if(pd[i]&&!pd[i].rest){ planned++; if(trained(shiftKey(mon,i))) done++; } }
+  var more=gap!=null&&gap>=2?"Every day you show up counts, and today is a fresh start.":(done?done+" of "+planned+" workouts done this week. Keep it going.":"Your week starts with one workout. That is all it takes.");
+  var reply=S.coachReply?"<br><b>Your coach replied to your question.</b> Open the Progress tab to read it.":"";
+  return "<div class='card welcome'><button class='x' id='welcomeX' aria-label='Dismiss' style='float:right'>&times;</button>"+
+    "<div class='eyebrow'>"+esc(p.name)+" · Week "+pos.week+" of "+pos.weeks+"</div>"+
+    "<h2 class='h2' style='font-size:24px;margin:4px 0 8px'>"+esc(head)+"</h2>"+
+    "<p style='margin:0'>"+line+" <span class='muted'>"+more+"</span>"+reply+"</p></div>";
+}
+function fuelGoalCard(){
+  if(!isStarter()) return "";
+  var g=S.profile.goal;
+  if(!g) return "<div class='card'><div class='eyebrow'>Your fuel plan</div><h3 class='h2' style='font-size:18px;margin:4px 0 6px'>Let’s set your daily macros</h3>"+
+    "<p class='muted small' style='margin:0 0 12px'>Enter your weight and choose your goal, weight loss or building muscle. Plate Count will work out your calories, protein, carbs and fat for you.</p>"+
+    "<button class='btn' id='fuelGoal'>Set my weight &amp; goal</button></div>";
+  var T=targetsFor(S.date);
+  return "<div class='card'><div class='eyebrow'>Your fuel plan · "+(g==="build"?"Build muscle":"Weight loss")+" · "+r1(lastWeightLb())+" lb</div>"+
+    "<div class='tgt4' style='margin-top:10px'><div><b>"+T.k+"</b><span>kcal</span></div><div><b>"+T.p+"</b><span>protein</span></div><div><b>"+T.c+"</b><span>carbs</span></div><div><b>"+T.f+"</b><span>fat</span></div></div>"+
+    "<button class='btn ghost sm' id='fuelGoal' style='margin-top:12px'>Update weight &amp; goal</button></div>";
+}
 function renderFuel(){
   var k=S.date, d=cur(), T=targetsFor(k), t=totals(k), burn=estBurn(k);
   var net=t.k, left=T.k-net, pct=T.k>0?Math.max(0,net)/T.k:0, C=2*Math.PI*56;
@@ -514,7 +557,7 @@ function renderFuel(){
     var p=tg>0?Math.min(100,v/tg*100):0;
     return "<div class='mac "+cls+"'><div class='row1'><span>"+label+"</span><span><b>"+r0(v)+"</b> / "+r0(tg)+" g</span></div><div class='bar'><i style='width:"+p.toFixed(1)+"%'></i></div></div>";
   }
-  var h="<div class='card'><div class='hero'>"+
+  var h=welcomeCard()+fuelGoalCard()+"<div class='card'><div class='hero'>"+
     "<div class='ring'><svg viewBox='0 0 132 132' aria-hidden='true'><circle class='trk' cx='66' cy='66' r='56' fill='none' stroke-width='12'/>"+
     "<circle class='val' cx='66' cy='66' r='56' fill='none' stroke-width='12' stroke-linecap='round' stroke-dasharray='"+C.toFixed(1)+"' stroke-dashoffset='"+(C*(1-Math.min(pct,1))).toFixed(1)+"'/></svg>"+
     "<div class='mid'><div class='big'>"+(left>=0?r0(left).toLocaleString():"+"+r0(-left).toLocaleString())+"</div><div class='cap'>"+(left>=0?"kcal left":"kcal over")+"</div></div></div>"+
@@ -535,6 +578,8 @@ function renderFuel(){
   });
   h+="<p class='foot'>Database values are USDA-derived. Barcode matches also draw on <a href='https://www.opennutrition.app' target='_blank' rel='noopener'>OpenNutrition</a> and <a href='https://world.openfoodfacts.org' target='_blank' rel='noopener'>Open Food Facts</a> contributors (ODbL). Photo and text estimates are approximate.</p>";
   var p=$("panel-fuel"); p.innerHTML=h;
+  var fg=$("fuelGoal"); if(fg) fg.onclick=function(){ openOnboarding(!S.profile.onboarded); };
+  var wx=$("welcomeX"); if(wx) wx.onclick=function(){ S.welcomeOff=true; renderFuel(); };
   p.querySelectorAll(".addbtn").forEach(function(b){ b.onclick=function(){ openAdd(b.dataset.meal); }; });
   p.querySelectorAll(".del").forEach(function(b){
     b.onclick=function(){
@@ -897,7 +942,16 @@ function openPair(it,rd,allItems){
 }
 var CHECK="<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M5 12.5l4.5 4.5L19 7.5'/></svg>";
 /* Cardio for the day: pick the machine you actually used, then log minutes and miles. */
+function walkCard(rd){
+  var c=day(rd).cardio, has=c.done||c.minutes||c.miles;
+  return "<details class='fold'"+(has?" open":"")+"><summary>Walk<span class='r'>"+(has?"Logged":"optional")+"</span></summary><div class='inner'>"+
+    "<span class='small muted'>Went for a walk? Log it here. It counts toward today’s activity.</span>"+
+    "<div class='cardio-row' style='margin-top:12px'><button class='tick' id='cTick' aria-pressed='"+c.done+"' aria-label='Mark walk done'>"+CHECK+"</button>"+
+    "<input class='numfield' id='cMin' type='number' inputmode='decimal' placeholder='min' value='"+(c.minutes!=null?c.minutes:"")+"' aria-label='Walk minutes'>"+
+    "<input class='numfield' id='cMi' type='number' inputmode='decimal' step='0.1' placeholder='miles' value='"+(c.miles!=null?c.miles:"")+"' aria-label='Walk miles'></div></div></details>";
+}
 function cardioCard(d,rd,p){
+  if(isStarter()){ var wc=day(rd).cardio; if(!wc.type){ wc.type="Walk outdoors"; } return walkCard(rd); }
   var c=day(rd).cardio, cs=cardioStatus(rd), dur=p.phase&&p.phase.cardio?p.phase.cardio:"", typ=c.type||"Treadmill", planned=!!d.cardio;
   var types="<p class='eyebrow' style='margin:12px 0 8px'>What did you do?</p><div class='chips' id='cTypes'>"+CARDIO_TYPES.map(function(t){
     return "<button class='chip' type='button' data-ct='"+esc(t[0])+"' aria-pressed='"+(t[0]===typ)+"'>"+esc(t[0])+"</button>"; }).join("")+"</div>";
@@ -923,7 +977,7 @@ function renderTrain(){
         "<div class='restday'>"+esc(d.rest)+"</div>"+
         "<div class='card' style='margin-top:12px'><p class='muted small' style='margin:0 0 10px'>Training anyway? Add the exercises you did, or log cardio below.</p><button class='btn ghost' id='addEx'>+ Add an exercise</button></div>"+
         cardioCard(d,rd,p);
-      var rp=$("panel-train"); rp.innerHTML=h; wireTrain(rp,rd,[],day(rd).sets,wd); return;
+      var rp=$("panel-train"); rp.innerHTML=h; wireTrain(rp,rd,[],day(rd).sets,wd); mountMusic(rp); return;
     }
     d={title:d.title+" · extra workout",ex:[]};
   }
@@ -992,6 +1046,12 @@ function renderTrain(){
   h+="<p class='foot'>Numbers save per day. Tap ✓ with empty boxes to log the suggested weight and reps.</p>";
   var panel=$("panel-train"); panel.innerHTML=h;
   wireTrain(panel,rd,items,sets,wd);
+  mountMusic(panel);
+}
+/* Workout-music card (spotify.js). Only the coach and starter accounts get it, and only once a Spotify Client ID is set. */
+function mountMusic(panel){
+  if(!window.PCSpotify) return;
+  var d=document.createElement("div"); d.id="musicBox"; panel.appendChild(d); PCSpotify.mount(d);
 }
 /* Suggested values: this set's number last session, else the set before it today. */
 function ghost(it,si,pmap,sets){
@@ -1512,7 +1572,7 @@ function planSuggestions(cw,pace){
   if(delta&&daysSince(P.calAdjAt)<14){ o.note="You changed calories "+daysSince(P.calAdjAt)+" days ago. Give it two weeks before the next change so the scale can show what it did."; delta=0; }
   else if(delta<0&&T.k+delta<CAL_FLOOR){ o.note="Your calories are already near the "+CAL_FLOOR+" floor. Add cardio instead of cutting more."; delta=0; }
   if(delta) o.items.push({kind:"cal",v:delta,head:(delta<0?"Lower":"Raise")+" calories by "+CAL_STEP,msg:why+" Change "+T.k+" to "+(T.k+delta)+" kcal"+(delta<0?"":" and keep protein where it is")+"."});
-  if(b==="cut"&&pct>r.hi&&bump<CARDIO_MAX&&daysSince(P.cardioBumpAt)>=7){
+  if(!isStarter()&&b==="cut"&&pct>r.hi&&bump<CARDIO_MAX&&daysSince(P.cardioBumpAt)>=7){
     var base=baseCardioPerSession()*4, from=Math.round(baseCardioPerSession()*(1+bump/100))*4, to=Math.round(baseCardioPerSession()*(1+(bump+CARDIO_STEP)/100))*4;
     o.items.push({kind:"cardio",v:bump+CARDIO_STEP,head:"Add "+CARDIO_STEP+"% more cardio",msg:"Weekly cardio would go from "+from+" to "+to+" minutes (base plan "+base+"). Change one thing at a time: take either this or the calorie change first, then give it two weeks."});
   }
@@ -1616,8 +1676,11 @@ function renderTrend(){
   h+=card("Calories vs target","Last 3 weeks. The dashed line is your daily target. Faded bars fell more than 10% short.",barChart(keys,kc,T.k,"var(--m-kcal)"),"chartcard")+
      card("Protein vs target","Hitting protein is the most protective habit while building. Over is fine.",barChart(keys,pr,T.p,"var(--m-pro)"),"chartcard");
   h+="<div class='card'><h3 class='h2' style='font-size:18px'>Daily targets</h3><div class='tgt4'><div><b>"+T.k+"</b><span>kcal</span></div><div><b>"+T.p+"</b><span>protein</span></div><div><b>"+T.c+"</b><span>carbs</span></div><div><b>"+T.f+"</b><span>fat</span></div></div><p class='muted small' style='margin:10px 0 0'>"+(perLb()&&weeklyWeight(S.date)?"This week’s protein is "+perLb()+" g per lb of your Saturday weight ("+r1(weeklyWeight(S.date))+" lb). ":"")+(P.goal?"Set from your weight and goal. You can change the calories to any number you like.":"Set by your phase. Change them from the phase button on Train.")+"</p>"+(P.goal?"<button class='btn ghost sm' id='recalcT' style='margin-top:10px'>Update weight &amp; targets</button>":"")+"</div>"+
-     "<p class='foot' id='syncNote'></p><p class='foot'><button class='linkbtn' id='signOut'>Sign out</button></p>";
+     (isStarter()?"<div id='coachBox'></div>":"")+
+     "<p class='foot' id='syncNote'></p><p class='foot'><button class='linkbtn' id='chgPw'>Change password</button> &nbsp;·&nbsp; <button class='linkbtn' id='signOut'>Sign out</button></p>";
   $("panel-trend").innerHTML=h;
+  $("chgPw").onclick=function(){ if(!DEV) changePassword(false); };
+  if(isStarter()) renderCoach();
 
   var save=function(){ var v=num($("wtIn").value); if(v==null) return; cur().weight=v; persistDay(S.date); renderTrend(); toast("Weight saved"); };
   $("wtSave").onclick=save; $("wtIn").onkeydown=function(e){ if(e.key==="Enter"){ e.preventDefault(); save(); } };
@@ -1635,6 +1698,76 @@ function renderTrend(){
   $("signOut").onclick=function(){ if(DEV) return; supabaseClient.auth.signOut().then(function(){ location.reload(); }); };
   var dot=$("syncdot"); $("syncNote").textContent=dot.title||"";
 }
+/* ================= ask your coach (starter accounts) ================= */
+/* Questions and replies live in plate_messages. The coach reads and answers them on the admin dashboard. */
+function seenKey(){ return "pc_msgseen_"+uid; }
+function loadMsgs(){
+  if(DEV||!uid||!isStarter()) return Promise.resolve();
+  return supabaseClient.from("plate_messages").select("id,from_coach,body,created_at").order("created_at",{ascending:true}).limit(100).then(function(r){
+    if(r.error) return;
+    S.msgs=r.data||[];
+    var last=S.msgs.length?S.msgs[S.msgs.length-1]:null, seen=0; try{ seen=+localStorage.getItem(seenKey())||0; }catch(e){}
+    S.coachReply=!!(last&&last.from_coach&&Date.parse(last.created_at)>seen);
+  }).catch(function(){});
+}
+function renderCoach(){
+  var box=$("coachBox"); if(!box) return;
+  var msgs=S.msgs||[];
+  box.innerHTML="<div class='card'><h3 class='h2' style='font-size:18px'>Ask your coach</h3><p class='cap'>Questions about a workout, your food, or how you’re feeling? Send them here and your coach will reply.</p>"+
+    (msgs.length?"<div class='thread'>"+msgs.map(function(m){
+      return "<div class='msg "+(m.from_coach?"coach":"me")+"'><b>"+(m.from_coach?"Coach":"You")+" · "+esc(fmtD(keyOf(new Date(m.created_at))))+"</b>"+esc(m.body)+"</div>"; }).join("")+"</div>":"")+
+    "<textarea class='field' id='coachIn' rows='3' maxlength='1000' placeholder='Type your question…' style='min-height:84px;padding:12px 14px;margin-top:10px'></textarea>"+
+    "<button class='btn' id='coachSend' style='margin-top:10px'>Send to my coach</button></div>";
+  if(S.coachReply&&msgs.length){ try{ localStorage.setItem(seenKey(),String(Date.now())); }catch(e){} S.coachReply=false; }
+  $("coachSend").onclick=function(){
+    var v=$("coachIn").value.trim(); if(!v){ toast("Type your question first"); return; }
+    if(DEV||!navigator.onLine){ toast("You need to be online to send a question."); return; }
+    $("coachSend").disabled=true;
+    supabaseClient.from("plate_messages").insert({user_id:uid,from_coach:false,body:v.slice(0,1000)}).then(function(r){
+      if(r.error){ $("coachSend").disabled=false; toast("Couldn’t send that. Try again in a moment."); return; }
+      (S.msgs=S.msgs||[]).push({from_coach:false,body:v,created_at:new Date().toISOString()}); renderCoach(); toast("Sent. Your coach will reply here.");
+    });
+  };
+}
+
+/* ================= password change ================= */
+/* Shown full-screen (no way to skip) on a first sign-in, and as a dismissible screen from Progress. */
+function changePassword(forced){
+  return new Promise(function(resolve){
+    var box=document.createElement("div"); box.className="loginwrap"; box.id="pwBox";
+    if(!forced) box.style.cssText="position:fixed;inset:0;z-index:60;background:var(--bg);overflow:auto";
+    document.body.classList.add("loggedout");
+    box.innerHTML="<div class='card' style='margin-top:56px'>"+
+      "<div class='eyebrow'>"+(forced?"One quick step":"Account")+"</div><h1 class='h2' style='font-size:26px;margin:2px 0 6px'>"+(forced?"Choose your own password":"Change your password")+"</h1>"+
+      "<p class='muted' style='margin:0 0 16px'>"+(forced?"For your security, replace the temporary password you were given with one only you know.":"Pick a new password for your account.")+" Use at least 8 characters with a letter and a number.</p>"+
+      "<form id='pf' novalidate><label class='sr' for='pn1'>New password</label><input class='field' id='pn1' type='password' autocomplete='new-password' placeholder='New password' style='margin-bottom:10px'>"+
+      "<label class='sr' for='pn2'>Confirm new password</label><input class='field' id='pn2' type='password' autocomplete='new-password' placeholder='Confirm new password' style='margin-bottom:10px'>"+
+      "<p class='err' id='perr' role='alert' hidden></p><button class='btn' id='pgo2' type='submit'>Save new password</button>"+
+      (forced?"":"<button class='btn ghost' id='pcancel' type='button' style='margin-top:10px'>Cancel</button>")+"</form></div>";
+    document.body.appendChild(box);
+    function done(){ box.remove(); document.body.classList.remove("loggedout"); resolve(); }
+    var f=$("pf"), err=$("perr"), go=$("pgo2");
+    function fail(m){ err.textContent=m; err.hidden=false; go.disabled=false; go.textContent="Save new password"; }
+    if($("pcancel")) $("pcancel").onclick=done;
+    f.onsubmit=function(e){
+      e.preventDefault();
+      var a=$("pn1").value, b=$("pn2").value;
+      if(a.length<8||!/[A-Za-z]/.test(a)||!/\d/.test(a)) return fail("Use at least 8 characters, with a letter and a number.");
+      if(a!==b) return fail("The two passwords don’t match.");
+      err.hidden=true; go.disabled=true; go.textContent="Saving…";
+      /* If the new password already signs in, it is the old one. */
+      supabaseClient.auth.signInWithPassword({email:userEmail,password:a}).then(function(r){
+        if(!r.error) return fail("That is your current password. Choose a different one.");
+        return supabaseClient.auth.updateUser({password:a,data:{must_change_password:false}}).then(function(u){
+          if(u.error) return fail(u.error.message||"Couldn’t save that password.");
+          META.must_change_password=false; done(); toast("Password changed");
+        });
+      }).catch(function(){ fail(navigator.onLine?"Couldn’t save that password. Try again.":"You appear to be offline."); });
+    };
+    setTimeout(function(){ try{ $("pn1").focus(); }catch(e){} },80);
+  });
+}
+
 /* ================= welcome: weight + goal -> daily targets ================= */
 /* Starting estimates from bodyweight alone (calories per lb of bodyweight, protein per lb, 27% of
    calories from fat, the rest carbs). A coach can fine-tune these. */
@@ -1651,7 +1784,8 @@ function calcTargets(w,goal,kOverride,pOverride){
   return {k:k,p:p,c:c,f:f};
 }
 function openOnboarding(first){
-  var goal=S.profile.goal||"lose", w=lastWeightLb()&&S.days&&Object.keys(S.days).some(function(k){ return S.days[k]&&S.days[k].weight!=null; })?lastWeightLb():"";
+  var goal=S.profile.goal||"lose"; if(isStarter()&&goal==="maintain") goal="lose";
+  var w=lastWeightLb()&&S.days&&Object.keys(S.days).some(function(k){ return S.days[k]&&S.days[k].weight!=null; })?lastWeightLb():"";
   var body="<p class='muted' style='margin:0 0 14px'>"+(first?"Welcome! Let’s set your daily targets so Plate Count can guide your food each day.":"Update your weight and Plate Count will recalculate your daily targets.")+"</p>"+
     "<label class='eyebrow' for='ow' style='display:block;margin-bottom:6px'>Your weight today (lb)</label>"+
     "<input class='field' id='ow' type='number' inputmode='decimal' step='0.1' placeholder='e.g. 165' value='"+esc(w)+"' style='margin-bottom:14px'>"+
@@ -1662,7 +1796,7 @@ function openOnboarding(first){
     "<label class='eyebrow' for='opl' style='display:block;margin-bottom:6px'>Or set protein by bodyweight: grams per lb</label>"+
     "<input class='field' id='opl' type='number' inputmode='decimal' step='0.1' placeholder='1 = 1 g per lb. Enter 0 to use the fixed number above' value='"+esc(S.profile.proteinPerLb===null||S.profile.proteinPerLb===undefined?"":S.profile.proteinPerLb)+"' style='margin-bottom:6px'>"+
     "<p class='muted small' style='margin:0 0 14px'>Protein follows your weight: each week’s goal is your Saturday weigh-in × this number (1 g per lb unless you change it), starting the Monday after. Log your weight on Saturdays. Enter 0 to use a fixed number instead.</p>"+
-    "<p class='eyebrow' style='margin:0 0 8px'>Your goal</p><div class='chips' id='og'>"+Object.keys(GOALS).map(function(k){
+    "<p class='eyebrow' style='margin:0 0 8px'>Your goal</p><div class='chips' id='og'>"+Object.keys(GOALS).filter(function(k){ return !isStarter()||k!=="maintain"; }).map(function(k){
       return "<button class='chip' type='button' data-g='"+k+"' aria-pressed='"+(k===goal)+"'>"+GOALS[k].label+"</button>"; }).join("")+"</div>"+
     "<p class='muted small' id='oblurb' style='margin:8px 0 0'></p><div id='oprev'></div>"+
     "<p class='muted small' style='margin:14px 0 0'>These are starting estimates, not medical advice. Your coach can fine-tune them, and you can update them any time.</p>";
@@ -1714,9 +1848,9 @@ function showLogin(){
     var box=document.createElement("div"); box.className="loginwrap"; box.id="loginBox";
     box.innerHTML="<div class='card' style='margin-top:56px'>"+
       "<div class='eyebrow'>Tenfold Method</div><h1 class='h2' style='font-size:30px;margin:2px 0 6px'>Plate Count</h1>"+
-      "<p class='muted' style='margin:0 0 16px'>Sign in with your Tenfold portal login. You'll stay signed in on this device.</p>"+
+      "<p class='muted' style='margin:0 0 16px'>Welcome back! Sign in with your username (or email) and password. If this is your first time, use the temporary login your coach gave you. You’ll choose your own password right after. You'll stay signed in on this device.</p>"+
       "<form id='lf' novalidate>"+
-      "<label class='sr' for='le'>Email</label><input class='field' id='le' type='email' inputmode='email' autocomplete='username' autocapitalize='off' autocorrect='off' placeholder='Email' style='margin-bottom:10px'>"+
+      "<label class='sr' for='le'>Username or email</label><input class='field' id='le' type='text' autocomplete='username' autocapitalize='off' autocorrect='off' spellcheck='false' placeholder='Username or email' style='margin-bottom:10px'>"+
       "<label class='sr' for='lp'>Password</label><input class='field' id='lp' type='password' autocomplete='current-password' placeholder='Password' style='margin-bottom:10px'>"+
       "<p class='err' id='lerr' role='alert' hidden></p>"+
       "<button class='btn' id='lgo' type='submit'>Sign in</button></form>"+
@@ -1726,15 +1860,19 @@ function showLogin(){
     f.onsubmit=function(e){
       e.preventDefault();
       var em=$("le").value.trim().toLowerCase(), pw=$("lp").value;
-      if(!em||!pw){ err.textContent="Enter your email and password."; err.hidden=false; return; }
+      if(!em||!pw){ err.textContent="Enter your username (or email) and password."; err.hidden=false; return; }
       err.hidden=true; go.disabled=true; go.textContent="Signing in…";
-      supabaseClient.auth.signInWithPassword({email:em,password:pw}).then(function(r){
+      /* A username (no @) is looked up to its sign-in email by the plate_login_email function. */
+      var emailP=em.indexOf("@")>=0?Promise.resolve(em):supabaseClient.rpc("plate_login_email",{u:em}).then(function(r){
+        if(r.error||!r.data) throw {message:"invalid login"}; return String(r.data).toLowerCase();
+      });
+      emailP.then(function(addr){ return supabaseClient.auth.signInWithPassword({email:addr,password:pw}); }).then(function(r){
         if(r.error) throw r.error;
         box.remove(); document.body.classList.remove("loggedout");
         resolve(checkAccess());
       }).catch(function(ex){
         go.disabled=false; go.textContent="Sign in";
-        err.textContent=/invalid/i.test(ex.message||"")?"That email or password didn’t match. Try again.":(navigator.onLine?"Couldn’t sign in: "+(ex.message||"unknown error"):"You appear to be offline.");
+        err.textContent=/invalid/i.test(ex.message||"")?"That username, email or password didn’t match. Try again.":(navigator.onLine?"Couldn’t sign in: "+(ex.message||"unknown error"):"You appear to be offline.");
         err.hidden=false;
       });
     };
@@ -1776,6 +1914,8 @@ function checkAccess(){
     if(!s) return showLogin();
     var id=s.user.id, email=s.user.email, ck="pc_member_"+id, ek="pc_ent_"+id;
     if(email===ADMIN_EMAIL) return {uid:id,email:email,ent:null};
+    /* Coach-provisioned accounts: app_metadata can only be set server-side, so a client cannot give itself this. */
+    if((s.user.app_metadata||{}).plate_track==="starter") return {uid:id,email:email,ent:null,track:"starter",meta:s.user.user_metadata||{}};
     return supabaseClient.from("memberships").select("*").eq("client_email",email).order("started_at",{ascending:false}).limit(10).then(function(m){
       if(m.error) throw m.error;
       var rows=m.data||[];
@@ -1794,13 +1934,30 @@ function checkAccess(){
   });
 }
 function start(u){
-  uid=u.uid; userEmail=u.email; ENT=u.ent||null; if(ENT&&ENT.readOnly) document.body.classList.add("ro"); lsLoad();
+  uid=u.uid; userEmail=u.email; ENT=u.ent||null; if(ENT&&ENT.readOnly) document.body.classList.add("ro");
+  if(u.track==="starter"){
+    TRACK="starter"; META=u.meta||{}; useStarterPrograms();
+    var bk=document.querySelector(".back"); if(bk) bk.style.display="none";   /* no membership portal for this account */
+    try{ var lv=localStorage.getItem("pc_last_"+uid); S.visitGap=lv?daysBetween(lv,todayKey()):null; localStorage.setItem("pc_last_"+uid,todayKey()); }catch(e){ S.visitGap=null; }
+  }
+  lsLoad();
   if(isLockedProgram(S.profile.programIdx)) S.profile.programIdx=lastUnlockedIdx();
   document.body.style.visibility="visible";
   if(!S.profile.programStart) S.profile.programStart=todayKey();   /* a new client's Week 1 starts the day they begin */
   maybeAdvance(); renderAll();
-  pull().then(function(){ if(!S.profile.programStart) S.profile.programStart=todayKey(); maybeAdvance(); maybeOnboard(); });
+  if(window.PCSpotify&&!DEV) PCSpotify.init({sb:supabaseClient,uid:uid,name:isStarter()?firstName():"Sarah",isCoach:userEmail===ADMIN_EMAIL,enabled:isStarter()||userEmail===ADMIN_EMAIL});
+  pull().then(function(){
+    if(!S.profile.programStart) S.profile.programStart=todayKey();
+    if(isStarter()&&(S.profile.name!==firstName()||S.profile.email!==userEmail||S.profile.track!=="starter")){ S.profile.name=firstName(); S.profile.email=userEmail; S.profile.track="starter"; persistProfile(); }   /* so the coach dashboard can list her */
+    maybeAdvance(); maybeOnboard();
+    return loadMsgs().then(function(){ if(S.coachReply) softRender(); });
+  });
   if("serviceWorker" in navigator&&!DEV) navigator.serviceWorker.register("sw.js").catch(function(){});
 }
-checkAccess().then(function(u){ if(u) start(u); }).catch(function(e){ document.body.style.visibility="visible"; showErr(e); });
+checkAccess().then(function(u){
+  if(!u) return;
+  userEmail=u.email;
+  if(u.track==="starter"&&(u.meta||{}).must_change_password===true&&!DEV){ META=u.meta; document.body.style.visibility="visible"; return changePassword(true).then(function(){ start(u); }); }
+  start(u);
+}).catch(function(e){ document.body.style.visibility="visible"; showErr(e); });
 })();

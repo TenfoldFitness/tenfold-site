@@ -72,6 +72,18 @@
         </div>
       </section>
 
+      <section id="pc-section">
+        <div class="section-head">
+          <h2 style="margin:0;">Plate Count clients</h2>
+        </div>
+        <div class="card">
+          <p class="small" id="pc-empty">Loading...</p>
+          <label class="small" for="pc-pick" id="pc-pick-label" style="display:none;">Client</label>
+          <select id="pc-pick" style="display:none; margin:4px 0 14px; padding:8px; font-size:15px;"></select>
+          <div id="pc-detail"></div>
+        </div>
+      </section>
+
       <section>
         <div class="section-head">
           <h2 style="margin:0;">Blog</h2>
@@ -102,6 +114,7 @@
       document.getElementById('admin-content').style.display = 'block';
       loadAppointments();
       loadPayments();
+      loadPlateClients();
     }
     init();
 
@@ -165,6 +178,104 @@
           <td>${new Date(p.created_at).toLocaleDateString()}</td>
         </tr>
       `).join('');
+    }
+
+    // ---- Plate Count clients: everything a starter client logs, plus her questions ----
+    let pcClients = [];
+    const r0 = n => Math.round(n);
+    function pcKey(d) { const p = n => (n < 10 ? '0' : '') + n; return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
+    function pcShort(k) { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }); }
+    function pcPosition(start) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(start || '')) return 'Not started';
+      const [y, m, d] = start.split('-').map(Number);
+      const wk = Math.floor(Math.max(0, (Date.now() - new Date(y, m - 1, d)) / 864e5) / 7);
+      if (wk >= 12) return 'Finished all 3 cycles';
+      return 'Cycle ' + (Math.floor(wk / 4) + 1) + ', week ' + (wk % 4 + 1) + ' of 4';
+    }
+
+    async function loadPlateClients() {
+      const empty = document.getElementById('pc-empty');
+      const { data, error } = await supabaseClient.from('plate_profile').select('user_id,data,updated_at');
+      if (error) { empty.textContent = 'Could not load Plate Count clients. Run plate-count/starter-setup.sql in Supabase first.'; return; }
+      pcClients = (data || []).filter(r => r.data && r.data.track === 'starter');
+      if (!pcClients.length) { empty.textContent = 'No starter clients have opened Plate Count yet. Adrienne will appear here after her first sign-in.'; return; }
+      empty.style.display = 'none';
+      const pick = document.getElementById('pc-pick');
+      pick.innerHTML = pcClients.map((c, i) => `<option value="${i}">${escapeHtml(c.data.name || c.data.email || c.user_id)}</option>`).join('');
+      pick.style.display = 'block'; document.getElementById('pc-pick-label').style.display = 'block';
+      pick.onchange = () => showPlateClient(+pick.value);
+      showPlateClient(0);
+    }
+
+    async function showPlateClient(i) {
+      const c = pcClients[i], P = c.data, box = document.getElementById('pc-detail');
+      box.innerHTML = '<p class="small">Loading...</p>';
+      const since = pcKey(new Date(Date.now() - 60 * 864e5));
+      const lr = await supabaseClient.from('plate_listening').select('track,artist,is_playing,recent,updated_at').eq('user_id', c.user_id).maybeSingle();
+      const [dr, mr] = await Promise.all([
+        supabaseClient.from('plate_days').select('day,data').eq('user_id', c.user_id).gte('day', since).order('day', { ascending: false }),
+        supabaseClient.from('plate_messages').select('id,from_coach,body,created_at').eq('user_id', c.user_id).order('created_at', { ascending: true })
+      ]);
+      const days = dr.data || [], msgs = mr.data || [];
+      const weigh = days.filter(d => d.data.weight != null).map(d => ({ day: d.day, w: d.data.weight }));
+      const t = P.targets || {};
+      const lastWk = pcKey(new Date(Date.now() - 7 * 864e5));
+      const week = days.filter(d => d.day > lastWk);
+      const logged = week.filter(d => (d.data.entries || []).length).length;
+      const trained = week.filter(d => Object.values(d.data.sets || {}).some(s => s.done)).length;
+      const goal = P.goal === 'build' ? 'Build muscle' : P.goal === 'lose' ? 'Weight loss' : 'Not set yet';
+
+      const stat = (v, l) => `<div style="flex:1 1 120px;"><div style="font-size:20px;font-weight:600;">${v}</div><div class="small">${l}</div></div>`;
+      let h = `<div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:14px;">` +
+        stat(escapeHtml(pcPosition(P.programStart)), 'Program position') +
+        stat(weigh.length ? weigh[0].w + ' lb' : '—', 'Latest weigh-in' + (weigh.length ? ' (' + escapeHtml(pcShort(weigh[0].day)) + ')' : '')) +
+        stat(escapeHtml(goal), 'Goal' + (P.goalWeight ? ' · target ' + P.goalWeight + ' lb' : '')) +
+        stat(t.k ? `${t.k} kcal · ${t.p}p ${t.c}c ${t.f}f` : '—', 'Daily targets') +
+        stat(logged + '/7', 'Days food logged (7 days)') + stat(trained + '/4', 'Workouts done (7 days)') + `</div>`;
+      h += `<p class="small">${escapeHtml(P.email || '')}</p>`;
+      const L = lr && lr.data;
+      if (L && L.track) {
+        const mins = Math.round((Date.now() - Date.parse(L.updated_at)) / 60000);
+        const live = L.is_playing && mins < 10;
+        h += `<p class="small"><b>Workout music:</b> ${live ? 'listening now to' : 'last played'} ${escapeHtml(L.track)} &middot; ${escapeHtml(L.artist || '')}${live ? '' : ' (' + (mins < 60 ? mins + ' min' : Math.round(mins / 60) + ' hr') + ' ago)'}</p>`;
+      }
+      if (weigh.length) h += `<p class="small"><b>Weigh-ins:</b> ${weigh.slice(0, 10).map(w => escapeHtml(pcShort(w.day)) + ' ' + w.w).join(' &middot; ')}</p>`;
+
+      h += `<h3 style="font-size:16px;margin:18px 0 6px;">Recent days</h3><div style="overflow-x:auto;"><table class="admin-table"><thead><tr><th>Day</th><th>Food</th><th>Workout</th><th>Cardio</th></tr></thead><tbody>`;
+      h += days.slice(0, 14).map(d => {
+        const e = d.data.entries || [], sets = d.data.sets || {}, done = Object.values(sets).filter(s => s.done).length;
+        const k = e.reduce((a, x) => a + (+x.k || 0), 0), p = e.reduce((a, x) => a + (+x.p || 0), 0);
+        const cm = d.data.cardio && d.data.cardio.minutes;
+        return `<tr><td>${escapeHtml(pcShort(d.day))}</td><td>${e.length ? r0(k) + ' kcal · ' + r0(p) + ' g protein' : '—'}</td><td>${done ? done + ' sets' : '—'}</td><td>${cm ? cm + ' min' : '—'}</td></tr>` +
+          `<tr><td colspan="4" style="padding:0 6px 8px;"><details><summary class="small" style="cursor:pointer;">Details</summary>${pcDayDetail(d.data)}</details></td></tr>`;
+      }).join('') || '<tr><td colspan="4">Nothing logged yet.</td></tr>';
+      h += `</tbody></table></div>`;
+
+      h += `<h3 style="font-size:16px;margin:18px 0 6px;">Questions &amp; replies</h3>` +
+        (msgs.length ? msgs.map(m => `<div style="margin:6px 0;padding:8px 10px;border-radius:8px;background:${m.from_coach ? 'var(--accent-bg)' : '#f4f2ec'};"><div class="small"><b>${m.from_coach ? 'You' : escapeHtml(P.name || 'Client')}</b> &middot; ${new Date(m.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</div><div style="white-space:pre-wrap;">${escapeHtml(m.body)}</div></div>`).join('') : '<p class="small">No questions yet.</p>') +
+        `<textarea id="pc-reply" rows="3" maxlength="1000" style="width:100%;margin-top:8px;padding:8px;font:inherit;" placeholder="Write a reply..."></textarea>` +
+        `<button class="btn btn-sm" id="pc-send" style="margin-top:6px;">Send reply</button>`;
+      box.innerHTML = h;
+      document.getElementById('pc-send').onclick = async () => {
+        const v = document.getElementById('pc-reply').value.trim(); if (!v) return;
+        const { error } = await supabaseClient.from('plate_messages').insert({ user_id: c.user_id, from_coach: true, body: v });
+        if (error) { alert('Could not send the reply.'); return; }
+        showPlateClient(i);
+      };
+    }
+
+    function pcDayDetail(d) {
+      const meals = {};
+      (d.entries || []).forEach(e => { (meals[e.meal || 'Snacks'] = meals[e.meal || 'Snacks'] || []).push(e); });
+      let h = Object.keys(meals).map(m => `<div class="small"><b>${escapeHtml(m)}:</b> ${meals[m].map(e => escapeHtml(e.name) + (e.amt ? ' (' + escapeHtml(e.amt) + ')' : '') + ' ' + r0(e.k) + ' kcal').join('; ')}</div>`).join('');
+      const lifts = {};
+      Object.entries(d.sets || {}).forEach(([key, s]) => {
+        if (!s.done && s.w == null) return;
+        const parts = key.split('|'); const name = (parts[1] || key).replace(/-/g, ' ');
+        (lifts[name] = lifts[name] || []).push((s.w != null ? s.w : '?') + '×' + (s.reps != null ? s.reps : '?') + (s.done ? '' : ' (not ticked)'));
+      });
+      h += Object.keys(lifts).map(n => `<div class="small"><b>${escapeHtml(n)}:</b> ${lifts[n].map(escapeHtml).join(', ')}</div>`).join('');
+      return h || '<div class="small">No details.</div>';
     }
 
     function escapeHtml(str) {
