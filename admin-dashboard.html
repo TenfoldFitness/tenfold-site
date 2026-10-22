@@ -233,6 +233,12 @@
         stat(t.k ? `${t.k} kcal · ${t.p}p ${t.c}c ${t.f}f` : '—', 'Daily targets') +
         stat(logged + '/7', 'Days food logged (7 days)') + stat(trained + '/4', 'Workouts done (7 days)') + `</div>`;
       h += `<p class="small">${escapeHtml(P.email || '')}</p>`;
+      const inj = P.injuries;
+      if (inj && ((inj.areas && inj.areas.length) || inj.notes)) {
+        h += `<p class="small" style="background:#f6e4dc;padding:8px 10px;border-radius:8px;"><b>Injuries / limitations:</b> ${escapeHtml((inj.areas || []).join(', '))}${inj.notes ? ' &middot; ' + escapeHtml(inj.notes) : ''}</p>`;
+      } else if (inj) {
+        h += `<p class="small"><b>Injuries / limitations:</b> none reported</p>`;
+      }
       const L = lr && lr.data;
       if (L && L.track) {
         const mins = Math.round((Date.now() - Date.parse(L.updated_at)) / 60000);

@@ -126,6 +126,9 @@ function mergeProfile(p,force){
   ["goalWeight","bf","goalBfLo","goalBfHi"].forEach(function(f){ d[f]=(typeof p[f]==="number"&&isFinite(p[f]))?p[f]:null; });
   d.cardioBump=(typeof p.cardioBump==="number"&&p.cardioBump>0)?Math.min(p.cardioBump,30):0;
   ["calAdjAt","cardioBumpAt","planDismissAt"].forEach(function(f){ d[f]=/^\d{4}-\d{2}-\d{2}$/.test(p[f])?p[f]:null; });
+  if(p.injuries&&typeof p.injuries==="object") d.injuries={
+    areas:(Array.isArray(p.injuries.areas)?p.injuries.areas:[]).filter(function(a){ return typeof a==="string"; }).slice(0,12).map(function(a){ return a.slice(0,30); }),
+    notes:typeof p.injuries.notes==="string"?p.injuries.notes.slice(0,500):""};
   ["name","email","track"].forEach(function(f){ if(typeof p[f]==="string") d[f]=p[f].slice(0,120); });
   d.updatedAt=+p.updatedAt||0;
   unionCustom(p.custom);
@@ -551,7 +554,7 @@ function renderFuel(){
   var net=t.k, left=T.k-net, pct=T.k>0?Math.max(0,net)/T.k:0, C=2*Math.PI*56;
   var st=statusMsg(t,burn), sub="";
   if(burn.kcal>1){
-    var bp=[]; if(burn.cardioMin) bp.push(r0(burn.cardioMin)+" min cardio"); if(burn.sets) bp.push(burn.sets+" set"+(burn.sets===1?"":"s"));
+    var bp=[]; if(burn.cardioMin) bp.push(r0(burn.cardioMin)+(isStarter()?" min walking":" min cardio")); if(burn.sets) bp.push(burn.sets+" set"+(burn.sets===1?"":"s"));
     sub="<span class='sub'>"+r0(t.k)+" eaten. Today's training (~"+r0(burn.kcal)+" kcal: "+bp.join(" + ")+") is already built into your target.</span>";
   }
   function mac(cls,label,v,tg){
@@ -996,6 +999,7 @@ function renderTrain(){
      "<div class='progtxt'><span id='progTxt'>"+done+" of "+total+" sets done</span><span>"+items.length+" exercises</span></div>"+
      (p.note?"<details class='fold' style='border:0;margin-top:8px'><summary style='padding:0;min-height:40px;font-size:13px;color:var(--text-2)'>About this phase</summary><div class='inner' style='padding:0 0 4px'><p style='margin:0 0 8px'>"+esc(p.note)+"</p>"+(p.phase&&p.phase.tech?"<p class='tech'>"+esc(p.phase.tech)+"</p>":"")+"</div></details>":"")+"</div>";
 
+  h+=injuryNote();
   var cardioHtml=cardioCard(d,rd,p);
   if(d.bands||d.warmup||d.bosu){
     h+="<details class='fold'><summary>Warm-up"+(d.bosu?" &amp; balance":"")+"<span class='r'>optional</span></summary><div class='inner'><ul style='margin:0;padding-left:18px'>"+
@@ -1782,6 +1786,12 @@ var GOALS={
   maintain:{label:"Maintain",     mult:14.5, protein:0.8, blurb:"Roughly your maintenance calories."},
   build:   {label:"Build muscle", mult:16,   protein:1.0, blurb:"A small surplus with plenty of protein."}
 };
+var INJURY_AREAS=["Knees","Lower back","Shoulders","Hips","Neck","Wrists","Ankles / feet"];
+/* A reminder on the Train tab for anyone who listed an injury. It informs; it never changes the workout. */
+function injuryNote(){
+  var j=S.profile.injuries; if(!j||(!j.areas.length&&!j.notes)) return "";
+  return "<div class='note mid' style='margin:12px 0 0'><b>Be careful with:</b> "+esc(j.areas.concat(j.notes?[j.notes]:[]).join(", "))+".<span class='sub'>If a move hurts, tap Swap to pick an easier one, or skip it. Tell your coach so they can adjust your plan.</span></div>";
+}
 function calcTargets(w,goal,kOverride,pOverride){
   var g=GOALS[goal]||GOALS.lose;
   var k=kOverride?Math.round(kOverride):Math.max(1400,Math.min(3500,Math.round(w*g.mult/10)*10));
@@ -1791,6 +1801,7 @@ function calcTargets(w,goal,kOverride,pOverride){
 }
 function openOnboarding(first){
   var goal=S.profile.goal||"lose"; if(isStarter()&&goal==="maintain") goal="lose";
+  var inj=S.profile.injuries||{areas:[],notes:""};
   var w=lastWeightLb()&&S.days&&Object.keys(S.days).some(function(k){ return S.days[k]&&S.days[k].weight!=null; })?lastWeightLb():"";
   var body="<p class='muted' style='margin:0 0 14px'>"+(first?"Welcome! Let’s set your daily targets so Plate Count can guide your food each day.":"Update your weight and Plate Count will recalculate your daily targets.")+"</p>"+
     "<label class='eyebrow' for='ow' style='display:block;margin-bottom:6px'>Your weight today (lb)</label>"+
@@ -1805,8 +1816,12 @@ function openOnboarding(first){
     "<p class='eyebrow' style='margin:0 0 8px'>Your goal</p><div class='chips' id='og'>"+Object.keys(GOALS).filter(function(k){ return !isStarter()||k!=="maintain"; }).map(function(k){
       return "<button class='chip' type='button' data-g='"+k+"' aria-pressed='"+(k===goal)+"'>"+GOALS[k].label+"</button>"; }).join("")+"</div>"+
     "<p class='muted small' id='oblurb' style='margin:8px 0 0'></p><div id='oprev'></div>"+
-    "<p class='muted small' style='margin:14px 0 0'>These are starting estimates, not medical advice. Your coach can fine-tune them, and you can update them any time.</p>";
-  openSheet(first?"Welcome to Plate Count":"Update weight & targets",body,
+    "<p class='eyebrow' style='margin:20px 0 8px'>Injuries or areas to be careful with <span style='text-transform:none;letter-spacing:0'>(optional)</span></p><div class='chips' id='oinj'>"+INJURY_AREAS.map(function(a){
+      return "<button class='chip' type='button' data-a='"+esc(a)+"' aria-pressed='"+(inj.areas.indexOf(a)>=0)+"'>"+esc(a)+"</button>"; }).join("")+"</div>"+
+    "<label class='sr' for='oin'>Injury notes</label><textarea class='field' id='oin' rows='3' maxlength='500' placeholder='Anything else we should know? For example: torn meniscus in 2022, avoid deep squats' style='margin-top:10px;min-height:84px;padding:12px 14px'>"+esc(inj.notes)+"</textarea>"+
+    "<p class='muted small' style='margin:6px 0 0'>Your coach sees this and can adjust your plan. It never changes your workout on its own.</p>"+
+    "<p class='muted small' style='margin:14px 0 0'>These are starting estimates, not medical advice. Your coach can fine-tune them, and you can update them any time. Check with your doctor before starting a new exercise program, especially if you have an injury.</p>";
+  openSheet(first?"Welcome to Plate Count":"Update weight, targets & injuries",body,
     "<button class='btn ghost' id='oskip' style='flex:0 0 36%'>"+(first?"Later":"Cancel")+"</button><button class='btn' id='osave'>Set my targets</button>");
   var inp=$("ow"), kin=$("ok"), pin=$("op"), kEdited=!first&&!!kin.value, pEdited=!first&&!!pin.value;
   kin.oninput=function(){ kEdited=!!kin.value; calc(); };
@@ -1826,12 +1841,14 @@ function openOnboarding(first){
   }
   $("og").querySelectorAll(".chip").forEach(function(b){ b.onclick=function(){
     goal=b.dataset.g; $("og").querySelectorAll(".chip").forEach(function(o){ o.setAttribute("aria-pressed",o===b?"true":"false"); }); calc(); }; });
+  $("oinj").querySelectorAll(".chip").forEach(function(b){ b.onclick=function(){ b.setAttribute("aria-pressed",b.getAttribute("aria-pressed")==="true"?"false":"true"); }; });
   inp.oninput=calc; $("opl").oninput=calc; calc();
   setTimeout(function(){ try{ inp.focus(); }catch(e){} },80);
   $("oskip").onclick=closeSheet;
   $("osave").onclick=function(){
     var T=calc(), wt=num(inp.value); if(!T) return;
     S.profile.targets=T; S.profile.goal=goal; S.profile.onboarded=true;
+    S.profile.injuries={areas:Array.prototype.slice.call($("oinj").querySelectorAll(".chip[aria-pressed='true']")).map(function(c){ return c.dataset.a; }),notes:$("oin").value.trim().slice(0,500)};
     var plv=num($("opl").value); S.profile.proteinPerLb=plv===0?0:((plv!=null&&plv>=0.3&&plv<=3)?plv:null);
     var td=todayKey(); day(td).weight=wt; persistDay(td);
     persistProfile(); closeSheet(); toast("Targets set: "+T.k+" kcal · "+T.p+" g protein");
