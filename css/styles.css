@@ -3,24 +3,27 @@
 @import url('https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Inter:wght@400;500;600&display=swap');
 
 :root {
-  /* Color tokens — editorial + architectural, warmed with teal and gold */
-  --bg: #FAF9F6;
-  --surface-1: #F1F0EA;
-  --surface-2: #FFFFFF;
-  --text-primary: #16241F;
-  --text-secondary: #5C6B67;
-  --text-muted: #626C67; /* darkened from #6B7570: now 4.5:1 or better on every surface */
-  --accent: #2F6F63;
-  --accent-deep: #1E4A40;
-  --accent-gold: #C9A24B;
-  --accent-bg: #E3EFEA;
-  --border: #D8D3C4;
+  /* Color tokens: editorial + architectural, warmed with sage and honey gold.
+     --warm runs 0 (top of page) to 1 (bottom); js/warm-scroll.js sets it, and the backdrop colors below blend with it.
+     Text and button colors stay fixed so contrast never drops below 4.5:1. */
+  --warm: 0;
+  --bg: color-mix(in srgb, #FBF6EC calc((1 - var(--warm)) * 100%), #F4E4CB);
+  --surface-1: color-mix(in srgb, #F5EEDF calc((1 - var(--warm)) * 100%), #EEDCBE);
+  --surface-2: #FFFDF8;
+  --text-primary: #1F2A22;
+  --text-secondary: #4A554C;
+  --text-muted: #5A645A;
+  --accent: #33694F;
+  --accent-deep: #244A38;
+  --accent-gold: #C4963A;
+  --accent-bg: color-mix(in srgb, #E8F0E4 calc((1 - var(--warm)) * 100%), #F3E3C0);
+  --border: color-mix(in srgb, #E0D6BF calc((1 - var(--warm)) * 100%), #D9C49C);
 
   --radius: 3px;
   --font-display: 'Newsreader', Georgia, serif;
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
-
+@media (prefers-reduced-motion: reduce) { :root { --warm: .35 !important; } }
 * { box-sizing: border-box; }
 
 html { scroll-behavior: smooth; }
@@ -29,8 +32,8 @@ body {
   margin: 0;
   font-family: var(--font-body);
   color: var(--text-primary);
-  /* Static background: nothing moves behind the text */
-  background: linear-gradient(180deg, #E3EFEA 0%, #FAF9F6 30%, #FAF9F6 70%, #E9F1ED 100%);
+  /* The backdrop colors drift slowly with scroll position (see --warm); nothing animates on its own, and reduced-motion users get a fixed shade */
+  background: linear-gradient(180deg, var(--accent-bg) 0%, var(--bg) 30%, var(--bg) 70%, var(--accent-bg) 100%);
   line-height: 1.6;
   overflow-x: clip; /* the full-width bands use 100vw, which can add a sideways scroll on phones */
 }
