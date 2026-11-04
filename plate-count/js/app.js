@@ -1857,6 +1857,32 @@ function planSuggestionsCal(cw,pace){
   if(bump>0&&(pct<r.lo||b!=="cut")) o.items.push({kind:"cardioReset",v:0,head:"Return cardio to the plan",msg:"You added "+bump+"% cardio earlier. "+(b!=="cut"?"You are no longer in a cut.":"Your weight is dropping fast enough now.")+" Go back to the base minutes?"});
   return o;
 }
+/* ---- projection: weight and body fat by the goal date, at your food target with 0, 150 or 300 extra kcal a day of activity ---- */
+function projectRun(w0,bf0,maint,intake,extra,weeks){
+  var fat=w0*bf0/100, lean=w0-fat, w=w0, out=[];
+  for(var t=1;t<=weeks;t++){
+    var m=maint-(w0-w)*10;                      /* maintenance drifts down about 10 kcal per lb lost */
+    fat-=(m-intake+extra)*7/3500; w=lean+fat; out.push({t:t,w:w,bf:fat/w*100});
+  }
+  return out;
+}
+function projectionCard(cw,pace){
+  var P=S.profile; if(isStarter()||cw==null||!P.bf||!pace) return "";
+  var sum=0,n=0; lastKeys(28).forEach(function(k){ if(S.days[k]){ var t=totals(k).k; if(t>800){ sum+=t; n++; } } });
+  if(n<7) return "";
+  var intake=P.targets.k, maint=Math.max(1400,Math.min(3500,sum/n-pace.rate*500)), td=todayKey();
+  var weeks=P.goalDate&&daysBetween(td,P.goalDate)>7?Math.min(60,Math.ceil(daysBetween(td,P.goalDate)/7)):32;
+  var gBf=P.goalBfHi||P.goalBfLo, lbl=P.goalDate?fmtD(P.goalDate):"week "+weeks, p="<p class='small' style='margin:0 0 8px'>";
+  var h=p+"From "+r1(cw)+" lb at "+r1(P.bf)+"% body fat, your logged intake of about "+r0(sum/n)+" kcal and your recent weight change, your maintenance is roughly <b>"+r0(maint)+" kcal</b>. This projection holds your muscle (lifting and high protein) and takes all the loss from fat.</p>";
+  [0,150,300].forEach(function(x){
+    var run=projectRun(cw,P.bf,maint,intake,x,weeks), end=run[run.length-1], hit=null;
+    if(gBf) run.some(function(r){ if(r.bf<=gBf){ hit=r; return true; } return false; });
+    h+=p+"<b>"+(x?"+"+x+" kcal a day of cardio or extra exercises":"Food at "+intake+" kcal, activity as it is")+":</b> by "+lbl+" about "+r1(end.w)+" lb and "+r1(end.bf)+"% body fat"+
+       (gBf?(hit?"; reaches "+gBf+"% in about "+hit.t+" weeks ("+fmtD(shiftKey(td,hit.t*7))+").":"; does not reach "+gBf+"% in that time."):".")+"</p>";
+  });
+  if(gBf&&gBf<18&&!cycleInfo(td).none) h+="<p class='cap' style='margin:0 0 8px'>Below about 18% body fat, hormones and bone density can suffer for women. If you go lower, check in with a doctor or sports dietitian.</p>";
+  return card("Where you will be","Estimates only. Body-fat readings can be off by several points and real results vary by around a third either way. 150 kcal is about 20 minutes of cardio.",h+"<p class='cap' style='margin:0'>Re-check every two weeks as you log more weigh-ins.</p>");
+}
 function planCard(cw,pace){
   var h=goalCheck(cw,pace)+cutPlan(cw,pace)+cardioReport(cw,pace), sg=planSuggestions(cw,pace), bump=S.profile.cardioBump||0, bonus=S.profile.bonusEx||0;
   if(bump>0) h+="<p class='cap' style='margin:0 0 8px'>Cardio is "+bump+"% above the phase plan.</p>";
@@ -1907,7 +1933,7 @@ function renderTrend(){
   h+="<div class='note "+pv.cls+"' style='margin-top:14px'><b style='display:block;margin-bottom:3px'>"+esc(pv.head)+"</b>"+esc(pv.msg)+"</div>"+
      "<div class='wtform'><input class='field' id='wtIn' type='number' step='0.1' inputmode='decimal' placeholder='Weigh-in for "+esc(S.date===todayKey()?"today":fmtD(S.date))+" (lb)' value='"+(d.weight!=null?d.weight:"")+"' aria-label='Weigh-in in pounds'><button class='btn' id='wtSave'>Log</button></div></div>";
 
-  h+=planCard(cwv,pace)+last7Card()+strengthCard();
+  h+=planCard(cwv,pace)+projectionCard(cwv,pace)+last7Card()+strengthCard();
 
   /* 2. weight chart */
   h+=card("Weight, last 12 weeks","The green line is your 7-day average, which smooths out daily water swings. Dots are single weigh-ins. Pink bands are your period and the days before it.",weightChart(wk,wt,P.goalWeight),"chartcard");
