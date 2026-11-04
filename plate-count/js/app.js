@@ -8,7 +8,7 @@ var ADMIN_EMAIL = "tenfoldfunctional@gmail.com";
 var DEV = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && /[?&]dev=1/.test(location.search);
 var FOODS = window.FOODS || [];
 var MEALS = ["Breakfast","Lunch","Dinner","Snacks"];
-var DEF_TARGETS = {k:2100,p:140,c:258,f:56};
+var DEF_TARGETS = {k:1900,p:160,c:189,f:56};
 var uid = null, userEmail = "";
 var ENT = null;   /* what this client is entitled to see; null = no limits (dev) */
 var TRACK = "";   /* "starter" = coach-provisioned account on the 3-cycle starter program (set from app_metadata at sign-in) */
@@ -119,6 +119,7 @@ function lsLoad(){
     if(o.d) Object.keys(o.d).forEach(function(k){ if(/^\d{4}-\d{2}-\d{2}$/.test(k)) S.days[k]=normDay(o.d[k]); });
     if(o.p) mergeProfile(o.p,true);
     if(o.dirty&&o.dirty.days) S.dirty=o.dirty;
+    migrateProfile();
   }catch(e){}
 }
 function mergeProfile(p,force){
@@ -136,14 +137,38 @@ function mergeProfile(p,force){
   if(typeof p.onboarded==="boolean") d.onboarded=p.onboarded;
   if(p.goal==="lose"||p.goal==="maintain"||p.goal==="build") d.goal=p.goal;
   ["goalWeight","bf","goalBfLo","goalBfHi"].forEach(function(f){ d[f]=(typeof p[f]==="number"&&isFinite(p[f]))?p[f]:null; });
-  d.cardioBump=(typeof p.cardioBump==="number"&&p.cardioBump>0)?Math.min(p.cardioBump,30):0;
-  ["calAdjAt","cardioBumpAt","planDismissAt"].forEach(function(f){ d[f]=/^\d{4}-\d{2}-\d{2}$/.test(p[f])?p[f]:null; });
+  d.cardioBump=(typeof p.cardioBump==="number"&&p.cardioBump>0)?Math.min(p.cardioBump,60):0;
+  d.bonusEx=(typeof p.bonusEx==="number"&&p.bonusEx>0)?Math.min(Math.round(p.bonusEx),2):0;
+  ["calAdjAt","cardioBumpAt","planDismissAt","bonusAt","goalDate"].forEach(function(f){ d[f]=/^\d{4}-\d{2}-\d{2}$/.test(p[f])?p[f]:null; });
+  /* Exercises swapped out because they were skipped two weeks running: original name -> replacement, the date, and names already rejected. */
+  d.exReplace={}; d.exReplaceAt={}; d.exRejected={};
+  if(p.exReplace&&typeof p.exReplace==="object") Object.keys(p.exReplace).slice(0,80).forEach(function(n){
+    if(typeof p.exReplace[n]!=="string") return; d.exReplace[n.slice(0,80)]=p.exReplace[n].slice(0,80);
+    var at=p.exReplaceAt&&p.exReplaceAt[n]; if(/^\d{4}-\d{2}-\d{2}$/.test(at)) d.exReplaceAt[n.slice(0,80)]=at;
+  });
+  if(p.exRejected&&typeof p.exRejected==="object") Object.keys(p.exRejected).slice(0,80).forEach(function(n){
+    if(Array.isArray(p.exRejected[n])) d.exRejected[n.slice(0,80)]=p.exRejected[n].filter(function(x){ return typeof x==="string"; }).slice(0,12).map(function(x){ return x.slice(0,80); });
+  });
+  if(p.mig1900===true) d.mig1900=true;
   if(p.injuries&&typeof p.injuries==="object") d.injuries={
     areas:(Array.isArray(p.injuries.areas)?p.injuries.areas:[]).filter(function(a){ return typeof a==="string"; }).slice(0,12).map(function(a){ return a.slice(0,30); }),
     notes:typeof p.injuries.notes==="string"?p.injuries.notes.slice(0,500):""};
   ["name","email","track"].forEach(function(f){ if(typeof p[f]==="string") d[f]=p[f].slice(0,120); });
   d.updatedAt=+p.updatedAt||0;
   unionCustom(p.custom);
+}
+/* One-time move to 1900 kcal and a fixed 160 g protein, plus the June 1, 2027 goal (135 lb, 15% body fat).
+   Runs once, only on a self-programmed account (no coach-set goal), and never overwrites a goal that is already set. */
+function migrateProfile(){
+  var P=S.profile; if(P.mig1900||P.goal||isStarter()||userEmail!==ADMIN_EMAIL) return;
+  P.mig1900=true;
+  if(P.targets.k===2100) P.targets={k:1900,p:160,c:189,f:56};
+  else if(P.targets.p<160) P.targets.p=160;
+  P.proteinPerLb=0;   /* hold 160 g flat instead of 1 g per lb of bodyweight */
+  if(P.goalWeight==null) P.goalWeight=135;
+  if(P.goalBfLo==null&&P.goalBfHi==null){ P.goalBfLo=15; P.goalBfHi=15; }
+  if(!P.goalDate) P.goalDate="2027-06-01";
+  P.updatedAt=Date.now(); S.dirty.profile=true;
 }
 function unionCustom(list){
   if(!Array.isArray(list)) return;
@@ -245,6 +270,7 @@ function pull(){
     if(dr.error||pr.error) throw (dr.error||pr.error);
     (dr.data||[]).forEach(function(row){ if(row&&/^\d{4}-\d{2}-\d{2}$/.test(row.day)) acceptIncoming(row.day,row.data); });
     if(pr.data&&pr.data.data) mergeProfile(pr.data.data,false); else S.dirty.profile=true;
+    migrateProfile();
     S.pulled=true; lsSave(); softRender(); return flush();
   }).catch(function(e){
     console.warn("pull failed",e); setSync("off","Offline — saved on this device");
@@ -877,10 +903,60 @@ function parseSpec(spec){
   var n=+m[1], parts=m[2].split(",").map(function(x){ return x.trim(); }), reps=[];
   for(var i=0;i<n;i++) reps.push(parts.length===1?parts[0]:(parts[i]!=null?parts[i]:parts[parts.length-1])); return {s:n,reps:reps};
 }
+/* Other exercises for the same workout, taken from every phase's version of that day (same title). */
+function exPool(dd,tiers){
+  var out=[];
+  PROGRAMS.forEach(function(pg){ (pg.days||[]).forEach(function(x){
+    if(x.title!==dd.title) return;
+    (x.ex||[]).forEach(function(y){ if(tiers&&tiers.indexOf(y.t)<0) return; [y.n].concat(y.sw||[]).forEach(function(n){ if(out.indexOf(n)<0) out.push(n); }); });
+  }); });
+  return out;
+}
+function bonusPool(d,items){
+  var have={}, rej=S.profile.exRejected||{};
+  items.forEach(function(it){ have[it.n.toLowerCase()]=1; have[it.origN.toLowerCase()]=1; });
+  Object.keys(rej).forEach(function(k){ rej[k].forEach(function(n){ have[n.toLowerCase()]=1; }); });
+  return exPool(d,["iso","sec"]).filter(function(n){ return !have[n.toLowerCase()]; });
+}
+/* If you did the rest of a workout but skipped one exercise two weeks in a row, you probably dislike it:
+   swap it for another exercise for that muscle group. Runs only on your own account, and only after the cloud copy has loaded. */
+function checkSkippedExercises(){
+  if(isStarter()||roBlocked()||!S.pulled||userEmail!==ADMIN_EMAIL) return;
+  var P=S.profile, td=todayKey(), pos=programPos(td), p=PROGRAMS[pos.idx];
+  if(!p||!p.phase||!P.programStart||pos.week<3||pos.held) return;
+  var phaseStart=shiftKey(P.programStart,7*(Math.floor(Math.max(0,daysBetween(P.programStart,td))/7)-(pos.week-1)));
+  var m=mondayOf(td), wk=[shiftKey(m,-14),shiftKey(m,-7)];
+  if(daysBetween(phaseStart,wk[0])<0) return;
+  var done=wk.map(function(w){
+    var s={}; for(var i=0;i<7;i++){ var dd=S.days[shiftKey(w,i)]; if(!dd||!dd.sets) continue;
+      Object.keys(dd.sets).forEach(function(k){ var v=dd.sets[k]; if(v&&v.done){ var q=k.split("|"); if(q.length>=3) s[q[1]]=1; } }); }
+    return s;
+  });
+  var rep=P.exReplace=P.exReplace||{}, at=P.exReplaceAt=P.exReplaceAt||{}, rej=P.exRejected=P.exRejected||{}, changed=[];
+  daysFor(p,td).forEach(function(dd){
+    if(!dd.ex||!dd.ex.length) return;
+    var used={}; dd.ex.forEach(function(e){ used[(rep[e.n]||e.n).toLowerCase()]=1; });
+    dd.ex.forEach(function(e){
+      if(at[e.n]&&daysBetween(at[e.n],wk[0])<0) return;      /* the current exercise has not had two full weeks yet */
+      var rj=rej[e.n]||[], names=[e.n].concat(e.sw||[],rep[e.n]?[rep[e.n]]:[]).filter(function(n){ return rj.indexOf(n)<0||n===rep[e.n]; });
+      var skipped=done.every(function(dn){
+        var others=dd.ex.some(function(x){ return [x.n].concat(x.sw||[]).some(function(n){ return dn[slug(n)]; }); });
+        return others&&!names.some(function(n){ return dn[slug(n)]; });
+      });
+      if(!skipped) return;
+      var cur=rep[e.n]||e.n, bad=rj.concat([cur]);
+      var alt=(e.sw||[]).concat(exPool(dd,[e.t])).filter(function(n){ return bad.indexOf(n)<0&&!used[n.toLowerCase()]; })[0];
+      if(!alt) return;
+      rej[e.n]=bad; rep[e.n]=alt; at[e.n]=td; used[alt.toLowerCase()]=1;
+      changed.push(cur+" → "+alt);
+    });
+  });
+  if(changed.length){ persistProfile(); toast("Skipped 2 weeks running, so I swapped: "+changed.join("; ")); }
+}
 function buildItems(p,d,wd,rdate){
   var sch=p.phase&&p.phase.scheme, focus=(DEF_FOCUS[p.id]||"h"), swaps=day(rdate).exSwaps||{}, items=[];
   (d.ex||[]).forEach(function(e){
-    var active=swaps[e.n]||e.n, it={L:e.L,n:active,origN:e.n,cue:e.cue,sw:e.sw,key:wd+"|"+slug(active)};
+    var active=swaps[e.n]||(S.profile.exReplace||{})[e.n]||e.n, it={L:e.L,n:active,origN:e.n,cue:e.cue,sw:e.sw,key:wd+"|"+slug(active)};
     if(sch&&e.t){
       var tier=sch[e.t]||sch.iso, k=(e.t==="main"&&focus==="s"&&tier.s)?tier.s:tier.h;
       it.warm=k.w; it.s=k.s; it.r=k.r; it.rest=k.rest; it.tech=k.tech; it.t=e.t;
@@ -890,6 +966,11 @@ function buildItems(p,d,wd,rdate){
       it.s=sp.s; it.r=sp.reps.every(function(r){ return r===sp.reps[0]; })?String(sp.reps[0]):sp.reps.join(", ");
     }
     items.push(it);
+  });
+  /* Bonus exercises: longer workouts you accepted from the Progress tab, to burn more without cutting food. */
+  var nb=S.profile.bonusEx||0;
+  if(nb>0&&!isStarter()&&(d.ex||[]).length) bonusPool(d,items).slice(0,nb).forEach(function(n){
+    items.push({L:"+",n:n,origN:n,s:2,r:"12-15",rest:"60 sec",sw:[],key:wd+"|"+slug(n),bonus:true});
   });
   /* Extra exercises added for this one day (an unplanned workout, or a lift added on top). */
   (day(rdate).extras||[]).forEach(function(x){
@@ -1014,6 +1095,7 @@ function cardioCard(d,rd,p){
     "<p class='cardio-note "+cs.cls+"'>"+esc(cs.msg)+"</p></div></details>";
 }
 function renderTrain(){
+  checkSkippedExercises();
   var rd=S.date, wd=workoutIdx(rd), p=program(), pos=programPos(todayKey()), isNow=(PROGRAMS[pos.idx]===p);
   prevIdx=buildPrevIndex();
   var pdays=daysFor(p,rd);
@@ -1525,7 +1607,8 @@ function openGoals(){
   function f(id,label,val,ph){ return "<div><label class='eyebrow' for='"+id+"' style='display:block;margin:0 0 6px'>"+label+"</label><input class='field' id='"+id+"' type='number' step='0.1' inputmode='decimal' placeholder='"+ph+"' value='"+esc(val==null?"":val)+"'></div>"; }
   openSheet("Your goal",
     "<div style='display:grid;gap:14px'>"+f("gw","Goal weight (lb)",P.goalWeight,"e.g. 135")+f("gbf","Current body fat % (optional)",P.bf,"e.g. 22")+
-    "<div style='display:grid;grid-template-columns:1fr 1fr;gap:10px'>"+f("glo","Goal body fat, low %",P.goalBfLo,"e.g. 15")+f("ghi","high %",P.goalBfHi,"e.g. 17")+"</div></div>"+
+    "<div style='display:grid;grid-template-columns:1fr 1fr;gap:10px'>"+f("glo","Goal body fat, low %",P.goalBfLo,"e.g. 15")+f("ghi","high %",P.goalBfHi,"e.g. 17")+"</div>"+
+    "<div><label class='eyebrow' for='gd' style='display:block;margin:0 0 6px'>Reach it by (date, optional)</label><input class='field' id='gd' type='date' value='"+esc(P.goalDate||"")+"'></div></div>"+
     "<p class='muted small' style='margin:14px 0 0'>Leave a field empty to clear it.</p>",
     "<button class='btn ghost' id='gx' style='flex:0 0 36%'>Cancel</button><button class='btn' id='gs'>Save goal</button>");
   $("gx").onclick=closeSheet;
@@ -1534,6 +1617,7 @@ function openGoals(){
     if(gw!=null&&(gw<70||gw>400)){ toast("Goal weight should be between 70 and 400 lb"); return; }
     if((bf!=null&&(bf<3||bf>60))||(lo!=null&&(lo<3||lo>60))||(hi!=null&&(hi<3||hi>60))){ toast("Body fat should be between 3 and 60 %"); return; }
     if(lo!=null&&hi!=null&&lo>hi){ var t=lo; lo=hi; hi=t; }
+    var gd=$("gd").value; P.goalDate=/^\d{4}-\d{2}-\d{2}$/.test(gd)?gd:null;
     P.goalWeight=gw; P.bf=bf; P.goalBfLo=lo; P.goalBfHi=hi; persistProfile(); closeSheet(); toast("Goal saved");
   };
 }
@@ -1640,7 +1724,7 @@ function strengthCard(){
 }
 function card(title,sub,inner,cls){ return "<div class='card"+(cls?" "+cls:"")+"'><h3 class='h2' style='font-size:18px'>"+title+"</h3>"+(sub?"<p class='cap'>"+sub+"</p>":"")+inner+"</div>"; }
 /* ---- goal check + suggested changes: the app only suggests; nothing changes until you tap Accept ---- */
-var CAL_STEP=100, CAL_FLOOR=1400, CARDIO_STEP=10, CARDIO_MAX=30;
+var CAL_STEP=100, CAL_FLOOR=1400, CARDIO_STEP=10, CARDIO_MAX=60, BONUS_MAX=2;
 function inLuteal(){ var ci=cycleInfo(S.date); return !ci.none&&phaseFor(ci.day,ci.avg,ci.mens).k==="lut"; }
 function daysSince(k){ return k?daysBetween(k,todayKey()):999; }
 function weeksText(w){ return w<1.5?"about a week":w<=104?"about "+r0(w)+" weeks":"more than two years"; }
@@ -1665,7 +1749,91 @@ function goalCheck(cw,pace){
   }
   return h;
 }
+/* ---- cardio analysis: how much cardio you really did, set against your weekly weight change ---- */
+function weekCardio(mon){
+  var t=0,n=0; for(var i=0;i<7;i++){ var c=S.days[shiftKey(mon,i)]; c=c&&c.cardio; if(c&&(c.minutes||c.done)){ t+=(+c.minutes||0); n++; } }
+  return {min:t,n:n};
+}
+function cardioAdherence(){
+  var m=mondayOf(todayKey()), a=weekCardio(shiftKey(m,-14)), b=weekCardio(shiftKey(m,-7)), tgt=cardioPerSession()*4, avg=(a.min+b.min)/2;
+  return {avg:avg,target:tgt,pct:tgt?avg/tgt:1,sessions:(a.n+b.n)/2};
+}
+function cardioReport(cw,pace){
+  if(isStarter()) return "";
+  var A=cardioAdherence(), p="<p class='small' style='margin:0 0 8px'>";
+  var h=p+"<b>Cardio check:</b> over the last two full weeks you averaged "+r0(A.avg)+" min of cardio a week ("+r1(A.sessions)+" sessions). Your plan is "+A.target+" min.</p>";
+  if(!pace||cw==null) return h+p+"With 4 or more weigh-ins I will compare this with your weekly weight change and tell you whether cardio should go up or down.</p>";
+  var r=paceBand(), kg=cw/2.20462, perMin=kcalMET(6.5,1,kg), top=r.hi/100*cw, bot=r.lo/100*cw, rate=sgn(pace.rate)+" lb a week";
+  function mins(lb){ return Math.max(5,Math.ceil(lb*3500/perMin/5)*5); }
+  if(pace.rate>top){
+    var m=mins(pace.rate-top);
+    h+=p+"<b>Cardio should go up.</b> Your weight is moving "+rate+", which is "+r1(pace.rate-top)+" lb a week above the top of your range. Closing that takes roughly "+m+" more cardio minutes a week (about "+Math.ceil(m/4)+" more per session).";
+    if(A.pct<0.85) h+=" You are "+r0(A.target-A.avg)+" min short of plan already, so doing the planned minutes comes first.";
+    h+="</p>";
+  } else if(pace.rate<bot){
+    var m2=mins(bot-pace.rate);
+    h+=p+"<b>Cardio can come down.</b> Your weight is moving "+rate+", "+r1(bot-pace.rate)+" lb a week past the bottom of your range. Trimming about "+m2+" cardio minutes a week would ease it.</p>";
+  } else h+=p+"<b>Cardio is right.</b> Your weight is moving "+rate+", inside your range. Keep cardio where it is.</p>";
+  return h+"<p class='cap' style='margin:0 0 8px'>Estimates from a 7-day average. Calories burned and water weight both vary, so treat these as a starting point.</p>";
+}
+
+/* ---- deadline plan: when the cut has to start to reach the goal weight and body fat by the goal date ---- */
+function cutPlan(cw,pace){
+  var P=S.profile, gw=P.goalWeight, dl=P.goalDate; if(isStarter()||!gw||!dl||cw==null) return "";
+  var p="<p class='small' style='margin:0 0 8px'>", td=todayKey(), bfHi=P.goalBfHi||P.goalBfLo, tgt=gw, lean=null, note="";
+  if(P.bf&&bfHi){
+    lean=cw*(1-P.bf/100); var wBf=lean/(1-bfHi/100);
+    if(wBf<gw-0.5){ tgt=wBf; note=" With your current muscle, "+bfHi+"% body fat is about "+r1(wBf)+" lb, lower than "+r1(gw)+", so I plan for the lower number."; }
+    else note=" With your current muscle, "+r1(gw)+" lb is about "+r1((1-lean/gw)*100)+"% body fat, so the weight is the number to hit.";
+  }
+  var need=cw-tgt, daysLeft=daysBetween(td,dl), h=p+"<b>Deadline plan for "+fmtD(dl)+(dl.slice(0,4)!==td.slice(0,4)?", "+dl.slice(0,4):"")+":</b> "+r1(tgt)+" lb"+(bfHi?" and "+bfHi+"% body fat":"")+"."+note+"</p>";
+  if(!P.bf) h+=p+"Add your current body-fat % under Edit goal and I can check the weight against your body-fat goal.</p>";
+  if(daysLeft<=0) return h+p+"That date has passed. Update the goal date to keep this plan going.</p>";
+  if(need<=0.5) return h+p+"You are already at or below that weight. Hold steady until the date.</p>";
+  var rate=Math.min(1.5,cw*0.0075), weeks=need/rate, BUFFER=3, startBy=shiftKey(dl,-Math.round((weeks+BUFFER)*7)), until=daysBetween(td,startBy);
+  h+=p+"You need to lose about <b>"+r1(need)+" lb</b>. At a muscle-safe "+r1(rate)+" lb a week that is about "+r0(weeks)+" weeks, plus "+BUFFER+" weeks of buffer for water swings and off weeks.</p>";
+  h+=p+(until<=0?"<b>Start the cut now.</b> The latest start date was "+fmtD(startBy)+".":"<b>Start the cut by "+fmtD(startBy)+"</b> ("+until+" day"+(until===1?"":"s")+" from now).")+"</p>";
+  var cutStart=null, cutWeeks=0, off=0, found=false;
+  (window.PHASES||[]).forEach(function(ph){ if(ph.block==="cut"){ found=true; cutWeeks+=ph.weeks||4; } else if(!found) off+=ph.weeks||4; });
+  if(found&&P.programStart){
+    cutStart=shiftKey(P.programStart,off*7); var cutEnd=shiftKey(cutStart,cutWeeks*7);
+    h+=p+"Your program's cutting phases run "+fmtD(cutStart)+" to "+fmtD(cutEnd)+" ("+cutWeeks+" weeks). "+(cutStart<=startBy?"That starts in time. If you have fat left to lose after it ends, a few weeks of cutting at the same pace can follow.":"That starts after your latest start date, so begin the deficit earlier than the program does.")+"</p>";
+  }
+  var kg=cw/2.20462, perMinK=kcalMET(6.5,1,kg), perExK=kcalMET(MET_LIFT,2*MIN_PER_SET,kg);
+  var gap=(rate+(pace?pace.rate:0))*3500;
+  h+=p+"<b>Making the deficit from activity, not food:</b> hold calories at "+P.targets.k+". A 30 minute cardio session burns about "+r0(perMinK*30)+" kcal, and each added exercise (2 sets) about "+r0(perExK)+" kcal. ";
+  if(pace&&gap>0) h+="Compared with your current pace, the plan needs about "+r0(gap)+" more kcal a week burned, roughly "+Math.ceil(gap/(perMinK*30))+" extra 30 minute sessions, or a mix of fewer sessions and longer workouts. Accept the cardio and workout-length suggestions below as they come up; each is re-checked after two weeks.";
+  else h+="Your current pace already meets this rate, so keep cardio and workouts as they are.";
+  return h+"</p>";
+}
 function planSuggestions(cw,pace){
+  if(isStarter()) return planSuggestionsCal(cw,pace);
+  var P=S.profile, o={items:[],note:""};
+  if(!pace||cw==null){ o.note="Log 4 or more weigh-ins over about 10 days and I will start suggesting cardio and workout changes."; return o; }
+  if(daysSince(P.planDismissAt)<7) return o;
+  if(pace.src==="recent"&&inLuteal()){ o.note="You are in the luteal phase, when water hides real change. I will wait to suggest changes until after your period starts."; return o; }
+  var pct=pace.rate/cw*100, b=blockNow(), r=paceBand(), T=P.targets, bump=P.cardioBump||0, bonus=P.bonusEx||0, A=cardioAdherence();
+  var since=Math.min(daysSince(P.calAdjAt),daysSince(P.cardioBumpAt),daysSince(P.bonusAt)), rt=sgn(pace.rate)+" lb a week";
+  var wait="You changed your plan "+since+" days ago. Give it two weeks before the next change so the scale can show what it did.";
+  function cardioTo(v){ var base=baseCardioPerSession(); return Math.round(base*(1+v/100))*4; }
+  if(pct>r.hi){
+    var why=b==="cut"?"Your weight is not dropping as fast as a cut should ("+rt+").":b==="build"?"You are gaining faster than a lean build ("+rt+"), which is mostly fat.":"Your weight is drifting up ("+rt+").";
+    if(since<14) o.note=wait;
+    else if(A.pct<0.85) o.note=why+" You are doing "+r0(A.avg)+" of your "+A.target+" planned cardio minutes a week. Hit the plan for two weeks first; that may close the gap on its own.";
+    else if(bump<CARDIO_MAX) o.items.push({kind:"cardio",v:bump+CARDIO_STEP,head:"Add "+CARDIO_STEP+"% more cardio",msg:why+" Weekly cardio would go from "+cardioTo(bump)+" to "+cardioTo(bump+CARDIO_STEP)+" minutes. Food stays at "+T.k+" kcal."});
+    else if(bonus<BONUS_MAX) o.items.push({kind:"bonus",v:bonus+1,head:"Make workouts longer: add 1 exercise per workout",msg:why+" Cardio is already at its limit, so this adds "+(bonus+1)+" extra exercise"+(bonus?"s":"")+" (2 sets each) to every workout. Food stays at "+T.k+" kcal."});
+    else if(T.k-CAL_STEP>=CAL_FLOOR) o.items.push({kind:"cal",v:-CAL_STEP,head:"Lower calories by "+CAL_STEP,msg:why+" Cardio and workout length are both at their limit, so food is the last lever. Change "+T.k+" to "+(T.k-CAL_STEP)+" kcal."});
+    else o.note="Cardio, workout length and calories are all at their limits. Talk with your coach about the plan.";
+  } else if(pct<r.lo){
+    var why2=b==="cut"?"You are losing faster than muscle can be protected ("+rt+").":b==="build"?"You are gaining slower than a build should ("+rt+").":"Your weight is drifting down ("+rt+").";
+    if(since<14) o.note=wait;
+    else if(bonus>0) o.items.push({kind:"bonus",v:bonus-1,head:"Shorten workouts: drop "+(bonus===1?"the extra exercise":"1 extra exercise"),msg:why2+" That takes you from "+bonus+" to "+(bonus-1)+" extra exercise"+(bonus-1===1?"":"s")+" per workout."});
+    else if(bump>0) o.items.push({kind:"cardio",v:Math.max(0,bump-CARDIO_STEP),head:"Trim cardio by "+CARDIO_STEP+"%",msg:why2+" Weekly cardio would go from "+cardioTo(bump)+" to "+cardioTo(Math.max(0,bump-CARDIO_STEP))+" minutes."});
+    else o.items.push({kind:"cal",v:CAL_STEP,head:"Raise calories by "+CAL_STEP,msg:why2+" Change "+T.k+" to "+(T.k+CAL_STEP)+" kcal and keep protein where it is."});
+  }
+  return o;
+}
+function planSuggestionsCal(cw,pace){
   var P=S.profile, o={items:[],note:""};
   if(!pace||cw==null){ o.note="Log 4 or more weigh-ins over about 10 days and I will start suggesting "+(isStarter()?"calorie changes":"calorie and cardio changes")+"."; return o; }
   if(daysSince(P.planDismissAt)<7) return o;
@@ -1689,8 +1857,14 @@ function planSuggestions(cw,pace){
   return o;
 }
 function planCard(cw,pace){
-  var h=goalCheck(cw,pace), sg=planSuggestions(cw,pace), bump=S.profile.cardioBump||0;
+  var h=goalCheck(cw,pace)+cutPlan(cw,pace)+cardioReport(cw,pace), sg=planSuggestions(cw,pace), bump=S.profile.cardioBump||0, bonus=S.profile.bonusEx||0;
   if(bump>0) h+="<p class='cap' style='margin:0 0 8px'>Cardio is "+bump+"% above the phase plan.</p>";
+  if(bonus>0) h+="<p class='cap' style='margin:0 0 8px'>Each workout has "+bonus+" bonus exercise"+(bonus===1?"":"s")+" added.</p>";
+  var rep=S.profile.exReplace||{}, rk=Object.keys(rep);
+  if(rk.length&&!isStarter()){
+    h+="<p class='small' style='margin:0 0 4px'><b>Swapped out for being skipped 2 weeks running:</b></p>";
+    rk.forEach(function(n,i){ h+="<div style='display:flex;align-items:center;gap:8px;margin:0 0 6px'><span class='small' style='flex:1'>"+esc(n)+" → "+esc(rep[n])+"</span><button class='btn ghost sm' data-plan='exundo' data-v='"+i+"'>Undo</button></div>"; });
+  }
   sg.items.forEach(function(it){
     h+="<div class='note' style='margin-top:10px'><b style='display:block;margin-bottom:3px'>"+esc(it.head)+"</b>"+esc(it.msg)+
        "<div style='display:flex;gap:8px;margin-top:10px'><button class='btn sm' data-plan='"+it.kind+"' data-v='"+it.v+"'>Accept</button><button class='btn ghost sm' data-plan='dismiss' data-v='0'>Not now</button></div></div>";
@@ -1701,7 +1875,12 @@ function planCard(cw,pace){
 function planAct(kind,v){
   var P=S.profile, t=P.targets, td=todayKey();
   if(kind==="cal"){ t.k+=v; t.c=Math.max(0,t.c+Math.round(v/4)); P.calAdjAt=td; toast("Calories now "+t.k); }
-  else if(kind==="cardio"||kind==="cardioReset"){ P.cardioBump=v; P.cardioBumpAt=td; toast(v?"Cardio up "+v+"%":"Cardio back to plan"); }
+  else if(kind==="cardio"||kind==="cardioReset"){ var was=P.cardioBump||0; P.cardioBump=v; P.cardioBumpAt=td; toast(v?(v>was?"Cardio up to +":"Cardio down to +")+v+"%":"Cardio back to plan"); }
+  else if(kind==="bonus"){ P.bonusEx=v; P.bonusAt=td; toast(v?"Workouts now have "+v+" bonus exercise"+(v===1?"":"s"):"Bonus exercises removed"); }
+  else if(kind==="exundo"){
+    var names=Object.keys(P.exReplace||{}), n=names[v];
+    if(n){ delete P.exReplace[n]; P.exReplaceAt=P.exReplaceAt||{}; P.exReplaceAt[n]=td; if(P.exRejected) delete P.exRejected[n]; toast("Back to "+n); }
+  }
   else { P.planDismissAt=td; toast("Okay, I will check again in a week"); }
   persistProfile(); renderTrend();
 }

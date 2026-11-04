@@ -7,7 +7,7 @@
 
 window.PHASES = [
 {id:"ph1", name:"Phase 1", sub:"Weeks 1-4", weeks:4, block:"build", cardio:"20 min",
- targets:{k:2100,p:140,c:258,f:56},
+ targets:{k:1900,p:160,c:189,f:56},
  note:"Foundation. Groove the movements, build work capacity, set your baselines. Pick a weight you could do two more reps with on the first working set and write everything down.",
  tech:"Two-step reps on A and B: pause just before the bottom, then pause again halfway up. It kills momentum and puts the work on the muscle.",
  scheme:{
@@ -17,7 +17,7 @@ window.PHASES = [
    core:{h:{w:"0",  s:3,r:"15-20",rest:"60 sec"}}}},
 
 {id:"ph2", name:"Phase 2", sub:"Weeks 5-8", weeks:4, block:"build", cardio:"20 min",
- targets:{k:2100,p:140,c:258,f:56},
+ targets:{k:1900,p:160,c:189,f:56},
  note:"Volume. Reps down slightly, a set added to the compounds and secondaries. This is the phase that builds the tissue the next one will load.",
  tech:"Keep the two-step reps. Full range beats extra weight: if the load is shortening your range, it is too heavy.",
  scheme:{
@@ -27,7 +27,7 @@ window.PHASES = [
    core:{h:{w:"0",  s:3,r:"15-20",rest:"60 sec"}}}},
 
 {id:"ph3", name:"Phase 3", sub:"Weeks 9-12", weeks:4, block:"build", cardio:"20 min",
- targets:{k:2100,p:140,c:258,f:56},
+ targets:{k:1900,p:160,c:189,f:56},
  note:"Peak strength, and the heaviest work of the whole programme. This lands here on purpose: it is the last phase before the deficit, so it is the last phase where you can properly express strength. Set your records now.",
  tech:"Drop the two-step on A and B and just move weight. Add a drop set to the last set of each isolation movement: strip about a third and keep going.",
  scheme:{
