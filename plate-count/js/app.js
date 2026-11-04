@@ -157,7 +157,7 @@ function mergeProfile(p,force){
   d.updatedAt=+p.updatedAt||0;
   unionCustom(p.custom);
 }
-/* One-time move to 1900 kcal and a fixed 160 g protein, plus the June 1, 2027 goal (135 lb, 15% body fat).
+/* One-time move to 1900 kcal and a fixed 160 g protein, plus the June 1, 2027 goal (135 lb, 18% body fat).
    Runs once, only on a self-programmed account (no coach-set goal), and never overwrites a goal that is already set. */
 function migrateProfile(){
   var P=S.profile; if(P.mig1900||P.goal||isStarter()||userEmail!==ADMIN_EMAIL) return;
@@ -166,8 +166,9 @@ function migrateProfile(){
   else if(P.targets.p<160) P.targets.p=160;
   P.proteinPerLb=0;   /* hold 160 g flat instead of 1 g per lb of bodyweight */
   if(P.goalWeight==null) P.goalWeight=135;
-  if(P.goalBfLo==null&&P.goalBfHi==null){ P.goalBfLo=15; P.goalBfHi=15; }
+  if(P.goalBfLo==null&&P.goalBfHi==null){ P.goalBfLo=18; P.goalBfHi=18; }
   if(!P.goalDate) P.goalDate="2027-06-01";
+  if(P.bf==null) P.bf=22;   /* current body fat per the Nov 2026 projection; update it under Edit goal */
   P.updatedAt=Date.now(); S.dirty.profile=true;
 }
 function unionCustom(list){
