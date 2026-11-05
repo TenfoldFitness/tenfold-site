@@ -1720,9 +1720,11 @@ function strengthCard(){
     return "<details class='sx'><summary><span class='sn'>"+esc(x.name)+"<small>"+esc(best)+" · "+esc(fmtD(x.last))+"</small></span>"+sparkline(vals)+"<span class='sd "+cls+"'>"+(x.pct>0?"+":x.pct<0?"−":"")+Math.abs(r1(x.pct))+"%</span></summary>"+
       "<table class='sxt'><thead><tr><th>Week of</th><th>Best set</th><th>Sets</th><th>Total lb</th><th>Change</th></tr></thead><tbody>"+tbl+"</tbody></table></details>";
   }).join("");
-  return card("Are you getting stronger?",sub,"<p class='small' style='margin:0 0 10px'><b>"+esc(head)+"</b></p>"+rows+
-    "<p class='cap' style='margin:12px 0 0'>The % compares your best set (weight × reps, turned into an estimated one-rep max) with the last week you did that lift. More reps at the same weight counts as stronger. Bodyweight lifts compare reps. Under 2% either way counts as about the same.</p>");
+  return "<details class='card csec' id='strCard'"+(STR_OPEN?" open":"")+"><summary><h3 class='h2' style='font-size:18px'>Are you getting stronger?</h3></summary><p class='cap'>"+sub+"</p>"+
+    "<p class='small' style='margin:0 0 10px'><b>"+esc(head)+"</b></p>"+rows+
+    "<p class='cap' style='margin:12px 0 0'>The % compares your best set (weight × reps, turned into an estimated one-rep max) with the last week you did that lift. More reps at the same weight counts as stronger. Bodyweight lifts compare reps. Under 2% either way counts as about the same.</p></details>";
 }
+var STR_OPEN=true;
 function card(title,sub,inner,cls){ return "<div class='card"+(cls?" "+cls:"")+"'><h3 class='h2' style='font-size:18px'>"+title+"</h3>"+(sub?"<p class='cap'>"+sub+"</p>":"")+inner+"</div>"; }
 /* ---- goal check + suggested changes: the app only suggests; nothing changes until you tap Accept ---- */
 var CAL_STEP=100, CAL_FLOOR=1400, CARDIO_STEP=10, CARDIO_MAX=60, BONUS_MAX=2;
@@ -1933,6 +1935,11 @@ function renderTrend(){
   h+="<div class='note "+pv.cls+"' style='margin-top:14px'><b style='display:block;margin-bottom:3px'>"+esc(pv.head)+"</b>"+esc(pv.msg)+"</div>"+
      "<div class='wtform'><input class='field' id='wtIn' type='number' step='0.1' inputmode='decimal' placeholder='Weigh-in for "+esc(S.date===todayKey()?"today":fmtD(S.date))+" (lb)' value='"+(d.weight!=null?d.weight:"")+"' aria-label='Weigh-in in pounds'><button class='btn' id='wtSave'>Log</button></div></div>";
 
+  /* period entry, kept near the top so it is quick to reach */
+  var logRow="<div class='logper'><div><label class='eyebrow' for='lpS'>Period started</label><input class='field' id='lpS' type='date' max='"+todayKey()+"' value='"+S.date+"'></div><div><label class='eyebrow' for='lpN'>Days</label><input class='field' id='lpN' type='number' min='1' max='10' value='5' inputmode='numeric'></div><button class='btn' id='lpGo'>Add</button></div>"+
+     "<button class='toggle' id='periodBtn' aria-pressed='"+!!d.period+"'><span class='dot'></span><span>"+(d.period?"Period logged on this day":"Period on this day")+"</span></button>";
+  h+=card("Log your period","Add the first day of a period and how many days it lasted. Your cycle details are further down.",logRow);
+
   h+=planCard(cwv,pace)+projectionCard(cwv,pace)+last7Card()+strengthCard();
 
   /* 2. weight chart */
@@ -1942,10 +1949,8 @@ function renderTrend(){
 
   /* 3. cycle */
   var ci=cycleInfo(S.date), cyc="";
-  var logRow="<div class='logper'><div><label class='eyebrow' for='lpS'>Period started</label><input class='field' id='lpS' type='date' max='"+todayKey()+"' value='"+S.date+"'></div><div><label class='eyebrow' for='lpN'>Days</label><input class='field' id='lpN' type='number' min='1' max='10' value='5' inputmode='numeric'></div><button class='btn' id='lpGo'>Add</button></div>"+
-     "<button class='toggle' id='periodBtn' aria-pressed='"+!!d.period+"'><span class='dot'></span><span>"+(d.period?"Period logged on this day":"Period on this day")+"</span></button>";
   if(ci.none){
-    cyc="<p class='muted small' style='margin:0 0 12px'>Add the first day of your last period, and how many days it lasted. After two periods you will see your cycle length, your next expected period, and how your weight moves through the month.</p>"+logRow;
+    cyc="<p class='muted small' style='margin:0 0 12px'>Log the first day of your last period, and how many days it lasted, in the Log your period card near the top. After two periods you will see your cycle length, your next expected period, and how your weight moves through the month.</p>";
   } else {
     var ph=phaseFor(ci.day,ci.avg,ci.mens), avg=ci.avg||28, due=daysBetween(S.date,shiftKey(ci.last,avg)), rw=refWindow(ci.avg,ci.mens), note;
     if(ph.k==="lut") note="Progesterone is high, so you hold more water. A scale reading 2 to 5 lb up is normal and is not fat. Hold your calories and judge your weight again after your period starts.";
@@ -1963,8 +1968,7 @@ function renderTrend(){
       cl.slice().reverse().slice(0,8).map(function(c){
         var odd=c.len&&(c.len<18||c.len>45);
         return "<div class='cyrow'><span class='cd'>"+fmtD(c.start)+"</span><span class='cl'>"+(c.cur?"Day "+ci.day+" so far":c.len+" days"+(odd?" (not counted)":""))+"</span><span class='cb'>period "+c.bleed+" day"+(c.bleed===1?"":"s")+"</span><button class='linkbtn' data-rm='"+c.start+"' aria-label='Remove period from "+esc(fmtD(c.start))+"'>Remove</button></div>";
-      }).join("")+
-      "<h4 class='sub-h' style='margin-top:16px'>Add a period</h4>"+logRow;
+      }).join("");
   }
   h+=card("Your cycle","How long your cycles run, when the next one is due, and where you are in the month.",cycleTimeline()+cyc);
 
@@ -1999,6 +2003,7 @@ function renderTrend(){
 
   var save=function(){ var v=num($("wtIn").value); if(v==null) return; cur().weight=v; persistDay(S.date); renderTrend(); toast("Weight saved"); };
   $("wtSave").onclick=save; $("wtIn").onkeydown=function(e){ if(e.key==="Enter"){ e.preventDefault(); save(); } };
+  var sc=$("strCard"); if(sc) sc.addEventListener("toggle",function(){ STR_OPEN=sc.open; });
   var rct=$("recalcT"); if(rct) rct.onclick=function(){ openOnboarding(false); };
   var gb=$("goalBtn"); if(gb) gb.onclick=openGoals;
   $("panel-trend").querySelectorAll("[data-plan]").forEach(function(b){ b.onclick=function(){ planAct(b.dataset.plan,+b.dataset.v); }; });

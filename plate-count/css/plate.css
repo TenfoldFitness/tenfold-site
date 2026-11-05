@@ -310,6 +310,11 @@ body.ro .addbtn,body.ro .plus,body.ro .tick,body.ro #wtSave,body.ro .numfield{po
 .pairblk{margin-top:14px;padding-top:12px;border-top:1px dashed var(--border-strong)}
 .pairkcal{margin:8px 0 4px}
 
+/* Collapsible card */
+.csec>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;list-style:none;min-height:32px}
+.csec>summary::-webkit-details-marker{display:none}
+.csec>summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--text-3);border-bottom:2px solid var(--text-3);transform:rotate(45deg);transition:transform .15s;flex:none;margin-right:4px}
+.csec[open]>summary::after{transform:rotate(-135deg)}
 /* Strength comparison */
 .sx{border-top:1px solid var(--border)}
 .sx:first-of-type{border-top:0}
