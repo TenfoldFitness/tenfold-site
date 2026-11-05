@@ -310,6 +310,13 @@ body.ro .addbtn,body.ro .plus,body.ro .tick,body.ro #wtSave,body.ro .numfield{po
 .pairblk{margin-top:14px;padding-top:12px;border-top:1px dashed var(--border-strong)}
 .pairkcal{margin:8px 0 4px}
 
+/* "See the full plan" expander */
+.more{margin-top:12px;border-top:1px solid var(--border);padding-top:4px}
+.more>summary{cursor:pointer;list-style:none;min-height:40px;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--accent-deep)}
+.more>summary::-webkit-details-marker{display:none}
+.more>summary::after{content:"";width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);transition:transform .15s}
+.more[open]>summary::after{transform:rotate(-135deg)}
+.more[open]>summary{margin-bottom:8px}
 /* Collapsible card */
 .csec>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;list-style:none;min-height:32px}
 .csec>summary::-webkit-details-marker{display:none}

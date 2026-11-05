@@ -1741,6 +1741,7 @@ function goalCheck(cw,pace){
     if(toward>0.05){ var w=need/toward; h+=p+"At your current pace ("+sgn(pace.rate)+" lb a week) you get there in "+weeksText(w)+(w<=104?", around <b>"+fmtD(shiftKey(todayKey(),Math.round(w*7)))+"</b>":"")+".</p>"; }
     else h+=p+"Your weight is not moving toward the goal right now ("+sgn(pace.rate)+" lb a week).</p>";
   } else h+=p+"Log 4 or more weigh-ins over about 10 days to see when you would reach it.</p>";
+  h+="<!--more-->";   /* everything after this sits behind "See the full plan" in planCard */
   var rec=cw*(dir<0?0.005:0.0025);
   h+=p+"A steady pace that protects muscle is about "+r1(rec)+" lb a week, which would take "+weeksText(need/rec)+".</p>";
   if(dir<0&&b==="build") h+=p+"<b>Heads up:</b> your plan is in a build phase, which adds weight. To lose toward this goal, switch to a cutting phase.</p>";
@@ -1886,9 +1887,9 @@ function projectionCard(cw,pace){
   return card("Where you will be","Estimates only. Body-fat readings can be off by several points and real results vary by around a third either way. 150 kcal is about 20 minutes of cardio.",h+"<p class='cap' style='margin:0'>Re-check every two weeks as you log more weigh-ins.</p>");
 }
 function planCard(cw,pace){
-  var h=goalCheck(cw,pace)+cutPlan(cw,pace)+cardioReport(cw,pace), sg=planSuggestions(cw,pace), bump=S.profile.cardioBump||0, bonus=S.profile.bonusEx||0;
-  if(bump>0) h+="<p class='cap' style='margin:0 0 8px'>Cardio is "+bump+"% above the phase plan.</p>";
-  if(bonus>0) h+="<p class='cap' style='margin:0 0 8px'>Each workout has "+bonus+" bonus exercise"+(bonus===1?"":"s")+" added.</p>";
+  var parts=goalCheck(cw,pace).split("<!--more-->"), h=parts[0], more=(parts[1]||"")+cutPlan(cw,pace)+cardioReport(cw,pace), sg=planSuggestions(cw,pace), bump=S.profile.cardioBump||0, bonus=S.profile.bonusEx||0;
+  if(bump>0) more+="<p class='cap' style='margin:0 0 8px'>Cardio is "+bump+"% above the phase plan.</p>";
+  if(bonus>0) more+="<p class='cap' style='margin:0 0 8px'>Each workout has "+bonus+" bonus exercise"+(bonus===1?"":"s")+" added.</p>";
   var rep=S.profile.exReplace||{}, rk=Object.keys(rep);
   if(rk.length&&!isStarter()){
     h+="<p class='small' style='margin:0 0 4px'><b>Swapped out for being skipped 2 weeks running:</b></p>";
@@ -1899,7 +1900,8 @@ function planCard(cw,pace){
        "<div style='display:flex;gap:8px;margin-top:10px'><button class='btn sm' data-plan='"+it.kind+"' data-v='"+it.v+"'>Accept</button><button class='btn ghost sm' data-plan='dismiss' data-v='0'>Not now</button></div></div>";
   });
   if(sg.note) h+="<p class='cap' style='margin:10px 0 0'>"+esc(sg.note)+"</p>";
-  return h?card("Goal check","Based on your 7-day average and pace. I only suggest changes; nothing changes until you tap Accept.",h):"";
+  if(more) h+="<details class='more'><summary>See the full plan</summary>"+more+"</details>";
+  return h?card("Goal check","Nothing changes until you tap Accept.",h):"";
 }
 function planAct(kind,v){
   var P=S.profile, t=P.targets, td=todayKey();
