@@ -181,6 +181,47 @@ var flushTimer=0, retryTimer=0, retryDelay=0;
 function persistDay(k){
   if(roBlocked()) return;
   var d=day(k); d.updatedAt=Date.now(); S.dirty.days[k]=true; lsSave(); queueFlush();
+  if(!autoMoving) maybeAutoMove(k);
+}
+/* ---- A missed workout done the next day moves itself onto the day it was really done ----
+   When the first set (or cardio) is logged on YESTERDAY while today has no training yet, the
+   workout is moved onto today, so it counts against today's food. The rest of this week moves
+   back a day (Sunday's rest day is used), the same as "Move the rest of this week". Undoable. */
+var autoMoving=false;
+function trainCount(k){
+  var d=S.days[k]; if(!d) return 0;
+  var n=Object.keys(d.sets||{}).filter(function(x){ return d.sets[x].done; }).length;
+  return n+((d.cardio&&d.cardio.done)?1:0);
+}
+function maybeAutoMove(k){
+  var t=todayKey();
+  if(k!==shiftKey(t,-1)||S.date!==k||trainCount(k)!==1) return;     /* only the first log on yesterday's page */
+  if(wdIndex(t)===0||!weekShiftOK(t)) return;                        /* needs yesterday in the same week and a free rest of week */
+  if(day(k).free) return;
+  var pd=daysFor(PROGRAMS[programPos(k).idx]||program(),k);
+  if(pd.length<7) return;
+  setTimeout(function(){ autoMoveWorkout(k,t); },0);                 /* after the tap or field finishes updating */
+}
+function autoMoveWorkout(k,t){
+  if(trainCount(k)!==1||!weekShiftOK(t)) return;
+  var F=["sets","pairs","cardio","extras","exSwaps","free"], dk=day(k), dt=day(t), end=shiftKey(mondayOf(t),6);
+  var snap={k:{},t:{},wd:[]}, srcWd=workoutIdx(k), old={};
+  F.forEach(function(f){ snap.k[f]=JSON.parse(JSON.stringify(dk[f]===undefined?null:dk[f])); snap.t[f]=JSON.parse(JSON.stringify(dt[f]===undefined?null:dt[f])); });
+  for(var d=k; d<=end; d=shiftKey(d,1)) old[d]=workoutIdx(d);
+  for(var d2=t; d2<=end; d2=shiftKey(d2,1)){ snap.wd.push([d2,day(d2).wd]); var src=old[shiftKey(d2,-1)]; day(d2).wd=(src===wdIndex(d2))?null:src; }
+  F.forEach(function(f){ if(dk[f]!==undefined) dt[f]=JSON.parse(JSON.stringify(dk[f])); });
+  dk.sets={}; dk.pairs={}; dk.cardio={done:false,miles:null,minutes:null,type:""}; dk.extras=[]; dk.exSwaps={}; dk.free=false;
+  autoMoving=true;
+  for(var d3=k; d3<=end; d3=shiftKey(d3,1)) persistDay(d3);
+  autoMoving=false;
+  S.date=t; S.openEx=null; renderAll(); window.scrollTo(0,0);
+  var nm=prettyDate(k,{weekday:"long"});
+  toast("Moved "+nm+"’s workout to today so it counts for today","Undo",function(){
+    F.forEach(function(f){ if(snap.k[f]===null) delete dk[f]; else dk[f]=snap.k[f]; if(snap.t[f]===null) delete dt[f]; else dt[f]=snap.t[f]; });
+    snap.wd.forEach(function(u){ day(u[0]).wd=u[1]; });
+    autoMoving=true; for(var d4=k; d4<=end; d4=shiftKey(d4,1)) persistDay(d4); autoMoving=false;
+    S.date=k; renderAll();
+  });
 }
 function persistProfile(){
   if(roBlocked()) return;
