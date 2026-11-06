@@ -380,8 +380,17 @@ function renderEntBar(){
 function weekShiftOK(k){
   if(wdIndex(k)===0||k>todayKey()) return false;          /* nothing earlier this week to have missed */
   var end=shiftKey(mondayOf(k),6);
-  for(var d=k; d<=end; d=shiftKey(d,1)) if(hasActivity(d)) return false;   /* never move days that already have entries */
+  /* Only logged training blocks the move. Food already eaten today stays on today, so it must not hide this option. */
+  for(var d=k; d<=end; d=shiftKey(d,1)) if(hasTraining(d)) return false;
   return true;
+}
+/* Yesterday's planned workout if it was skipped and today is still free, so it can be done today and count for today. */
+function missedYesterday(rd){
+  if(rd!==todayKey()||!weekShiftOK(rd)) return null;
+  var yk=shiftKey(rd,-1), pd=daysFor(PROGRAMS[programPos(yk).idx]||program(),yk);
+  if(pd.length<7) return null;
+  var y=pd[Math.min(workoutIdx(yk),pd.length-1)];
+  return (y&&!y.rest&&!trained(yk))?y:null;
 }
 function shiftOption(){
   if(!weekShiftOK(S.date)) return "";
@@ -491,6 +500,11 @@ function estBurn(k){
   Object.keys(d.sets).forEach(function(x){ if(d.sets[x].done) sets++; });
   if(sets) burn+=kcalMET(MET_LIFT,sets*MIN_PER_SET,kg);
   return {kcal:burn,cardioMin:(c&&c.minutes)||0,sets:sets};
+}
+function hasTraining(k){
+  var d=S.days[k]; if(!d) return false;
+  if(d.cardio&&(d.cardio.done||d.cardio.minutes)) return true;
+  return Object.keys(d.sets||{}).some(function(x){ return d.sets[x].done; });
 }
 function hasActivity(k){
   var d=S.days[k]; if(!d) return false;
@@ -1125,6 +1139,8 @@ function renderTrain(){
      "<div class='progress' role='progressbar' aria-valuemin='0' aria-valuemax='"+total+"' aria-valuenow='"+done+"'><i id='progFill' style='width:"+(total?done/total*100:0)+"%'></i></div>"+
      "<div class='progtxt'><span id='progTxt'>"+done+" of "+total+" sets done</span><span>"+items.length+" exercises</span></div>"+
      (p.note&&!free?"<details class='fold' style='border:0;margin-top:8px'><summary style='padding:0;min-height:40px;font-size:13px;color:var(--text-2)'>About this phase</summary><div class='inner' style='padding:0 0 4px'><p style='margin:0 0 8px'>"+esc(p.note)+"</p>"+(p.phase&&p.phase.tech?"<p class='tech'>"+esc(p.phase.tech)+"</p>":"")+"</div></details>":"")+"</div>";
+  var my=free?null:missedYesterday(rd);
+  if(my) h+="<div class='card' style='margin-top:12px'><p style='margin:0 0 8px'><b>Missed yesterday’s "+esc(my.title||my.name)+"?</b> Do it today and it counts for today, next to the food you’ve logged.</p><button class='btn sm' id='moveYest'>Do it today</button> <span class='muted small'>Moves the rest of the week back a day. You can undo it.</span></div>";
 
   h+=free?"<p class='muted small' style='margin:10px 4px 0'>Your own workout. Add each exercise you did, then log sets and weights like usual. <button class='linkbtn' id='freeOff'>Back to the planned workout</button></p>"
          :"<button class='linkbtn' id='freeOn' style='margin:10px 4px 0'>I did my own thing today (Freestyle)</button>";
@@ -1253,6 +1269,7 @@ function ghost(it,si,pmap,sets){
 }
 function wireTrain(panel,rd,items,sets,wd){
   var pb=$("phaseBtn"); if(pb) pb.onclick=openPhaseSheet;
+  var my=$("moveYest"); if(my) my.onclick=function(){ shiftWeekFrom(S.date); renderAll(); };
   panel.querySelectorAll("[data-toggle]").forEach(function(b){ b.onclick=function(){
     var ix=+b.dataset.toggle; S.openEx=(S.openEx===ix||(S.openEx==null&&b.getAttribute("aria-expanded")==="true"))?-1:ix; renderTrain();
     var el=panel.querySelector(".ex[data-ix='"+ix+"']"); if(el&&S.openEx===ix) el.scrollIntoView({block:"nearest",behavior:"smooth"});
