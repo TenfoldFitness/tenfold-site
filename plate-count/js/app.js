@@ -202,8 +202,13 @@ function maybeAutoMove(k){
   if(pd.length<7) return;
   setTimeout(function(){ autoMoveWorkout(k,t); },0);                 /* after the tap or field finishes updating */
 }
-function autoMoveWorkout(k,t){
-  if(trainCount(k)!==1||!weekShiftOK(t)) return;
+/* Yesterday already has a logged workout and today is still free: it can be moved onto today by hand. */
+function canMoveToToday(rd){
+  var t=todayKey();
+  return rd===shiftKey(t,-1)&&wdIndex(t)>0&&trainCount(rd)>0&&!day(rd).free&&weekShiftOK(t);
+}
+function autoMoveWorkout(k,t,force){
+  if(trainCount(k)<1||(!force&&trainCount(k)!==1)||!weekShiftOK(t)) return;
   var F=["sets","pairs","cardio","extras","exSwaps","free"], dk=day(k), dt=day(t), end=shiftKey(mondayOf(t),6);
   var snap={k:{},t:{},wd:[]}, srcWd=workoutIdx(k), old={};
   F.forEach(function(f){ snap.k[f]=JSON.parse(JSON.stringify(dk[f]===undefined?null:dk[f])); snap.t[f]=JSON.parse(JSON.stringify(dt[f]===undefined?null:dt[f])); });
@@ -1183,6 +1188,8 @@ function renderTrain(){
   var my=free?null:missedYesterday(rd);
   if(my) h+="<div class='card' style='margin-top:12px'><p style='margin:0 0 8px'><b>Missed yesterday’s "+esc(my.title||my.name)+"?</b> Do it today and it counts for today, next to the food you’ve logged.</p><button class='btn sm' id='moveYest'>Do it today</button> <span class='muted small'>Moves the rest of the week back a day. You can undo it.</span></div>";
 
+  if(!free&&canMoveToToday(rd)) h+="<div class='card' style='margin-top:12px'><p style='margin:0 0 8px'><b>Did this workout today instead?</b> Move it to today so it counts for today, next to the food you’ve logged.</p><button class='btn sm' id='moveToToday'>Move this workout to today</button> <span class='muted small'>Moves the rest of the week back a day. You can undo it.</span></div>";
+
   h+=free?"<p class='muted small' style='margin:10px 4px 0'>Your own workout. Add each exercise you did, then log sets and weights like usual. <button class='linkbtn' id='freeOff'>Back to the planned workout</button></p>"
          :"<button class='linkbtn' id='freeOn' style='margin:10px 4px 0'>I did my own thing today (Freestyle)</button>";
   h+=injuryNote();
@@ -1310,6 +1317,7 @@ function ghost(it,si,pmap,sets){
 }
 function wireTrain(panel,rd,items,sets,wd){
   var pb=$("phaseBtn"); if(pb) pb.onclick=openPhaseSheet;
+  var mt=$("moveToToday"); if(mt) mt.onclick=function(){ autoMoveWorkout(S.date,todayKey(),true); };
   var my=$("moveYest"); if(my) my.onclick=function(){ shiftWeekFrom(S.date); renderAll(); };
   panel.querySelectorAll("[data-toggle]").forEach(function(b){ b.onclick=function(){
     var ix=+b.dataset.toggle; S.openEx=(S.openEx===ix||(S.openEx==null&&b.getAttribute("aria-expanded")==="true"))?-1:ix; renderTrain();
