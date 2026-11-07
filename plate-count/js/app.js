@@ -1790,7 +1790,21 @@ function strengthCard(){
     "<p class='small' style='margin:0 0 10px'><b>"+esc(head)+"</b></p>"+rows+
     "<p class='cap' style='margin:12px 0 0'>The % compares your best set (weight × reps, turned into an estimated one-rep max) with the last week you did that lift. More reps at the same weight counts as stronger. Bodyweight lifts compare reps. Under 2% either way counts as about the same.</p></details>";
 }
-var STR_OPEN=true;
+var STR_OPEN=false;
+/* every Progress card starts collapsed; the open ones are remembered across re-renders */
+var SEC_OPEN={};
+function collapseCards(root){
+  [].slice.call(root.querySelectorAll(".card")).forEach(function(c){
+    if(c.classList.contains("hero-w")||c.closest("details")) return;
+    var t=c.querySelector(".eyebrow, h3"); if(!t) return;
+    var key=t.textContent.split(" · ")[0].trim(), det=document.createElement("details"), sum=document.createElement("summary");
+    det.className=c.className+" csec"; det.open=!!SEC_OPEN[key];
+    if(t.tagName==="H3") sum.appendChild(t); else { var sp=document.createElement("span"); sp.className="eyebrow"; sp.textContent=t.textContent; t.remove(); sum.appendChild(sp); }
+    det.appendChild(sum); while(c.firstChild) det.appendChild(c.firstChild);
+    det.addEventListener("toggle",function(){ SEC_OPEN[key]=det.open; });
+    c.replaceWith(det);
+  });
+}
 function card(title,sub,inner,cls){ return "<div class='card"+(cls?" "+cls:"")+"'><h3 class='h2' style='font-size:18px'>"+title+"</h3>"+(sub?"<p class='cap'>"+sub+"</p>":"")+inner+"</div>"; }
 /* ---- goal check + suggested changes: the app only suggests; nothing changes until you tap Accept ---- */
 var CAL_STEP=100, CAL_FLOOR=1400, CARDIO_STEP=10, CARDIO_MAX=60, BONUS_MAX=2;
@@ -2066,6 +2080,7 @@ function renderTrend(){
      (canAskCoach()?"<div id='coachBox'></div>":"")+
      "<p class='foot' id='syncNote'></p><p class='foot'><button class='linkbtn' id='chgPw'>Change password</button> &nbsp;·&nbsp; <button class='linkbtn' id='signOut'>Sign out</button></p>";
   $("panel-trend").innerHTML=h;
+  collapseCards($("panel-trend"));
   $("chgPw").onclick=function(){ if(!DEV) changePassword(false); };
   if(canAskCoach()) renderCoach();
 
@@ -2118,6 +2133,8 @@ function renderCoach(){
       return "<div class='msg "+(m.from_coach?"coach":"me")+"'><b>"+(m.from_coach?"Coach":"You")+" · "+esc(fmtD(keyOf(new Date(m.created_at))))+"</b>"+esc(m.body)+"</div>"; }).join("")+"</div>":"")+
     "<textarea class='field' id='coachIn' rows='3' maxlength='1000' placeholder='Type your question…' style='min-height:84px;padding:12px 14px;margin-top:10px'></textarea>"+
     "<button class='btn' id='coachSend' style='margin-top:10px'>Send to my coach</button></div>";
+  if(S.coachReply&&msgs.length) SEC_OPEN["Ask your coach"]=true;
+  collapseCards(box);
   if(S.coachReply&&msgs.length){ try{ localStorage.setItem(seenKey(),String(Date.now())); }catch(e){} S.coachReply=false; }
   $("coachSend").onclick=function(){
     var v=$("coachIn").value.trim(); if(!v){ toast("Type your question first"); return; }

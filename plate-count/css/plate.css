@@ -322,6 +322,9 @@ body.ro .addbtn,body.ro .plus,body.ro .tick,body.ro #wtSave,body.ro .numfield{po
 .csec>summary::-webkit-details-marker{display:none}
 .csec>summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--text-3);border-bottom:2px solid var(--text-3);transform:rotate(45deg);transition:transform .15s;flex:none;margin-right:4px}
 .csec[open]>summary::after{transform:rotate(-135deg)}
+.csec>summary{min-height:44px}
+.csec>summary h3,.csec>summary .eyebrow{margin:0}
+.csec[open]>summary{margin-bottom:10px}
 /* Strength comparison */
 .sx{border-top:1px solid var(--border)}
 .sx:first-of-type{border-top:0}
