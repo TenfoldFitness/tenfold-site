@@ -2075,7 +2075,11 @@ function renderTrend(){
   var rct=$("recalcT"); if(rct) rct.onclick=function(){ openOnboarding(false); };
   var gb=$("goalBtn"); if(gb) gb.onclick=openGoals;
   $("panel-trend").querySelectorAll("[data-plan]").forEach(function(b){ b.onclick=function(){ planAct(b.dataset.plan,+b.dataset.v); }; });
-  $("periodBtn").onclick=function(){ var dd=cur(); dd.period=!dd.period; persistDay(S.date); renderTrend(); };
+  $("periodBtn").onclick=function(){
+    var dd=cur(), d0=S.date; dd.period=!dd.period; persistDay(d0); renderTrend();
+    var pk=shiftKey(d0,-1), pv=S.days[pk];
+    if(dd.period&&(!pv||!pv.period)) toast("Period logged. Did it start yesterday?","Yes, add yesterday",function(){ day(pk).period=true; persistDay(pk); renderTrend(); toast("Yesterday added"); });
+  };
   var lg=$("lpGo"); if(lg) lg.onclick=function(){
     var s=$("lpS").value, n=Math.round(num($("lpN").value)||0);
     if(!/^\d{4}-\d{2}-\d{2}$/.test(s)||s>todayKey()){ toast("Pick a start date that is today or earlier"); return; }
