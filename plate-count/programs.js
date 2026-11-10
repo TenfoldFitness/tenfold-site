@@ -329,3 +329,130 @@ JSON.parse(JSON.stringify(window.DAYS[0])),   // Monday: its own copy, so extra 
   addSw(D[5], "Tricep Rope Pushdown", ["Tricep Pressdown"]);
   addSw(D[5], "Preacher Curl", ["Hammer Curl"]);
 })();
+
+/* ---------------------------------------------------------------------------------------------
+   Accessory rotation, Phases 3 to 6. Starts on ROT_FROM so the week already under way is untouched.
+   The main lifts never rotate, so records stay comparable from phase to phase.
+     Set A (Phases 3 and 6): heavier, more stable choices; pin-loaded or cable isolation, because
+                             Phase 3 adds drop sets. Phase 6 reuses it so Phase 3 numbers can be held.
+     Set B (Phase 4):        machine and cable variations that are easier on joints as the cut starts.
+     Set C (Phase 5):        dumbbell and single-side variations for the lower-volume phase.
+   Phase 2 keeps the list above exactly as written. A slot with no entry for a set keeps its exercise.
+   The app skips the rotation for any exercise the client has starred, and a swap the client chose
+   ("just today" or "every time") always wins over it.
+   --------------------------------------------------------------------------------------------- */
+window.ROT_FROM = "2026-11-16";
+window.ROT_SET = {ph3:"A", ph4:"B", ph5:"C", ph6:"A"};
+(function () {
+  var D = window.DAYS_V2;
+  function rot(day, name, sets) {
+    (day.ex || []).forEach(function (e) {
+      if (e.n !== name) return;
+      e.rot = sets; e.sw = e.sw || [];
+      Object.keys(sets).forEach(function (k) { if (sets[k] !== e.n && e.sw.indexOf(sets[k]) < 0) e.sw.push(sets[k]); });
+    });
+  }
+  /* Monday, Chest */
+  rot(D[0], "Decline Press",              {A:"Weighted Dip", B:"Decline Barbell Press"});
+  rot(D[0], "Seated Machine Chest Press", {A:"Seated Hammer Chest Press", B:"Standing Cable Press", C:"Flat Machine Press"});
+  rot(D[0], "Pec Deck Fly",               {B:"Low to High Cable Fly", C:"Incline Dumbbell Fly"});
+  rot(D[0], "Dumbbell Pullover",          {A:"Cable Pullover", C:"Cable Pullover"});
+  /* Tuesday, Quads */
+  rot(D[1], "Leg Press",                  {B:"Belt Squat", C:"Heels-Elevated Goblet Squat"});
+  rot(D[1], "Hack Squat",                 {A:"Front Squat", C:"DB Sumo Squat"});
+  rot(D[1], "Leg Extension",              {C:"Sissy Squat"});
+  rot(D[1], "Bulgarian Split Squat",      {A:"Weighted Step-Up", B:"Reverse Lunge", C:"Walking Lunge"});
+  /* Wednesday, Back */
+  rot(D[2], "Low Cable Row",              {A:"Chest-Supported Row", B:"Seated Machine Row"});
+  rot(D[2], "Bent-Over Dumbbell Row",     {A:"Barbell Row", B:"Single Arm Dumbbell Row"});
+  rot(D[2], "Hammer Strength Pulldown",   {A:"Neutral Grip Lat Pulldown", B:"Close Grip Pulldown", C:"Straight Arm Pulldown"});
+  rot(D[2], "High Cable Reverse Fly",     {A:"Reverse Pec Deck", C:"Bent-Over Rear Delt Raise"});
+  rot(D[2], "Cable Face Pull",            {C:"Band Face Pull"});
+  /* Thursday, Hamstrings and calves */
+  rot(D[3], "Seated Leg Curl",            {B:"Unilateral Standing Leg Curl"});
+  rot(D[3], "Single-Leg Romanian Deadlift", {A:"Barbell Hip Thrust", B:"Glute-Hamstring Raise"});
+  rot(D[3], "Standing Calf Raise",        {A:"Smith Machine Calf Raise", C:"Single Leg Calf Raise"});
+  rot(D[3], "Donkey Calf Raise",          {B:"Single Leg Calf Raise"});
+  /* Friday, Shoulders */
+  rot(D[4], "Dumbbell Lateral Raise",     {B:"Cable Lateral Raise", C:"Machine Lateral Raise"});
+  rot(D[4], "Wide Grip Upright Row",      {B:"Cable Upright Row", C:"Dumbbell High Pull"});
+  rot(D[4], "Rear Delt Cable Fly",        {A:"Rear Delt Row", B:"Reverse Pec Deck", C:"Bent-Over Rear Delt Raise"});
+  rot(D[4], "Underhand Front Raise",      {A:"Cable Front Raise", B:"Plate Front Raise", C:"Neutral Grip Dumbbell Front Raise"});
+  rot(D[4], "Seated Machine Lateral Raise", {C:"Banded Lateral Raise"});
+  rot(D[4], "Barbell Shrug",              {A:"Trap Bar Shrug", B:"Dumbbell Shrug"});
+  /* Saturday, Arms */
+  rot(D[5], "EZ Bar Drag Curl",           {A:"Barbell Curl", B:"Cable Curl"});
+  rot(D[5], "Overhead Cable Tricep Extension", {A:"Lying Skull Crusher", C:"Overhead Dumbbell Extension"});
+  rot(D[5], "Tricep Rope Pushdown",       {A:"Straight Bar Pushdown", C:"Tricep Pressdown"});
+  rot(D[5], "Preacher Curl",              {A:"Machine Preacher Curl", B:"Incline Dumbbell Curl", C:"Hammer Curl"});
+
+  /* Main lifts that should not drop to the 3 to 4 rep strength option in Phases 3, 5 and 6.
+     Low-rep work suits the barbell lifts. On dumbbells, a curl machine or the reverse hack it adds
+     risk without adding strength, so these stay on the phase's higher-rep option. */
+  function hyp(day, name) { (day.ex || []).forEach(function (e) { if (e.n === name) e.hyp = true; }); }
+  hyp(D[0], "Incline Dumbbell Press");
+  hyp(D[1], "Reverse Hack Squat");
+  hyp(D[3], "Lying Leg Curl");
+  hyp(D[4], "Seated Dumbbell Press");
+
+  /* Back day had no heavy lift in the peak-strength phase: its only main lift is the bodyweight pull-up.
+     Phase 3 gets the deadlift back, first in the session while fresh. Shown from ROT_FROM, Phase 3 only. */
+  D[2].ex.unshift({L:"A", n:"Deadlift", t:"main", only:["ph3"],
+    cue:"Reset every rep. Speed off the floor tells you whether the weight is right. Belt on for the working sets.",
+    sw:["Trap Bar Deadlift","Rack Pull"]});
+})();
+
+/* Coaching cues for the rotated exercises. A slot's own cue only fits its own exercise. */
+window.ROT_CUES = {
+  "Weighted Dip":"Lean forward slightly so the chest takes the load. Lower until the shoulders are just below the elbows, no deeper. Bodyweight first; add load once you own 3 sets of 8.",
+  "Seated Hammer Chest Press":"Seat height so the handles line up with mid-chest. Shoulder blades back against the pad, and stop just short of lockout.",
+  "Cable Pullover":"Straight bar or rope, with a slight bend in the elbows that never changes. Pull from the lats, ribs down.",
+  "Decline Barbell Press":"Bar to the lower chest. Use a spotter or safeties: getting out from under a decline bar alone is the risk.",
+  "Standing Cable Press":"Staggered stance, cables at chest height. Press forward and slightly together, ribs down.",
+  "Low to High Cable Fly":"Pulleys at the bottom. Sweep up and in to chin height with a slight bend in the elbows.",
+  "Flat Machine Press":"Handles at mid-chest. Controlled lowering, stop just short of lockout.",
+  "Incline Dumbbell Fly":"Low incline. Open until you feel the stretch across the chest and no further, then squeeze back up.",
+  "Front Squat":"Elbows high, torso vertical. Easier on the spine than the low bar squat that opens the day.",
+  "Weighted Step-Up":"Whole foot on the box. Drive through the top leg and lower slowly. Do not push off the floor foot.",
+  "Belt Squat":"The load hangs from the hips, so the spine gets a break. Sit straight down, knees tracking over the toes.",
+  "Reverse Lunge":"Step back, lower the back knee toward the floor, push through the front heel. Torso tall.",
+  "Heels-Elevated Goblet Squat":"Heels on a plate or wedge, one dumbbell at the chest. Sit straight down and let the knees travel forward.",
+  "DB Sumo Squat":"Wide stance, toes out, one dumbbell hanging between the legs. Knees track over the toes.",
+  "Sissy Squat":"Hold a support. Knees travel forward, hips stay open, lean back as one line. Stop where the knees stay comfortable.",
+  "Walking Lunge":"Long, even strides. Front heel down, back knee toward the floor, torso tall.",
+  "Chest-Supported Row":"Chest stays on the pad. No body english.",
+  "Barbell Row":"Hinge to about 45 degrees and keep that angle. Pull to the lower ribs, lower under control.",
+  "Neutral Grip Lat Pulldown":"Palms facing each other. Pull the elbows down to your sides, chest up, no leaning back.",
+  "Reverse Pec Deck":"Chest on the pad, arms long. Lead with the elbows and stop when the arms are in line with the shoulders.",
+  "Seated Machine Row":"Chest tall against the pad. Pull the elbows back past the ribs and pause.",
+  "Single Arm Dumbbell Row":"Hand and knee on the bench, flat back. Pull the elbow toward the hip, not the shoulder.",
+  "Close Grip Pulldown":"Close handle, slight lean. Pull to the upper chest and squeeze the lats down.",
+  "Straight Arm Pulldown":"Arms stay long. Sweep the bar from eye level to the thighs using the lats.",
+  "Bent-Over Rear Delt Raise":"Hinge forward with light dumbbells. Lead with the elbows out to the side, no swinging.",
+  "Band Face Pull":"Pull to the forehead with high elbows and finish with the hands apart.",
+  "Unilateral Standing Leg Curl":"One leg at a time. Hips square, slow on the way down.",
+  "Barbell Hip Thrust":"Two second hold at lockout, chin tucked.",
+  "Glute-Hamstring Raise":"Hips straight. Lower under control and pull back up with the hamstrings. Use a band or a push off the floor until you own it.",
+  "Smith Machine Calf Raise":"Balls of the feet on a plate or step. Full stretch at the bottom, pause, full squeeze at the top.",
+  "Single Leg Calf Raise":"Hold a support for balance. Pause at the bottom and at the top.",
+  "Cable Lateral Raise":"One arm at a time, cable across the body. Lead with the elbow to shoulder height.",
+  "Machine Lateral Raise":"Pads above the elbows. Lift to shoulder height and lower slowly.",
+  "Cable Upright Row":"Rope or wide bar. Elbows toward the ceiling, stop at elbow height. Drop it if the shoulder complains.",
+  "Dumbbell High Pull":"Elbows lead, high and wide. Dumbbells to lower-chest height.",
+  "Rear Delt Row":"Elbows flared wide, pull to the upper chest. Lighter than a normal row.",
+  "Cable Front Raise":"Cable behind you. Raise to just above parallel and lower slowly.",
+  "Plate Front Raise":"Hold the plate at nine and three. Raise to eye level, lower slowly.",
+  "Neutral Grip Dumbbell Front Raise":"Thumbs up. Raise to just above parallel, no swinging.",
+  "Banded Lateral Raise":"Stand on the band and lead with the elbows. The band is hardest at the top, so pause there.",
+  "Trap Bar Shrug":"Straight up, pause at the top. No rolling.",
+  "Dumbbell Shrug":"Straight up, pause at the top. No rolling.",
+  "Barbell Curl":"Elbows pinned to your sides. No swinging from the hips.",
+  "Cable Curl":"Elbows stay just in front of the hips. Constant tension, squeeze the top.",
+  "Lying Skull Crusher":"Lower the bar to just behind the head, elbows pointing at the ceiling. The stretch is the point.",
+  "Overhead Dumbbell Extension":"One dumbbell in both hands. Elbows point forward, lower behind the head for the stretch.",
+  "Straight Bar Pushdown":"Elbows pinned. Press down, pause, return slowly.",
+  "Tricep Pressdown":"Elbows pinned. Press down, pause, return slowly.",
+  "Machine Preacher Curl":"Do not lock out at the bottom. Keep the tension on.",
+  "Incline Dumbbell Curl":"Lie back on a 45 to 60 degree incline and let the arms hang. Curl without the elbows drifting forward.",
+  "Hammer Curl":"Palms facing in. Elbows stay pinned to your sides."
+};

@@ -14,6 +14,10 @@ var ENT = null;   /* what this client is entitled to see; null = no limits (dev)
 var TRACK = "";   /* "starter" = coach-provisioned account on the 3-cycle starter program (set from app_metadata at sign-in) */
 var META = {};    /* the signed-in user's user_metadata (first_name, must_change_password) */
 function isStarter(){ return TRACK==="starter"; }
+/* Two ways onto the starter program: a coach-provisioned account (PROVISIONED, fixed at sign-in), or a member
+   who chose it themselves (S.profile.plan). The coach-only extras, shared music and the workout buddy, stay with PROVISIONED. */
+var PROVISIONED = false;
+function canChoosePlan(){ return !PROVISIONED&&userEmail!==ADMIN_EMAIL&&!!(window.STARTER_PHASES&&window.STARTER_PHASES.length); }
 /* Every client can send the coach a question; the coach's own account has nobody to ask. */
 function canAskCoach(){ return !!userEmail&&userEmail!==ADMIN_EMAIL; }
 function firstName(){
@@ -150,6 +154,7 @@ function mergeProfile(p,force){
     if(Array.isArray(p.exRejected[n])) d.exRejected[n.slice(0,80)]=p.exRejected[n].filter(function(x){ return typeof x==="string"; }).slice(0,12).map(function(x){ return x.slice(0,80); });
   });
   if(p.mig1900===true) d.mig1900=true;
+  if(p.plan==="starter"||p.plan==="full") d.plan=p.plan;   /* the program a member chose for themselves */
   /* Exercises the client starred as favourites, and a note left by the last phase change until it is dismissed. */
   d.favs=(Array.isArray(p.favs)?p.favs:[]).filter(function(x){ return typeof x==="string"&&x; }).slice(0,60).map(function(x){ return x.slice(0,80); });
   d.phaseNote=(p.phaseNote&&typeof p.phaseNote==="object"&&typeof p.phaseNote.from==="string"&&typeof p.phaseNote.to==="string")?{from:p.phaseNote.from.slice(0,12),to:p.phaseNote.to.slice(0,12)}:null;
@@ -362,10 +367,21 @@ PROGRAMS.push({
     {n:"Speed Glute Ham Drops",s:2,r:"5",cue:"Resist the fall, do not free-fall into it."},
     {n:"Pull Up Drop",s:2,r:"5",cue:"Catch at the top position and resist the drop."}]}]
 });
+var MAIN_PROGRAMS=PROGRAMS.slice();
 /* The starter track replaces the whole program list with the 3 starter cycles. */
 function useStarterPrograms(){
   PROGRAMS.length=0;
   (window.STARTER_PHASES||[]).forEach(function(ph){ PROGRAMS.push({id:ph.id,name:ph.name,sub:ph.sub,note:ph.note,phase:ph,metric:{label:"Weight",ph:"lb"},days:window.STARTER_DAYS}); });
+}
+function useMainPrograms(){ PROGRAMS.length=0; MAIN_PROGRAMS.forEach(function(x){ PROGRAMS.push(x); }); }
+/* Puts a member on the program they chose. Safe to call again after a sync brings the choice in from another device. */
+function applyPlan(){
+  if(PROVISIONED||!canChoosePlan()) return;
+  var want=S.profile.plan==="starter";
+  if(want&&!isStarter()){ TRACK="starter"; useStarterPrograms(); }
+  else if(!want&&isStarter()){ TRACK=""; useMainPrograms(); }
+  if(!PROGRAMS[S.profile.programIdx]) S.profile.programIdx=0;
+  if(isLockedProgram(S.profile.programIdx)) S.profile.programIdx=lastUnlockedIdx();
 }
 var DEF_FOCUS={ph1:"h",ph2:"h",ph3:"s",ph4:"h",ph5:"s",ph6:"s"};
 function program(){ return PROGRAMS[S.profile.programIdx]||PROGRAMS[0]; }
@@ -421,7 +437,7 @@ function renderEntBar(){
   } else if(ENT&&ENT.nextUnlock&&pos.held){
     msg="You’ve finished your unlocked weeks. Phase "+(ENT.allowed+1)+" unlocks on "+fmtDate(ENT.nextUnlock)+(ENT.kind==="subscription"?" if you keep your membership":"")+".";
   } else if(pos.done&&!pos.held&&(!ENT||ENT.allowed>=phaseCount())){
-    msg=isStarter()?"You finished all 3 cycles. Amazing work! Your coach will set up what comes next. Keep logging in the meantime.":"You’ve finished all six phases. The next cycle of workouts is being written. Keep logging in the meantime.";
+    msg=isStarter()?(PROVISIONED?"You finished all 3 cycles. Amazing work! Your coach will set up what comes next. Keep logging in the meantime.":"You finished all 3 cycles. Amazing work! The full six-day program is there when you want it: tap the cycle name on the Train tab, then Change program."):"You’ve finished all six phases. The next cycle of workouts is being written. Keep logging in the meantime.";
   }
   el.innerHTML=msg; el.hidden=!msg;
 }
@@ -1025,6 +1041,7 @@ function checkSkippedExercises(){
     if(!dd.ex||!dd.ex.length) return;
     var used={}; dd.ex.forEach(function(e){ used[(rep[e.n]||e.n).toLowerCase()]=1; });
     dd.ex.forEach(function(e){
+      if(e.only&&e.only.indexOf(p.id)<0) return;              /* not part of this phase, so it cannot have been skipped */
       if(at[e.n]&&daysBetween(at[e.n],wk[0])<0) return;      /* the current exercise has not had two full weeks yet */
       var rj=rej[e.n]||[], names=[e.n].concat(e.sw||[],rep[e.n]?[rep[e.n]]:[]).filter(function(n){ return rj.indexOf(n)<0||n===rep[e.n]; });
       var skipped=done.every(function(dn){
@@ -1055,16 +1072,31 @@ function toggleFav(n){
   if(was) S.profile.favs=f.filter(function(x){ return x.toLowerCase()!==l; }); else f.push(String(n).slice(0,80));
   persistProfile(); return !was;
 }
+/* ---- Phase rotation (programs.js: ROT_FROM, ROT_SET, each exercise's rot) ----
+   planEx: the exercises a program actually runs on a date. An exercise marked `only` belongs to the listed phases.
+   rotFor: this phase's accessory for a slot, or null. Never before ROT_FROM, and never for a slot whose own exercise is starred. */
+function planEx(p,d,rdate){
+  var from=window.ROT_FROM||"";
+  return (d.ex||[]).filter(function(e){ return !e.only||(e.only.indexOf(p.id)>=0&&rdate>=from); });
+}
+function rotFor(p,e,rdate){
+  var set=(window.ROT_SET||{})[p.id];
+  if(!set||!e.rot||!e.rot[set]||rdate<(window.ROT_FROM||"")||isFav(e.n)) return null;
+  return e.rot[set];
+}
 function buildItems(p,d,wd,rdate){
   var sch=p.phase&&p.phase.scheme, focus=(DEF_FOCUS[p.id]||"h"), swaps=day(rdate).exSwaps||{}, items=[];
-  var taken={}; (d.ex||[]).forEach(function(e){ taken[e.n.toLowerCase()]=1; });
-  (d.ex||[]).forEach(function(e){
-    /* A day that already has sets logged under the planned exercise keeps showing it, so a later star or standing swap never hides old numbers. */
+  var list=planEx(p,d,rdate), taken={};
+  list.forEach(function(e){ taken[e.n.toLowerCase()]=1; var r0n=rotFor(p,e,rdate); if(r0n) taken[r0n.toLowerCase()]=1; });
+  list.forEach(function(e,ei){
+    /* A day that already has sets logged under the slot's own exercise keeps showing it, so a later star, standing swap or rotation never hides old numbers. */
     var pre=wd+"|"+slug(e.n)+"|", had=Object.keys(day(rdate).sets||{}).some(function(k){ return k.indexOf(pre)===0; });
     var fixed=swaps[e.n]||(had?e.n:(S.profile.exReplace||{})[e.n]), fv=fixed?null:favFor(e,taken); if(fv) taken[fv.toLowerCase()]=1;
-    var active=fixed||fv||e.n, it={L:e.L,n:active,origN:e.n,cue:e.cue,sw:e.sw,key:wd+"|"+slug(active)};
+    /* Order of say: a swap for today, a standing swap, a starred exercise, this phase's rotation, then the slot's own exercise. */
+    var planned=rotFor(p,e,rdate)||e.n, active=fixed||fv||planned;
+    var it={L:(e.L?String.fromCharCode(65+ei):e.L),n:active,origN:e.n,planned:planned,cue:(active===e.n?e.cue:((window.ROT_CUES||{})[active]||e.cue)),sw:e.sw,key:wd+"|"+slug(active)};
     if(sch&&e.t){
-      var tier=sch[e.t]||sch.iso, k=(e.t==="main"&&focus==="s"&&tier.s)?tier.s:tier.h;
+      var tier=sch[e.t]||sch.iso, k=(e.t==="main"&&focus==="s"&&tier.s&&!e.hyp)?tier.s:tier.h;
       it.warm=k.w; it.s=k.s; it.r=k.r; it.rest=k.rest; it.tech=k.tech; it.t=e.t;
       if(e.s) it.s=e.s; if(e.r) it.r=e.r; it.bw=!!e.bw;
     } else {
@@ -1213,7 +1245,7 @@ function phaseNoteCard(p){
   });
   var same=!!(fromP&&fromP.days===p.days);
   return "<div class='card' style='margin-top:12px;background:var(--accent-bg)'><p class='eyebrow' style='margin:0 0 6px'>New: "+esc(p.name)+"</p>"+
-    "<p style='margin:0 0 8px'>"+(same?"The exercises stay the same on purpose, so your numbers stay comparable. What changes is how you do them.":"The weekly split changes in this phase, and so do the sets and reps.")+"</p>"+
+    "<p style='margin:0 0 8px'>"+(same?((window.ROT_SET||{})[p.id]&&todayKey()>=(window.ROT_FROM||"")?"Your main lifts stay the same on purpose, so your numbers stay comparable. Some of the accessory exercises change this phase. Anything you starred stays.":"The exercises stay the same on purpose, so your numbers stay comparable. What changes is how you do them."):"The weekly split changes in this phase, and so do the sets and reps.")+"</p>"+
     (rows?"<ul class='small' style='margin:0 0 8px;padding-left:18px'>"+rows+"</ul>":"")+
     (p.note?"<p class='small muted' style='margin:0 0 10px'>"+esc(p.note)+"</p>":"")+"<button class='btn ghost sm' id='phaseNoteX'>Got it</button></div>";
 }
@@ -1306,7 +1338,7 @@ function renderTrain(){
           "<button class='linkbtn' data-unpair='"+ix+"'>Unpair "+esc(pr.n)+"</button></div>";
       }
       var opts=[it.origN].concat(it.sw||[]);
-      h+="<div class='ex-foot'>"+(pr?"":"<button class='linkbtn' data-openpair='"+ix+"'>Pair with another exercise</button>")+(it.extra?"<button class='linkbtn' data-rmx='"+esc(it.xid)+"'>Remove this exercise</button>":"<button class='linkbtn' data-swap='"+ix+"'>"+(it.n!==it.origN?"Doing: "+esc(it.n)+" — change":"Can’t do this one? Swap")+"</button>")+
+      h+="<div class='ex-foot'>"+(pr?"":"<button class='linkbtn' data-openpair='"+ix+"'>Pair with another exercise</button>")+(it.extra?"<button class='linkbtn' data-rmx='"+esc(it.xid)+"'>Remove this exercise</button>":"<button class='linkbtn' data-swap='"+ix+"'>"+(it.n!==(it.planned||it.origN)?"Doing: "+esc(it.n)+" — change":"Can’t do this one? Swap")+"</button>")+
         "<button class='linkbtn' data-fav='"+ix+"' aria-pressed='"+isFav(it.n)+"'>"+(isFav(it.n)?"★ You love this one":"☆ I love this one")+"</button></div></div>";
     }
     h+="</div>";
@@ -1328,7 +1360,7 @@ function mountMusic(panel){
 /* Workout buddy: a small one-line toggle. You and your coach see each other's recent workouts (name, day, sets done).
    Nothing else is shared: no food, weight, notes or injuries. Saved to plate_shared (starter-buddy.sql). */
 var buddy={others:[],saved:"",timer:0,open:false};
-function buddyOn(){ return !DEV&&uid&&(isStarter()||userEmail===ADMIN_EMAIL); }
+function buddyOn(){ return !DEV&&uid&&(PROVISIONED||userEmail===ADMIN_EMAIL); }
 function buddyTitle(k){
   try{
     if(S.days[k]&&S.days[k].free) return "Freestyle workout";
@@ -1349,7 +1381,7 @@ function buddyMine(){
 }
 function buddySave(){
   var mine=buddyMine(), s=JSON.stringify(mine); if(s===buddy.saved) return; buddy.saved=s;
-  supabaseClient.from("plate_shared").upsert({user_id:uid,name:isStarter()?firstName():"Sarah",is_coach:userEmail===ADMIN_EMAIL,items:mine,updated_at:new Date().toISOString()})
+  supabaseClient.from("plate_shared").upsert({user_id:uid,name:PROVISIONED?firstName():"Sarah",is_coach:userEmail===ADMIN_EMAIL,items:mine,updated_at:new Date().toISOString()})
     .then(function(r){ if(r&&r.error) buddy.saved=""; },function(){ buddy.saved=""; });
 }
 function buddyPull(){
@@ -1466,23 +1498,23 @@ function openSwap(it,rd){
     var v=((S.days[k]||{}).exSwaps||{})[it.origN];
     if(typeof v==="string"&&v&&!seen[v.toLowerCase()]){ seen[v.toLowerCase()]=1; opts.push(v); }
   });
-  var standing=(S.profile.exReplace||{})[it.origN];
+  var standing=(S.profile.exReplace||{})[it.origN], plan=it.planned||it.origN;   /* plan = what this phase calls for in this slot */
   openSheet("Swap exercise","<p class='muted small'>Your numbers save against whichever you pick."+(standing?" You chose "+esc(standing)+" for every time.":"")+"</p><div class='list'>"+
-    opts.map(function(x,i){ return "<button class='item' data-o='"+i+"'><span class='t'>"+(isFav(x)?"★ ":"")+esc(x)+(x===it.n?"<small>Current</small>":(x===it.origN?"<small>The planned exercise</small>":(i>=base?"<small>Added by you</small>":"")))+"</span></button>"; }).join("")+"</div>"+
+    opts.map(function(x,i){ return "<button class='item' data-o='"+i+"'><span class='t'>"+(isFav(x)?"★ ":"")+esc(x)+(x===it.n?"<small>Current</small>":(x===plan?"<small>The planned exercise</small>":(i>=base?"<small>Added by you</small>":"")))+"</span></button>"; }).join("")+"</div>"+
     "<input class='field' id='sw' placeholder='Something else…' style='margin-top:12px'>","<button class='btn' id='sws'>Use what I typed</button>");
   /* Just today: saved on this day only. Every time: saved on the profile, so the swap is still there next week and next phase. */
   function applyPick(name,always){
     var ex=day(rd).exSwaps, rep=S.profile.exReplace=S.profile.exReplace||{};
     if(always){
       delete ex[it.origN];
-      if(name===it.origN){ delete rep[it.origN]; if(favFor({n:it.origN,sw:it.sw},{})) ex[it.origN]=it.origN; } else rep[it.origN]=name;
+      if(name===plan){ delete rep[it.origN]; if(favFor({n:it.origN,sw:it.sw},{})) ex[it.origN]=plan; } else rep[it.origN]=name;
       persistProfile();
     } else {
       /* Picking the planned exercise for today has to be stored when a standing swap or a favourite would otherwise override it. */
-      if(name===it.origN&&!rep[it.origN]&&!favFor({n:it.origN,sw:it.sw},{})) delete ex[it.origN]; else ex[it.origN]=name;
+      if(name===plan&&!rep[it.origN]&&!favFor({n:it.origN,sw:it.sw},{})) delete ex[it.origN]; else ex[it.origN]=name;
     }
     persistDay(rd); closeSheet();
-    toast(always?(name===it.origN?"Back to "+name+" every time":name+" every time, until you change it"):name+" for today");
+    toast(always?(name===plan?"Back to the plan: "+name:name+" every time, until you change it"):name+" for today");
   }
   function pick(name){
     openSheet("Use "+name,"<p style='margin:0 0 6px'>Just for today, or every time this exercise comes up?</p><p class='muted small' style='margin:0'>Every time keeps the swap next week and in later phases. You can change it back from the same Swap link.</p>",
@@ -1511,6 +1543,7 @@ function openPhaseSheet(){
   } else if(p.phase&&p.phase.targets){ var T=p.phase.targets;
     body+="<p class='eyebrow' style='margin:18px 0 8px'>Daily targets</p><div class='tgt4'><div><b>"+T.k+"</b><span>kcal</span></div><div><b>"+T.p+"</b><span>protein</span></div><div><b>"+T.c+"</b><span>carbs</span></div><div><b>"+T.f+"</b><span>fat</span></div></div>"+
       "<button class='btn ghost sm' id='useT' style='margin-top:10px' "+(sameTargets(T,S.profile.targets)?"disabled":"")+">"+(sameTargets(T,S.profile.targets)?"In use":"Use these targets")+"</button>"; }
+  if(canChoosePlan()) body+="<p class='eyebrow' style='margin:18px 0 8px'>Your program</p><p class='muted small' style='margin:0 0 8px'>You are on the "+(isStarter()?"Starter program, 4 days a week":"Full program, 6 days a week")+".</p><button class='btn ghost sm' id='chgPlan'>Change program</button>";
   body+="<p class='eyebrow' style='margin:18px 0 8px'>Program start date</p><input class='field' type='date' id='pstart' value='"+esc(S.profile.programStart)+"'>";
   openSheet("Phase & workout",body);
   var B=$("shBody");
@@ -1518,6 +1551,7 @@ function openPhaseSheet(){
   B.querySelectorAll("[data-l]").forEach(function(b){ b.onclick=function(){ S.profile.plyoLevel=+b.dataset.l; persistProfile(); closeSheet(); }; });
   B.querySelectorAll("[data-w]").forEach(function(b){ b.onclick=function(){ var dd=cur(); dd.wd=(+b.dataset.w===wdIndex(S.date))?null:+b.dataset.w; persistDay(S.date); S.openEx=null; closeSheet(); }; });
   var rc=$("recalc"); if(rc) rc.onclick=function(){ openOnboarding(false); };
+  var cp=$("chgPlan"); if(cp) cp.onclick=function(){ openPlanChooser(false); };
   var shw=$("shiftWeek"); if(shw) shw.onclick=function(){ shiftWeekFrom(S.date); };
   var ut=$("useT"); if(ut) ut.onclick=function(){ var T=p.phase.targets; S.profile.targets={k:T.k,p:T.p,c:T.c,f:T.f}; persistProfile(); closeSheet(); toast("Targets updated"); };
   $("pstart").onchange=function(){
@@ -2361,10 +2395,40 @@ function openOnboarding(first){
     persistProfile(); closeSheet(); toast("Targets set: "+T.k+" kcal · "+T.p+" g protein");
   };
 }
+/* ---- Choosing a program: the 4-day starter or the full 6-day program ----
+   Asked once, before the targets sheet, and reachable later from the Phase & workout sheet. */
+function openPlanChooser(first){
+  var now=isStarter()?"starter":"full";
+  function opt(id,title,lines){
+    return "<button class='item' data-plan='"+id+"' style='text-align:left;align-items:flex-start'><span class='t'><b>"+title+"</b>"+(!first&&id===now?"<small>Your program now</small>":"")+
+      "<span class='muted small' style='display:block;margin-top:4px;font-weight:400'>"+lines+"</span></span></button>";
+  }
+  openSheet(first?"Which program fits you right now?":"Change program",
+    "<p class='muted' style='margin:0 0 12px'>"+(first?"Both are included in your plan. Pick the one that fits where you are today.":"Both are included in your plan.")+"</p><div class='list'>"+
+    opt("starter","Starter · 4 days a week","For anyone new to lifting or coming back after a break. Two 75-minute sessions and two 30-minute sessions a week, for 12 weeks. Built around dumbbells, a cable machine and a bar, with swaps on every move.")+
+    opt("full","Full program · 6 days a week","For anyone who has been lifting steadily for about six months. Six gym sessions a week across six phases, for 24 weeks.")+
+    "</div><p class='muted small' style='margin:12px 0 0'>You can switch any time. "+(first?"":"Switching starts the other program at Week 1 today. ")+"Everything you have logged is kept.</p>");
+  $("shBody").querySelectorAll("[data-plan]").forEach(function(b){ b.onclick=function(){ setPlan(b.dataset.plan,first); }; });
+}
+function setPlan(plan,first){
+  var P=S.profile, was=isStarter()?"starter":"full", prev={plan:P.plan,start:P.programStart,idx:P.programIdx,note:P.phaseNote};
+  P.plan=plan;
+  if(plan!==was){ P.programStart=todayKey(); P.programIdx=0; P.phaseNote=null; S.openEx=null; applyPlan(); }
+  persistProfile();
+  if(first){ renderAll(); openOnboarding(true); return; }
+  closeSheet();
+  if(plan===was) return;
+  toast("Switched to the "+(plan==="starter"?"Starter":"Full")+" program. Week 1 starts today.","Undo",function(){
+    P.plan=prev.plan; P.programStart=prev.start; P.programIdx=prev.idx; P.phaseNote=prev.note; applyPlan();
+    if(PROGRAMS[prev.idx]) P.programIdx=prev.idx;
+    persistProfile(); renderAll();
+  });
+}
 function maybeOnboard(){
   var legacy=S.profile.onboarded===undefined&&Object.keys(S.days).some(function(k){ return k<todayKey()&&hasActivity(k); });
   if(S.profile.onboarded===true||legacy) return;
-  if($("scrim").hidden) openOnboarding(true);
+  if(!$("scrim").hidden) return;
+  if(canChoosePlan()&&!S.profile.plan) openPlanChooser(true); else openOnboarding(true);
 }
 
 /* ================= boot ================= */
@@ -2467,21 +2531,24 @@ function checkAccess(){
 function start(u){
   uid=u.uid; userEmail=u.email; ENT=u.ent||null; if(ENT&&ENT.readOnly) document.body.classList.add("ro");
   if(u.track==="starter"){
-    TRACK="starter"; META=u.meta||{}; useStarterPrograms();
+    TRACK="starter"; PROVISIONED=true; META=u.meta||{}; useStarterPrograms();
     var bk=document.querySelector(".back"); if(bk) bk.style.display="none";   /* no membership portal for this account */
-    try{ var lv=localStorage.getItem("pc_last_"+uid); S.visitGap=lv?daysBetween(lv,todayKey()):null; localStorage.setItem("pc_last_"+uid,todayKey()); }catch(e){ S.visitGap=null; }
   }
+  /* Days since the last visit, for the starter welcome card's greeting. */
+  try{ var lv=localStorage.getItem("pc_last_"+uid); S.visitGap=lv?daysBetween(lv,todayKey()):null; localStorage.setItem("pc_last_"+uid,todayKey()); }catch(e){ S.visitGap=null; }
   lsLoad();
+  applyPlan();
   if(isLockedProgram(S.profile.programIdx)) S.profile.programIdx=lastUnlockedIdx();
   document.body.style.visibility="visible";
   if(!S.profile.programStart) S.profile.programStart=todayKey();   /* a new client's Week 1 starts the day they begin */
-  if(window.PCSpotify&&!DEV) PCSpotify.init({sb:supabaseClient,uid:uid,name:isStarter()?firstName():"Sarah",isCoach:userEmail===ADMIN_EMAIL,enabled:isStarter()||userEmail===ADMIN_EMAIL});
+  if(window.PCSpotify&&!DEV) PCSpotify.init({sb:supabaseClient,uid:uid,name:PROVISIONED?firstName():"Sarah",isCoach:userEmail===ADMIN_EMAIL,enabled:PROVISIONED||userEmail===ADMIN_EMAIL});
   maybeAdvance(); renderAll();
   pull().then(function(){
     if(!S.profile.programStart) S.profile.programStart=todayKey();
+    applyPlan();   /* a program chosen on another device arrives with the sync */
     /* Everyone's name and email go on their profile so the coach dashboard can list them and show their questions. */
     if(userEmail!==ADMIN_EMAIL){
-      var wantTrack=isStarter()?"starter":(S.profile.track||"");
+      var wantTrack=isStarter()?"starter":(S.profile.plan==="full"?"full":(S.profile.track||""));
       if(S.profile.name!==firstName()||S.profile.email!==userEmail||(S.profile.track||"")!==wantTrack){ S.profile.name=firstName(); S.profile.email=userEmail; if(wantTrack) S.profile.track=wantTrack; persistProfile(); }
     }
     maybeAdvance(); maybeOnboard();
