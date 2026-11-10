@@ -14,7 +14,7 @@
   <header class="site-header">
     <div class="wrap">
       <a class='logo' href='/' style='text-decoration:none; color:inherit;'>Tenfold</a>
-      <nav class="primary-nav">
+      <nav class="primary-nav portal-nav" aria-label="Account">
         <span style="color:var(--text-primary); font-weight:500;">Dashboard</span>
         <a href='/admin-dashboard' id='admin-link' style='display:none;'>Admin dashboard</a>
         <a href="#" id="logout-link">Log out</a>
@@ -32,6 +32,31 @@
     <!-- Honest status: says Saved only after it is true. Screen readers hear changes. -->
     <p id="status-line" class="status-line" role="status" aria-live="polite"></p>
 
+    <!-- Shown until the first workout is logged and the starting snapshot is done: one clear place to begin -->
+    <section id="get-started" style="display:none; border-top:none; padding-top:0;">
+      <div class="card" style="background:var(--accent-bg);">
+        <p class="label">Start here</p>
+        <p class="value" style="margin-bottom:10px;">Three steps to get going</p>
+        <ol style="margin:0; padding-left:20px; line-height:1.9; font-size:15px; color:var(--text-secondary);">
+          <li id="gs-assessment"><a href="assessment.html" style="color:var(--accent); text-decoration:underline;">Take your starting snapshot</a>. Seven questions, about three minutes.</li>
+          <li><a href="plate-count/index.html" style="color:var(--accent); text-decoration:underline;">Open today's session in Plate Count</a>. That is where your program lives.</li>
+          <li>New to lifting, or no gym today? Use the <a href="#quick-workout" style="color:var(--accent); text-decoration:underline;">quick workout</a> below instead.</li>
+        </ol>
+        <p class="small" style="margin:10px 0 0;">There is no deadline on any of this. Start with whichever one you have time for.</p>
+      </div>
+    </section>
+
+    <section style="border-top:none; padding-top:0;">
+      <div class="card" id="plate-count-card" style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:220px;">
+          <p class="label">Plate Count</p>
+          <p class="value" style="margin-bottom:4px;">Your program lives here. Today's session, your lifts and your meals, in one app.</p>
+          <p class="small" style="margin:0;">Works offline. Add it to your phone's home screen to use it like an app.</p>
+        </div>
+        <a href="plate-count/index.html" class="btn btn-primary btn-sm">Open today's session</a>
+      </div>
+    </section>
+
     <section style="border-top:none; padding-top:0;">
       <div class="grid dash-grid">
         <div class="card">
@@ -48,17 +73,6 @@
           <p class="value" style="margin-bottom:10px;">Pay for a session or package</p>
           <button class="btn btn-sm" id="open-billing">Make a payment</button>
         </div>
-      </div>
-    </section>
-
-    <section style="border-top:none; padding-top:0;">
-      <div class="card" id="plate-count-card" style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
-        <div style="flex:1; min-width:220px;">
-          <p class="label">Plate Count</p>
-          <p class="value" style="margin-bottom:4px;">Log your meals and training in one place.</p>
-          <p class="small" style="margin:0;">Works offline. Add it to your phone's home screen to use it like an app.</p>
-        </div>
-        <a href="plate-count/index.html" class="btn btn-primary btn-sm">Open Plate Count</a>
       </div>
     </section>
 
@@ -105,11 +119,11 @@
       <p class="small" style="margin-bottom:12px;">It gives your plan a real starting point. Your profile will show up under Progress.</p>
       <a href="assessment.html" class="btn btn-primary btn-sm">Take assessment</a>
     </div>
-    <section>
-      <h2>Daily workout</h2>
+    <section id="quick-workout">
+      <h2>Quick workout (no gym needed)</h2>
       <div class="tool-box">
         <p class="small" style="margin-bottom:4px;" id="workout-focus-label">Loading today's focus...</p>
-        <p class="small" style="margin-bottom:12px;">Pick your equipment to build today's workout.</p>
+        <p class="small" style="margin-bottom:12px;">A shorter session for days you cannot get to your program, or a gentler place to start. Pick your equipment to build it.</p>
         <div id="workout-equipment-choices" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;">
           <button class="btn btn-sm workout-choice" data-equipment="Resistance bands">Resistance bands</button>
           <button class="btn btn-sm workout-choice" data-equipment="Dumbbells">Dumbbells</button>
@@ -393,13 +407,28 @@
     }
 
     // Greet by name when we have it. Never show the start of an email address.
+    // Greeting and first steps. "Welcome back" only once there is something to come back to.
+    let firstName = '', hasLogs = false, logsLoaded = false, needsAssessment = false, assessmentDone = false;
+    function renderGreeting() {
+      const hello = (logsLoaded && !hasLogs) ? 'Welcome' : 'Welcome back';
+      document.getElementById('welcome-name').textContent = firstName ? hello + ', ' + firstName : hello;
+      if (logsLoaded && !hasLogs) document.getElementById('welcome-note').textContent = "You're in. Here is where to begin.";
+    }
+    function renderGetStarted() {
+      const show = needsAssessment || (logsLoaded && !hasLogs);
+      document.getElementById('get-started').style.display = show ? 'block' : 'none';
+      if (assessmentDone) {
+        document.getElementById('gs-assessment').innerHTML = 'Starting snapshot: done. It is under Progress.';
+      }
+    }
+
     async function loadWelcome(email) {
       let name = '';
       try {
         const { data } = await supabaseClient.from('client_profiles').select('name').eq('email', email).limit(1);
         if (data && data.length && data[0].name) name = data[0].name.trim().split(/\s+/)[0];
       } catch (e) { /* fall back to a plain greeting */ }
-      document.getElementById('welcome-name').textContent = name ? 'Welcome back, ' + name : 'Welcome back';
+      firstName = name; renderGreeting();
     }
 
     async function getAuthToken() {
@@ -458,13 +487,14 @@
 
       const box = document.getElementById('profile-box');
       if (!assessments || !assessments.length) {
-        document.getElementById('first-run').style.display = 'block';
+        needsAssessment = true; renderGetStarted();
         box.innerHTML = `
           <p class="small" style="margin-bottom:12px;">You haven't taken your starting assessment yet.</p>
           <a href="assessment.html" class="btn btn-primary btn-sm">Take assessment</a>
         `;
         return;
       }
+      assessmentDone = true; renderGetStarted();
 
       const a = assessments[0];
       const chartHtml = drawRadarChart({
@@ -647,6 +677,7 @@
     }
 
     let selectedSlotISO = null;
+    let selectedSlotLabel = '';
     let rescheduleApptId = null; // set when rescheduling an existing appointment
     let selectedLocation = 'Virtual';
 
@@ -668,7 +699,8 @@
       submitBtn.disabled = true;
       picker.innerHTML = '<p class="small">Loading available times...</p>';
 
-      const allSlots = generateSlotsForDate(dateStr);
+      // Never offer a time that has already passed today
+      const allSlots = generateSlotsForDate(dateStr).filter(s => s.getTime() > Date.now());
       if (!allSlots.length) {
         picker.innerHTML = '<p class="small">Sarah isn\'t available on this day. Please pick another date.</p>';
         return;
@@ -718,6 +750,7 @@
           document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
           btn.classList.add('selected');
           selectedSlotISO = slot.toISOString();
+          selectedSlotLabel = slot.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' }) + ' at ' + slot.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
           submitBtn.disabled = false;
         });
         grid.appendChild(btn);
@@ -872,6 +905,10 @@
         return;
       }
 
+      // Off while saving so a double tap cannot book twice. Picking a time turns it back on.
+      const bookBtn = this;
+      bookBtn.disabled = true;
+
       const { data: sessionData } = await supabaseClient.auth.getSession();
       const email = sessionData.session.user.email;
       const notes = document.getElementById('appt-notes').value.trim();
@@ -896,6 +933,7 @@
         errorEl.textContent = "We couldn't book that time just now. Please check your connection and try again, or pick another time.";
         errorEl.style.display = 'block';
         setStatus("Couldn't book. Nothing was saved.", 'warn');
+        bookBtn.disabled = false;
         return;
       }
       setStatus('Booked and saved.', 'saved');
@@ -922,8 +960,8 @@
       }
 
       successEl.textContent = selectedLocation === 'In-person'
-        ? 'Booked and saved. Check your email for the details.'
-        : "Booked! You'll get your Google Meet link by email shortly.";
+        ? 'Booked for ' + selectedSlotLabel + '. Check your email for the details.'
+        : 'Booked for ' + selectedSlotLabel + '. Your video call link is on its way by email.';
       successEl.style.display = 'block';
       rescheduleApptId = null;
       loadNextAppointment(email);
@@ -1053,7 +1091,7 @@
             </div>
           `;
         } catch (err) {
-          errorEl.textContent = err.message;
+          console.error(err); errorEl.textContent = "We couldn't build your workout just now. Please check your connection and try again.";
           errorEl.style.display = 'block';
         } finally {
           allButtons.forEach(b => b.disabled = false);
@@ -1112,6 +1150,7 @@
       }
 
       const dates = logs.map(l => l.log_date);
+      hasLogs = dates.length > 0; logsLoaded = true; renderGreeting(); renderGetStarted();
       document.getElementById('week-lookback-text').textContent = weekLookbackText(dates);
 
       // Gentle welcome back after a few days away. Nothing to catch up on.
@@ -1225,7 +1264,7 @@
           </div>
         `).join('');
       } catch (err) {
-        errorEl.textContent = err.message;
+        console.error(err); errorEl.textContent = "We couldn't load recipe ideas just now. Please check your connection and try again.";
         errorEl.style.display = 'block';
       } finally {
         btn.disabled = false;
@@ -1313,7 +1352,7 @@
         document.getElementById('restaurant-add-form').style.display = 'none';
         loadRestaurants(email);
       } catch (err) {
-        errorEl.textContent = err.message;
+        console.error(err); errorEl.textContent = "We couldn't save that just now. Please check your connection and try again. Nothing was lost.";
         errorEl.style.display = 'block';
       } finally {
         btn.disabled = false;

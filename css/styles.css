@@ -195,6 +195,12 @@ nav.primary-nav a.current { color: var(--text-primary); font-weight: 500; }
   nav.primary-nav a { width: 100%; padding: 10px 0; }
   nav.primary-nav .pill-link { width: 100%; text-align: center; margin-top: 8px; }
   nav.primary-nav .instagram-link { padding: 10px 0; }
+  /* Signed-in pages have two or three links and no menu button, so the links stay in the header row */
+  nav.primary-nav.portal-nav {
+    display: flex; position: static; flex-direction: row; align-items: center;
+    gap: 16px; background: none; border-bottom: none; padding: 0;
+  }
+  nav.primary-nav.portal-nav a { width: auto; padding: 12px 0; }
 }
 
 /* ---- Buttons: sharp, architectural ---- */
@@ -619,6 +625,14 @@ table.compare thead th:not(:first-child) { text-align: center; }
 .bleed-band .ten-mark-gold { color: #E3C477; }
 .lead-band .ten-mark-gold, .gate-box .ten-mark-gold { color: var(--accent); }
 table.compare .c-price { display: block; font-weight: 500; color: var(--accent); font-size: 12px; margin-top: 2px; }
+/* Row labels stay in view while the plan columns scroll sideways on a phone */
+table.compare tbody th, table.compare thead th:first-child { position: sticky; left: 0; z-index: 1; }
+table.compare tbody th { background: var(--surface-2); }
+.compare-hint { display: none; margin: 0 0 8px; font-size: 13px; color: var(--text-secondary); }
+@media (max-width: 640px) { .compare-hint { display: block; } }
+.next-steps { background: var(--accent-bg); border: 1px solid var(--border); padding: 18px 20px; margin: 24px 0 0; }
+.next-steps h2 { font-size: 16px; margin: 0 0 8px; }
+.next-steps ol { margin: 0; padding-left: 20px; font-size: 15px; color: var(--text-secondary); line-height: 1.7; }
 .compare-note { margin: 10px 0 0; color: var(--text-secondary); }
 .compare-note .yes, .compare-note .no { font-size: 16px; }
 

@@ -26,7 +26,7 @@
   <main class="wrap" style="max-width:600px;">
     <div style="padding:32px 0 8px;">
       <h1 style="font-size:24px;">Schedule your first coaching check-in</h1>
-      <p>To get started right away, book within the next 3 days. If that doesn't work with your schedule, feel free to pick a date further out — whatever works for you.</p>
+      <p>Pick any time that suits you. Sooner just means we start sooner. The check-in is 45 minutes.</p>
     </div>
 
     <div class="tool-box" id="schedule-form-wrap">
@@ -92,7 +92,7 @@
       submitBtn.disabled = true;
       picker.innerHTML = '<p class="small">Loading available times...</p>';
 
-      const allSlots = generateSlotsForDate(dateStr);
+      const allSlots = generateSlotsForDate(dateStr).filter(s => s.getTime() > Date.now());
       if (!allSlots.length) {
         picker.innerHTML = '<p class="small">Sarah isn\'t available on this day. Please pick another date.</p>';
         return;

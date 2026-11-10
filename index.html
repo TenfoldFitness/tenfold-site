@@ -129,7 +129,7 @@
         </div>
 
         <div class="choose-panel" id="p-session" hidden>
-          <p class="panel-line">Monday of the real program, start to finish. Your email, nothing else.</p>
+          <p class="panel-line">Monday of the real program, start to finish. Your email, nothing else. It is an intermediate gym session, so if you are new to lifting, the free call is the better first step.</p>
           <a href="sample-workout.html" class="btn btn-primary">Get the free session</a>
         </div>
         <div class="choose-panel" id="p-call" hidden>
@@ -160,7 +160,7 @@
             <p class="label">3. Virtual or in-person?</p>
             <div class="quiz-choices" role="group">
               <button type="button" class="quiz-choice" data-val="virtual" aria-pressed="false">Virtual works great</button>
-              <button type="button" class="quiz-choice" data-val="inperson" aria-pressed="false">I'd like in-person</button>
+              <button type="button" class="quiz-choice" data-val="inperson" aria-pressed="false">I'd like in-person (Pawtucket, RI)</button>
             </div>
           </div>
 
@@ -170,7 +170,8 @@
             <p id="quiz-tier-name" style="font-size:20px; font-weight:600; margin-bottom:6px; color:var(--accent);"></p>
             <p id="quiz-includes" class="small" style="margin:0 0 10px;"></p>
             <p id="quiz-clarifier" class="small" style="display:none; margin-bottom:14px;"></p>
-            <a href="#" id="quiz-cta" class="btn btn-primary btn-sm">See this package</a>
+            <a href="#" id="quiz-cta" class="btn btn-primary btn-sm">Start with this plan</a>
+            <p class="small" style="margin:12px 0 0;">Not ready to choose? <a href="pricing.html" style="color:var(--accent); text-decoration:underline;">Compare every plan</a> or <a href="consultation.html" style="color:var(--accent); text-decoration:underline;">talk it through on a free call</a>.</p>
           </div>
         </div>
 
@@ -218,11 +219,19 @@
         <h2 class="center" style="margin-bottom:1.25rem;">Questions people ask before starting</h2>
         <div class="faq-item">
           <button type="button" class="faq-q" aria-expanded="false">Do I need any equipment? <span class="faq-arrow" aria-hidden="true">&#9660;</span></button>
-          <p class="faq-a">Not necessarily. Programs can be built around resistance bands, dumbbells, or just your bodyweight, whatever you have access to.</p>
+          <p class="faq-a">Not necessarily. The portal builds a daily workout around resistance bands, dumbbells, or just your bodyweight, whatever you have access to. The full Maximum Strength and Size program is written for a gym, and every lift has swaps for missing equipment.</p>
         </div>
         <div class="faq-item">
           <button type="button" class="faq-q" aria-expanded="false">What if I'm not "in shape" yet? <span class="faq-arrow" aria-hidden="true">&#9660;</span></button>
-          <p class="faq-a">That's exactly who this is for. Every plan starts from where you actually are, not where you think you should be.</p>
+          <p class="faq-a">That's exactly who this is for. Every plan starts from where you actually are, not where you think you should be. If you are new to lifting, start with the shorter daily workout in the portal. The full gym program is there when you want it.</p>
+        </div>
+        <div class="faq-item">
+          <button type="button" class="faq-q" aria-expanded="false">What if I miss a day? <span class="faq-arrow" aria-hidden="true">&#9660;</span></button>
+          <p class="faq-a">Then you missed a day, and that is all it is. Nothing resets and there are no streaks to lose. You pick up at the next session, and you can move a workout to another day in the app.</p>
+        </div>
+        <div class="faq-item">
+          <button type="button" class="faq-q" aria-expanded="false">What happens after I join? <span class="faq-arrow" aria-hidden="true">&#9660;</span></button>
+          <p class="faq-a">Three things. You create your login and pay, which takes about two minutes. You answer seven quick questions so your plan starts where you are. Then you open today's session. On plans with coaching, you also pick a time for your first call.</p>
         </div>
         <div class="faq-item">
           <button type="button" class="faq-q" aria-expanded="false">Can I change or cancel my plan later? <span class="faq-arrow" aria-hidden="true">&#9660;</span></button>
@@ -247,8 +256,8 @@
             <div class="pm-head"><span class="pm-price">$20<small>/month</small></span><span class="pm-name">Foundation</span></div>
             <ul class="pm-list">
               <li>The full Maximum Strength and Size program, day by day</li>
-              <li>Every lift at three tiers, so a limitation changes the lift, not the plan</li>
-              <li>Fridge-to-recipe and restaurant macro tools</li>
+              <li>Every lift in three versions, so an injury or missing equipment changes the lift, not the plan</li>
+              <li>Tools that turn what is in your fridge into meal ideas and estimate restaurant meals</li>
               <li>A session log that keeps your own check-ins</li>
             </ul>
             <p class="pm-note">Cancel anytime. No contract, no cancellation fee. Coaching calls are on the higher plans.</p>
@@ -315,16 +324,16 @@
 
       if (support === 'self') {
         tierLabel = 'Foundation — $20/mo';
-        ctaHref = 'signup.html?tier=1'; ctaText = 'See this plan';
+        ctaHref = 'signup.html?tier=1'; ctaText = 'Start with this plan';
       } else if (support === 'regular' && setting === 'virtual') {
         tierLabel = 'Guided — $100/mo';
-        ctaHref = 'signup.html?tier=2'; ctaText = 'See this plan';
+        ctaHref = 'signup.html?tier=2'; ctaText = 'Start with this plan';
       } else if (support === 'weekly' && setting === 'virtual') {
         tierLabel = 'Virtual Intensive — $1,000 / 12 wks';
-        ctaHref = 'signup.html?tier=3'; ctaText = 'See this package';
+        ctaHref = 'signup.html?tier=3'; ctaText = 'Start with this package';
       } else {
         tierLabel = 'In-Person Starter — $850 / 12 wks';
-        ctaHref = 'signup.html?tier=4'; ctaText = 'See this package';
+        ctaHref = 'signup.html?tier=4'; ctaText = 'Start with this package';
         clarifier = "That is one in-person session a week for twelve weeks, about $71 a session. Twice and three times a week are also priced on the pricing page. If you would rather talk it through first, book a free call.";
       }
 
