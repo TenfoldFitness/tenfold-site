@@ -150,6 +150,9 @@ function mergeProfile(p,force){
     if(Array.isArray(p.exRejected[n])) d.exRejected[n.slice(0,80)]=p.exRejected[n].filter(function(x){ return typeof x==="string"; }).slice(0,12).map(function(x){ return x.slice(0,80); });
   });
   if(p.mig1900===true) d.mig1900=true;
+  /* Exercises the client starred as favourites, and a note left by the last phase change until it is dismissed. */
+  d.favs=(Array.isArray(p.favs)?p.favs:[]).filter(function(x){ return typeof x==="string"&&x; }).slice(0,60).map(function(x){ return x.slice(0,80); });
+  d.phaseNote=(p.phaseNote&&typeof p.phaseNote==="object"&&typeof p.phaseNote.from==="string"&&typeof p.phaseNote.to==="string")?{from:p.phaseNote.from.slice(0,12),to:p.phaseNote.to.slice(0,12)}:null;
   if(p.injuries&&typeof p.injuries==="object") d.injuries={
     areas:(Array.isArray(p.injuries.areas)?p.injuries.areas:[]).filter(function(a){ return typeof a==="string"; }).slice(0,12).map(function(a){ return a.slice(0,30); }),
     notes:typeof p.injuries.notes==="string"?p.injuries.notes.slice(0,500):""};
@@ -434,12 +437,15 @@ function weekShiftOK(k){
 function missedYesterday(rd){
   if(rd!==todayKey()||!weekShiftOK(rd)) return null;
   var yk=shiftKey(rd,-1), pd=daysFor(PROGRAMS[programPos(yk).idx]||program(),yk);
+  if(S.profile.programStart&&yk<S.profile.programStart) return null;   /* nothing was missed before the program began */
   if(pd.length<7) return null;
   var y=pd[Math.min(workoutIdx(yk),pd.length-1)];
   return (y&&!y.rest&&!trained(yk))?y:null;
 }
 function shiftOption(){
   if(!weekShiftOK(S.date)) return "";
+  /* The shift works by using up Sunday's rest day. A plan that trains on Sunday would silently lose that workout. */
+  var sd=daysFor(program(),S.date); if(sd.length<7||!sd[6]||!sd[6].rest) return "";
   var prevName=prettyDate(shiftKey(S.date,-1),{weekday:"long"});
   return "<p class='eyebrow' style='margin:18px 0 8px'>Missed a day?</p>"+
     "<button class='btn ghost sm' id='shiftWeek'>Move the rest of this week one day later</button>"+
@@ -467,12 +473,13 @@ function maybeAdvance(){
   var prevIdx=S.profile.programIdx, prevT=Object.assign({},S.profile.targets);
   var from=cp.phase, to=PROGRAMS[pos.idx].phase;
   S.profile.programIdx=pos.idx;
+  S.profile.phaseNote={from:cp.id,to:PROGRAMS[pos.idx].id};   /* shown on Train until dismissed, so the change is explained and not just flashed */
   /* A client who set their own goal keeps their own targets; phase targets only auto-apply to legacy profiles. */
   var retarget=!S.profile.goal&&to.targets&&!sameTargets(from.targets,to.targets);
   if(retarget) S.profile.targets={k:to.targets.k,p:to.targets.p,c:to.targets.c,f:to.targets.f};
   persistProfile(); softRender();
   toast("Moved to "+PROGRAMS[pos.idx].name+(retarget?" — targets now "+S.profile.targets.k+" kcal":""),"Undo",function(){
-    S.profile.programIdx=prevIdx; S.profile.targets=prevT; persistProfile(); renderAll();
+    S.profile.programIdx=prevIdx; S.profile.targets=prevT; S.profile.phaseNote=null; persistProfile(); renderAll();
   });
 }
 function workoutIdx(k){ var d=day(k); return d.wd!=null?d.wd:wdIndex(k); }
@@ -608,12 +615,17 @@ function statusMsg(t,burn){
   var dt=diff===0?"On target":(diff>0?"+"+r0(diff)+" kcal over":"−"+r0(-diff)+" kcal under");
   if(t.k===0) return {cls:"mid",msg:"Nothing logged yet. Today's target is "+target+" kcal and "+TG.p+" g protein."};
   var pm=pLeft>12?r0(pLeft)+" g of protein left to cover.":"Protein is covered.";
-  if(block==="cut"){
-    if(diff>150) return {cls:"warn",msg:dt+" against your cut target. A surplus is what stalls a cut — bring the rest of today down if you can."};
-    if(diff>-600) return {cls:"ok",msg:dt+" against target. "+pm};
-    return {cls:"warn",msg:dt+" — steeper than the plan calls for. Eat some of it back tomorrow to protect your muscle."};
+  /* Today is still in progress, so it gets a plain running total and never a verdict. Verdicts are for days that are over. */
+  if(S.date===todayKey()){
+    if(diff>0) return {cls:"mid",msg:r0(diff)+" kcal over today’s target. One day doesn’t decide anything; the weekly average is what counts."};
+    return {cls:"mid",msg:(diff===0?"Right on today’s target. ":r0(-diff)+" kcal left today. ")+pm};
   }
-  if(diff<-250) return {cls:"warn",msg:dt+" — "+r0(-diff)+" kcal and "+Math.max(0,r0(pLeft))+" g protein still to go. Falling short again and again is what turns a building phase into maintenance."};
+  if(block==="cut"){
+    if(diff>150) return {cls:"mid",msg:dt+" against target. One day over does not undo a week. The weekly average is the number to watch."};
+    if(diff>-600) return {cls:"ok",msg:dt+" against target. "+pm};
+    return {cls:"mid",msg:dt+". That is a bigger gap than the plan asks for. Eating a little more the next day helps protect your muscle."};
+  }
+  if(diff<-250) return {cls:"mid",msg:dt+". Eating closer to target is what feeds the training in a building phase. The weekly average is the number to watch."};
   if(diff<=400) return {cls:"ok",msg:dt+" against target. "+pm};
   return {cls:"ok",msg:dt+". Read the weekly average, not any single day."};
 }
@@ -679,11 +691,15 @@ function renderFuel(){
        "<button class='mealtog' data-mt='"+mn+"' aria-expanded='"+!shut+"' aria-label='"+(shut?"Show":"Hide")+" "+mn+" foods'><svg viewBox='0 0 24 24' aria-hidden='true'><path d='M6 9l6 6 6-6'/></svg><h2 class='h2'>"+mn+"</h2></button>"+
        (items.length?"<span class='kc'>"+(shut?items.length+" item"+(items.length===1?"":"s")+" · ":"")+r0(kc)+" kcal</span>":"")+
        "<button class='addbtn' data-meal='"+mn+"' aria-label='Add food to "+mn+"'>+ Add</button></div><div class='entries'"+(shut?" hidden":"")+">";
-    if(!items.length) h+="<div class='empty-meal'>Nothing logged.</div>";
+    if(!items.length){
+      /* One tap to log the same meal as yesterday, the most common repeat. */
+      var ye=((S.days[shiftKey(S.date,-1)]||{}).entries||[]).filter(function(e){ return e.meal===mn; });
+      h+="<div class='empty-meal'>Nothing logged."+(ye.length?" <button class='linkbtn' data-rep='"+mn+"'>Repeat yesterday’s "+mn.toLowerCase()+" ("+ye.length+" item"+(ye.length===1?"":"s")+" · "+r0(ye.reduce(function(a,e){ return a+e.k; },0))+" kcal)</button>":"")+"</div>";
+    }
     items.forEach(function(e){
       var i=d.entries.indexOf(e);
       h+="<div class='entry'><div><div class='nm'>"+esc(e.name)+"</div><div class='am'>"+esc(e.amt)+"</div></div>"+
-         "<div class='mc'><b>"+r0(e.k)+"</b>"+r0(e.p)+"p · "+r0(e.c)+"c · "+r0(e.f)+"f</div>"+
+         "<div class='mc'><b>"+r0(e.k)+"</b><span aria-label='"+r0(e.p)+" grams protein, "+r0(e.c)+" carbs, "+r0(e.f)+" fat'>"+r0(e.p)+"g protein · "+r0(e.c)+"c · "+r0(e.f)+"f</span></div>"+
          "<button class='del' data-i='"+i+"' aria-label='Remove "+esc(e.name)+"'>&times;</button></div>";
     });
     h+="</div></section>";
@@ -695,6 +711,17 @@ function renderFuel(){
   p.querySelectorAll(".mealtog").forEach(function(b){ b.onclick=function(){ loadShut(); S.mealShut[b.dataset.mt]=!S.mealShut[b.dataset.mt]; saveShut(); renderFuel(); }; });
   var wx=$("welcomeX"); if(wx) wx.onclick=function(){ S.welcomeOff=true; renderFuel(); };
   p.querySelectorAll(".addbtn").forEach(function(b){ b.onclick=function(){ openAdd(b.dataset.meal); }; });
+  p.querySelectorAll("[data-rep]").forEach(function(b){ b.onclick=function(){
+    var mn=b.dataset.rep, k2=S.date, src=((S.days[shiftKey(k2,-1)]||{}).entries||[]).filter(function(e){ return e.meal===mn; });
+    if(!src.length) return;
+    var copies=src.map(function(e){ return JSON.parse(JSON.stringify(e)); });
+    copies.forEach(function(e){ day(k2).entries.push(e); });
+    loadShut(); S.mealShut[mn]=false; saveShut(); persistDay(k2); renderFuel(); renderWeek();
+    toast("Added yesterday’s "+mn.toLowerCase(),"Undo",function(){
+      var a=day(k2).entries; copies.forEach(function(e){ var i=a.indexOf(e); if(i>=0) a.splice(i,1); });
+      persistDay(k2); if(S.date===k2){ renderFuel(); renderWeek(); }
+    });
+  }; });
   p.querySelectorAll(".del").forEach(function(b){
     b.onclick=function(){
       var i=+b.dataset.i, k2=S.date, e=day(k2).entries[i]; day(k2).entries.splice(i,1); persistDay(k2); renderFuel(); renderWeek();
@@ -1014,10 +1041,28 @@ function checkSkippedExercises(){
   });
   if(changed.length){ persistProfile(); toast("Skipped 2 weeks running, so I swapped: "+changed.join("; ")); }
 }
+/* ---- Favourites: exercises the client starred ----
+   A starred exercise is used automatically wherever it is one of a slot's listed swaps, unless that slot's own
+   exercise is starred too or the favourite is already somewhere else in the same workout. */
+function isFav(n){ var f=S.profile.favs||[], l=String(n).toLowerCase(); return f.some(function(x){ return x.toLowerCase()===l; }); }
+function favFor(e,taken){
+  if(!(S.profile.favs||[]).length||isFav(e.n)) return null;
+  var hit=(e.sw||[]).filter(function(n){ return isFav(n)&&!taken[n.toLowerCase()]; });
+  return hit.length?hit[0]:null;
+}
+function toggleFav(n){
+  var f=S.profile.favs=S.profile.favs||[], l=String(n).toLowerCase(), was=isFav(n);
+  if(was) S.profile.favs=f.filter(function(x){ return x.toLowerCase()!==l; }); else f.push(String(n).slice(0,80));
+  persistProfile(); return !was;
+}
 function buildItems(p,d,wd,rdate){
   var sch=p.phase&&p.phase.scheme, focus=(DEF_FOCUS[p.id]||"h"), swaps=day(rdate).exSwaps||{}, items=[];
+  var taken={}; (d.ex||[]).forEach(function(e){ taken[e.n.toLowerCase()]=1; });
   (d.ex||[]).forEach(function(e){
-    var active=swaps[e.n]||(S.profile.exReplace||{})[e.n]||e.n, it={L:e.L,n:active,origN:e.n,cue:e.cue,sw:e.sw,key:wd+"|"+slug(active)};
+    /* A day that already has sets logged under the planned exercise keeps showing it, so a later star or standing swap never hides old numbers. */
+    var pre=wd+"|"+slug(e.n)+"|", had=Object.keys(day(rdate).sets||{}).some(function(k){ return k.indexOf(pre)===0; });
+    var fixed=swaps[e.n]||(had?e.n:(S.profile.exReplace||{})[e.n]), fv=fixed?null:favFor(e,taken); if(fv) taken[fv.toLowerCase()]=1;
+    var active=fixed||fv||e.n, it={L:e.L,n:active,origN:e.n,cue:e.cue,sw:e.sw,key:wd+"|"+slug(active)};
     if(sch&&e.t){
       var tier=sch[e.t]||sch.iso, k=(e.t==="main"&&focus==="s"&&tier.s)?tier.s:tier.h;
       it.warm=k.w; it.s=k.s; it.r=k.r; it.rest=k.rest; it.tech=k.tech; it.t=e.t;
@@ -1155,6 +1200,23 @@ function cardioCard(d,rd,p){
     "<input class='numfield' id='cMi' type='number' inputmode='decimal' step='0.1' placeholder='miles' value='"+(c.miles!=null?c.miles:"")+"' aria-label='Cardio miles'></div>"+
     "<p class='cardio-note "+cs.cls+"'>"+esc(cs.msg)+"</p></div></details>";
 }
+/* After a phase change: what changed and why, kept on screen until the client closes it. */
+function phaseNoteCard(p){
+  var pn=S.profile.phaseNote; if(!pn||!p.phase||p.id!==pn.to) return "";
+  var fromP=null; PROGRAMS.forEach(function(x){ if(x.id===pn.from) fromP=x; });
+  var rows="", names={main:"Main lifts",sec:"Secondary lifts",iso:"Isolation work"};
+  if(fromP&&fromP.phase&&fromP.phase.scheme&&p.phase.scheme) Object.keys(names).forEach(function(t){
+    var a=fromP.phase.scheme[t], b=p.phase.scheme[t]; if(!a||!b) return;
+    var ka=(t==="main"&&(DEF_FOCUS[fromP.id]||"h")==="s"&&a.s)?a.s:a.h, kb=(t==="main"&&(DEF_FOCUS[p.id]||"h")==="s"&&b.s)?b.s:b.h;
+    if(!ka||!kb||(ka.s===kb.s&&ka.r===kb.r&&ka.rest===kb.rest)) return;
+    rows+="<li>"+names[t]+": "+kb.s+" sets of "+esc(kb.r)+", rest "+esc(kb.rest)+" <span class='muted'>(was "+ka.s+" of "+esc(ka.r)+")</span></li>";
+  });
+  var same=!!(fromP&&fromP.days===p.days);
+  return "<div class='card' style='margin-top:12px;background:var(--accent-bg)'><p class='eyebrow' style='margin:0 0 6px'>New: "+esc(p.name)+"</p>"+
+    "<p style='margin:0 0 8px'>"+(same?"The exercises stay the same on purpose, so your numbers stay comparable. What changes is how you do them.":"The weekly split changes in this phase, and so do the sets and reps.")+"</p>"+
+    (rows?"<ul class='small' style='margin:0 0 8px;padding-left:18px'>"+rows+"</ul>":"")+
+    (p.note?"<p class='small muted' style='margin:0 0 10px'>"+esc(p.note)+"</p>":"")+"<button class='btn ghost sm' id='phaseNoteX'>Got it</button></div>";
+}
 function renderTrain(){
   checkSkippedExercises();
   var rd=S.date, wd=workoutIdx(rd), p=program(), pos=programPos(todayKey()), isNow=(PROGRAMS[pos.idx]===p);
@@ -1181,17 +1243,20 @@ function renderTrain(){
   if(S.openId){ for(var xi=0;xi<items.length;xi++) if(items[xi].xid===S.openId) S.openEx=xi; S.openId=null; }
   var total=0, done=0;
   items.forEach(function(it){ for(var i=0;i<it.s;i++){ total++; if((sets[it.key+"|"+i]||{}).done) done++; } });
-  h+="<div class='card'><div class='session'><div class='ttl'><div class='eyebrow'>"+esc(prettyDate(rd,{weekday:"long"}))+(wd!==wdIndex(rd)?" · swapped":"")+"</div><h1 class='h1'>"+esc(d.title||d.name)+"</h1></div>"+chip+"</div>"+
+  h+="<div class='card'><div class='session'><div class='ttl'><div class='eyebrow'>"+esc(prettyDate(rd,{weekday:"long"}))+(wd!==wdIndex(rd)?" · moved":"")+"</div><h1 class='h1'>"+esc(d.title||d.name)+"</h1></div>"+chip+"</div>"+
      "<div class='progress' role='progressbar' aria-valuemin='0' aria-valuemax='"+total+"' aria-valuenow='"+done+"'><i id='progFill' style='width:"+(total?done/total*100:0)+"%'></i></div>"+
      "<div class='progtxt'><span id='progTxt'>"+done+" of "+total+" sets done</span><span>"+items.length+" exercises</span></div>"+
      (p.note&&!free?"<details class='fold' style='border:0;margin-top:8px'><summary style='padding:0;min-height:40px;font-size:13px;color:var(--text-2)'>About this phase</summary><div class='inner' style='padding:0 0 4px'><p style='margin:0 0 8px'>"+esc(p.note)+"</p>"+(p.phase&&p.phase.tech?"<p class='tech'>"+esc(p.phase.tech)+"</p>":"")+"</div></details>":"")+"</div>";
+  if(total>0&&done===total) h+="<div class='card' style='margin-top:12px;background:var(--accent-bg)'><p style='margin:0'><b>Workout logged.</b> Every number here is your starting point for next time.</p></div>";
+  else if(done>0&&rd<todayKey()) h+="<div class='card' style='margin-top:12px'><p style='margin:0'><b>"+done+" set"+(done===1?"":"s")+" logged.</b> That counts.</p></div>";
+  if(!free&&rd===todayKey()) h+=phaseNoteCard(p);
   var my=free?null:missedYesterday(rd);
   if(my) h+="<div class='card' style='margin-top:12px'><p style='margin:0 0 8px'><b>Missed yesterday’s "+esc(my.title||my.name)+"?</b> Do it today and it counts for today, next to the food you’ve logged.</p><button class='btn sm' id='moveYest'>Do it today</button> <span class='muted small'>Moves the rest of the week back a day. You can undo it.</span></div>";
 
   if(!free&&canMoveToToday(rd)) h+="<div class='card' style='margin-top:12px'><p style='margin:0 0 8px'><b>Did this workout today instead?</b> Move it to today so it counts for today, next to the food you’ve logged.</p><button class='btn sm' id='moveToToday'>Move this workout to today</button> <span class='muted small'>Moves the rest of the week back a day. You can undo it.</span></div>";
 
   h+=free?"<p class='muted small' style='margin:10px 4px 0'>Your own workout. Add each exercise you did, then log sets and weights like usual. <button class='linkbtn' id='freeOff'>Back to the planned workout</button></p>"
-         :"<button class='linkbtn' id='freeOn' style='margin:10px 4px 0'>I did my own thing today (Freestyle)</button>";
+         :"<button class='linkbtn' id='freeOn' style='margin:10px 4px 0'>I did a different workout today</button>";
   h+=injuryNote();
   var cardioHtml=cardioCard(d,rd,p);
   if(d.bands||d.warmup||d.bosu){
@@ -1206,15 +1271,16 @@ function renderTrain(){
     var isOpen=(ix===open), complete=(cnt===it.s);
     h+="<div class='ex"+(isOpen?" open":"")+(complete?" done":"")+"' data-ix='"+ix+"'><button class='ex-head' data-toggle='"+ix+"' aria-expanded='"+isOpen+"'>"+
       "<span class='ex-letter'>"+(complete?CHECK.replace("<svg","<svg style='width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:3;stroke-linecap:round'"):esc(it.L||ix+1))+"</span>"+
-      "<span class='ex-t'><div class='ex-name'>"+esc(it.n)+"</div><div class='ex-meta'>"+it.s+" × "+esc(it.r)+(it.rest?" · rest "+esc(it.rest):"")+"</div></span>"+
+      "<span class='ex-t'><div class='ex-name'>"+(isFav(it.n)?"<span class='favmark' aria-label='Favourite'>★</span> ":"")+esc(it.n)+"</div><div class='ex-meta'>"+it.s+" sets of "+esc(it.r)+(/\d\s*$/.test(String(it.r))?" reps":"")+(it.rest?" · rest "+esc(it.rest):"")+"</div></span>"+
       "<span class='pips' aria-hidden='true'>"+Array.apply(null,Array(it.s)).map(function(_,i){ return "<i class='"+(i<cnt?"on":"")+"'></i>"; }).join("")+"</span></button>";
     if(isOpen){
       var prev=(prevIdx||{})[it.key.slice(it.key.indexOf("|")+1)+"|"], pmap={}; if(prev) prev.sets.forEach(function(x){ pmap[x.i]=x; });
       var pr=(day(rd).pairs||{})[it.key];
       h+="<div class='ex-body'>"+
         (it.cue?"<p class='cue'>"+esc(it.cue)+"</p>":"")+(it.tech?"<p class='tech'>"+esc(it.tech)+"</p>":"")+
-        (it.warm&&it.warm!=="0"?"<p class='small muted' style='margin:0 0 8px'>"+esc(it.warm)+" warm-up set"+(it.warm==="1"?"":"s")+" first</p>":"")+
+        (it.warm&&it.warm!=="0"?"<p class='small muted' style='margin:0 0 8px'>"+esc(it.warm)+" lighter warm-up set"+(it.warm==="1"?"":"s")+" first. Warm-ups are not logged.</p>":"")+
         (prev?"<div class='lastline'><b>Last</b><span>"+esc(prettyDate(prev.date,{month:"short",day:"numeric"}))+"</span><span>"+prev.sets.map(function(x){ return (x.w!=null?x.w:"?")+"×"+(x.reps!=null?x.reps:"?"); }).join(", ")+"</span></div>":"")+
+        (!prev&&!it.extra?"<p class='small muted' style='margin:0 0 10px'>First time on this one: "+(it.bw?"bodyweight is enough to start.":"pick a weight you could lift about two more times than the target. Too light or too heavy? Change it on the next set.")+" What you write down is your starting number.</p>":"")+
         "<div class='sethd'><span></span><span>"+esc(it.bw?"Added weight":((p.metric||{}).label||"Weight"))+"</span><span>Reps</span><span></span></div>";
       for(var si=0;si<it.s;si++){
         var key=it.key+"|"+si, v=sets[key]||{}, g=ghost(it,si,pmap,sets);
@@ -1240,13 +1306,14 @@ function renderTrain(){
           "<button class='linkbtn' data-unpair='"+ix+"'>Unpair "+esc(pr.n)+"</button></div>";
       }
       var opts=[it.origN].concat(it.sw||[]);
-      h+="<div class='ex-foot'>"+(pr?"":"<button class='linkbtn' data-openpair='"+ix+"'>Pair with another exercise</button>")+(it.extra?"<button class='linkbtn' data-rmx='"+esc(it.xid)+"'>Remove this exercise</button>":"<button class='linkbtn' data-swap='"+ix+"'>"+(it.n!==it.origN?"Doing: "+esc(it.n)+" — change":"Did something else? Swap")+"</button>")+"</div></div>";
+      h+="<div class='ex-foot'>"+(pr?"":"<button class='linkbtn' data-openpair='"+ix+"'>Pair with another exercise</button>")+(it.extra?"<button class='linkbtn' data-rmx='"+esc(it.xid)+"'>Remove this exercise</button>":"<button class='linkbtn' data-swap='"+ix+"'>"+(it.n!==it.origN?"Doing: "+esc(it.n)+" — change":"Can’t do this one? Swap")+"</button>")+
+        "<button class='linkbtn' data-fav='"+ix+"' aria-pressed='"+isFav(it.n)+"'>"+(isFav(it.n)?"★ You love this one":"☆ I love this one")+"</button></div></div>";
     }
     h+="</div>";
   });
   h+="<button class='btn ghost' id='addEx' style='margin-top:12px'>+ Add an exercise</button>";
   h+=cardioHtml;
-  h+="<p class='foot'>Numbers save per day. Tap ✓ with empty boxes to log the suggested weight and reps.</p>";
+  h+="<p class='foot'>Numbers save per day. Grey numbers are suggestions: tap ✓ with empty boxes to log them. Star an exercise you love and it is used wherever it fits.</p>";
   var panel=$("panel-train"); panel.innerHTML=h;
   wireTrain(panel,rd,items,sets,wd);
   mountMusic(panel);
@@ -1312,7 +1379,10 @@ function ghost(it,si,pmap,sets){
   var g={w:null,reps:null}, pv=pmap[si];
   if(pv){ g.w=pv.w; g.reps=pv.reps; }
   if(si>0){ var b=sets[it.key+"|"+(si-1)]||{}; if(g.w==null&&b.w!=null) g.w=b.w; if(g.reps==null&&b.reps!=null) g.reps=b.reps; }
-  if(g.reps==null){ var n=num(String(it.r).split(/[-–,]/)[0]); if(n!=null) g.reps=n; }
+  var rr=String(it.r).split(/[-–,]/).map(num).filter(function(x){ return x!=null; }), lo=rr.length?rr[0]:null, hi=rr.length?rr[rr.length-1]:null;
+  /* Last time's reps are only a useful suggestion while they still fit this phase's range. */
+  if(pv&&g.reps!=null&&lo!=null&&(g.reps<lo||g.reps>hi)) g.reps=lo;
+  if(g.reps==null&&lo!=null) g.reps=lo;
   return g;
 }
 function wireTrain(panel,rd,items,sets,wd){
@@ -1324,6 +1394,11 @@ function wireTrain(panel,rd,items,sets,wd){
     var el=panel.querySelector(".ex[data-ix='"+ix+"']"); if(el&&S.openEx===ix) el.scrollIntoView({block:"nearest",behavior:"smooth"});
   }; });
   panel.querySelectorAll("[data-swap]").forEach(function(b){ b.onclick=function(){ openSwap(items[+b.dataset.swap],rd); }; });
+  panel.querySelectorAll("[data-fav]").forEach(function(b){ b.onclick=function(){
+    var nm=items[+b.dataset.fav].n, on=toggleFav(nm); renderTrain();
+    toast(on?"★ "+nm+" starred. It will be used wherever it fits.":"Star removed from "+nm);
+  }; });
+  var pnx=$("phaseNoteX"); if(pnx) pnx.onclick=function(){ S.profile.phaseNote=null; persistProfile(); renderTrain(); };
   panel.querySelectorAll("[data-openpair]").forEach(function(b){ b.onclick=function(){ openPair(items[+b.dataset.openpair],rd,items); }; });
   panel.querySelectorAll("[data-unpair]").forEach(function(b){ b.onclick=function(){
     var base=items[+b.dataset.unpair], dd=day(rd); if(dd.pairs) delete dd.pairs[base.key];
@@ -1391,10 +1466,30 @@ function openSwap(it,rd){
     var v=((S.days[k]||{}).exSwaps||{})[it.origN];
     if(typeof v==="string"&&v&&!seen[v.toLowerCase()]){ seen[v.toLowerCase()]=1; opts.push(v); }
   });
-  openSheet("Swap exercise","<p class='muted small'>Your numbers save against whichever you pick.</p><div class='list'>"+
-    opts.map(function(x,i){ return "<button class='item' data-o='"+i+"'><span class='t'>"+esc(x)+(x===it.n?"<small>Current</small>":(i>=base?"<small>Added by you</small>":""))+"</span></button>"; }).join("")+"</div>"+
+  var standing=(S.profile.exReplace||{})[it.origN];
+  openSheet("Swap exercise","<p class='muted small'>Your numbers save against whichever you pick."+(standing?" You chose "+esc(standing)+" for every time.":"")+"</p><div class='list'>"+
+    opts.map(function(x,i){ return "<button class='item' data-o='"+i+"'><span class='t'>"+(isFav(x)?"★ ":"")+esc(x)+(x===it.n?"<small>Current</small>":(x===it.origN?"<small>The planned exercise</small>":(i>=base?"<small>Added by you</small>":"")))+"</span></button>"; }).join("")+"</div>"+
     "<input class='field' id='sw' placeholder='Something else…' style='margin-top:12px'>","<button class='btn' id='sws'>Use what I typed</button>");
-  function pick(name){ var ex=day(rd).exSwaps; if(name===it.origN) delete ex[it.origN]; else ex[it.origN]=name; persistDay(rd); closeSheet(); }
+  /* Just today: saved on this day only. Every time: saved on the profile, so the swap is still there next week and next phase. */
+  function applyPick(name,always){
+    var ex=day(rd).exSwaps, rep=S.profile.exReplace=S.profile.exReplace||{};
+    if(always){
+      delete ex[it.origN];
+      if(name===it.origN){ delete rep[it.origN]; if(favFor({n:it.origN,sw:it.sw},{})) ex[it.origN]=it.origN; } else rep[it.origN]=name;
+      persistProfile();
+    } else {
+      /* Picking the planned exercise for today has to be stored when a standing swap or a favourite would otherwise override it. */
+      if(name===it.origN&&!rep[it.origN]&&!favFor({n:it.origN,sw:it.sw},{})) delete ex[it.origN]; else ex[it.origN]=name;
+    }
+    persistDay(rd); closeSheet();
+    toast(always?(name===it.origN?"Back to "+name+" every time":name+" every time, until you change it"):name+" for today");
+  }
+  function pick(name){
+    openSheet("Use "+name,"<p style='margin:0 0 6px'>Just for today, or every time this exercise comes up?</p><p class='muted small' style='margin:0'>Every time keeps the swap next week and in later phases. You can change it back from the same Swap link.</p>",
+      "<button class='btn ghost' id='swT'>Just today</button><button class='btn' id='swA'>Every time</button>");
+    $("swT").onclick=function(){ applyPick(name,false); };
+    $("swA").onclick=function(){ applyPick(name,true); };
+  }
   $("shBody").querySelectorAll("[data-o]").forEach(function(b){ b.onclick=function(){ pick(opts[+b.dataset.o]); }; });
   $("sws").onclick=function(){ var v=$("sw").value.trim(); if(v) pick(v); };
 }
@@ -1972,7 +2067,7 @@ function planCard(cw,pace){
   if(bonus>0) more+="<p class='cap' style='margin:0 0 8px'>Each workout has "+bonus+" bonus exercise"+(bonus===1?"":"s")+" added.</p>";
   var rep=S.profile.exReplace||{}, rk=Object.keys(rep);
   if(rk.length&&!isStarter()){
-    h+="<p class='small' style='margin:0 0 4px'><b>Swapped out for being skipped 2 weeks running:</b></p>";
+    h+="<p class='small' style='margin:0 0 4px'><b>Your standing swaps:</b></p>";
     rk.forEach(function(n,i){ h+="<div style='display:flex;align-items:center;gap:8px;margin:0 0 6px'><span class='small' style='flex:1'>"+esc(n)+" → "+esc(rep[n])+"</span><button class='btn ghost sm' data-plan='exundo' data-v='"+i+"'>Undo</button></div>"; });
   }
   sg.items.forEach(function(it){
@@ -2238,8 +2333,11 @@ function openOnboarding(first){
     var wt=num(inp.value), ko=kEdited?num(kin.value):null, po=pEdited?num(pin.value):null, pl=num($("opl").value);
     if(ko!=null&&(ko<1000||ko>5000)) ko=null; if(po!=null&&(po<30||po>500)) po=null;
     if(pl!=null&&pl!==0&&(pl<0.3||pl>3)) pl=null;
-    if(pl==null) pl=perLb()||1;   /* empty box = the 1 g per lb default */
-    if(pl&&wt) po=Math.ceil(wt*pl-0.0001);
+    /* A protein number typed into the grams box wins. Before, the per-lb rule silently overwrote it. */
+    var typedP=pEdited&&po!=null&&$("opl").value==="";
+    if(typedP) pl=0;
+    else { if(pl==null) pl=perLb()||1;   /* empty box = the 1 g per lb default */
+      if(pl&&wt) po=Math.ceil(wt*pl-0.0001); }
     var T=wt&&wt>=70&&wt<=600?calcTargets(wt,goal,ko,po):null;
     if(T&&!kEdited) kin.placeholder="Suggested: "+calcTargets(wt,goal).k;
     if(T&&!pEdited) pin.placeholder="Suggested: "+calcTargets(wt,goal).p;
@@ -2258,6 +2356,7 @@ function openOnboarding(first){
     S.profile.targets=T; S.profile.goal=goal; S.profile.onboarded=true;
     S.profile.injuries={areas:Array.prototype.slice.call($("oinj").querySelectorAll(".chip[aria-pressed='true']")).map(function(c){ return c.dataset.a; }),notes:$("oin").value.trim().slice(0,500)};
     var plv=num($("opl").value); S.profile.proteinPerLb=plv===0?0:((plv!=null&&plv>=0.3&&plv<=3)?plv:null);
+    if($("opl").value===""&&pEdited&&num(pin.value)!=null) S.profile.proteinPerLb=0;   /* a typed gram number is a fixed target */
     var td=todayKey(); day(td).weight=wt; persistDay(td);
     persistProfile(); closeSheet(); toast("Targets set: "+T.k+" kcal · "+T.p+" g protein");
   };
@@ -2389,6 +2488,15 @@ function start(u){
   });
   if("serviceWorker" in navigator&&!DEV) navigator.serviceWorker.register("sw.js").catch(function(){});
 }
+/* An installed app that is reopened the next morning should land on today, not on the day it was left on. */
+var hiddenOn=null;
+document.addEventListener("visibilitychange",function(){
+  if(document.hidden){ hiddenOn=todayKey(); return; }
+  if(!uid||!hiddenOn||hiddenOn===todayKey()) return;
+  hiddenOn=null;
+  if(!$("scrim").hidden||typing()) return;
+  S.date=todayKey(); S.openEx=null; maybeAdvance(); renderAll();
+});
 checkAccess().then(function(u){
   if(!u) return;
   userEmail=u.email;

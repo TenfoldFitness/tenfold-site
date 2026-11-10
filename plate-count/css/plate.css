@@ -59,7 +59,10 @@ button:disabled{cursor:default;opacity:.45}
 .syncpill{--sp-warn:#94472F;display:inline-flex;align-items:center;gap:7px;min-height:36px;padding:0 12px;border-radius:999px;flex:none;background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);font:600 12.5px var(--f-body);white-space:nowrap}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .syncpill{--sp-warn:var(--warn)}}
 .syncpill.ok{background:var(--accent-bg);color:var(--accent-deep);border-color:transparent}
-.syncpill.off{background:var(--warn-bg);color:var(--sp-warn);border-color:transparent}
+/* Offline but saved on the phone is a safe state, so it looks calm. The warning colour is kept for .bad only. */
+.syncpill.off{background:var(--surface-2);color:var(--text-2);border-color:var(--border)}
+.favmark{color:var(--accent)}
+.empty-meal .linkbtn{display:block;margin-top:2px;padding:0;text-align:left}
 .syncpill.bad{background:var(--warn-bg);color:var(--sp-warn);border:1.5px solid var(--sp-warn)}
 #synctext:empty{display:none}
 .syncpill:has(#synctext:empty){padding:0 8px;min-height:24px;border-color:transparent;background:transparent}
