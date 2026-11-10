@@ -280,6 +280,20 @@
       </div>
     </section>
 
+    <!-- Your plan: what you are on, when the next charge is, and a cancel that takes one tap and can be undone -->
+    <section id="plan-section" style="display:none;">
+      <h2>Your plan</h2>
+      <div class="card">
+        <p class="label" id="plan-label">Your plan</p>
+        <p class="value" id="plan-name" style="margin-bottom:6px;"></p>
+        <p class="small" id="plan-detail" style="margin:0 0 12px;"></p>
+        <p class="form-error" id="plan-error" role="alert"></p>
+        <button type="button" class="btn btn-sm" id="plan-cancel" style="display:none;">Cancel my plan</button>
+        <button type="button" class="btn btn-sm btn-primary" id="plan-resume" style="display:none;">Keep my plan</button>
+        <p class="small" style="margin:12px 0 0;"><a href="policies.html#refunds" style="color:var(--accent); text-decoration:underline;">Cancelling and refunds</a></p>
+      </div>
+    </section>
+
   </main>
 
   <footer>Tenfold Method &nbsp;&middot;&nbsp; In person &amp; virtual training &nbsp;&middot;&nbsp; <a href="policies.html">Privacy, refunds &amp; terms</a> &nbsp;&middot;&nbsp; <a href="consultation.html">Contact</a></footer>
@@ -336,10 +350,11 @@
           .eq('client_email', email)
           .eq('status', 'active')
           .order('tier', { ascending: false })
-          .limit(1);
+          .limit(20);
 
-        const active = memberships && memberships.length ? memberships[0] : null;
-        const hasValidMembership = active && (!active.expires_at || new Date(active.expires_at) > new Date());
+        // An ended plan or package stays on record. Skip those so an old row never hides a current one.
+        const active = (memberships || []).find(m => !m.expires_at || new Date(m.expires_at) > new Date()) || null;
+        const hasValidMembership = !!active;
 
         if (!hasValidMembership) {
           const dashParams = new URLSearchParams(window.location.search);
@@ -542,6 +557,91 @@
       `;
     }
 
+    // ---- Your plan: name, next charge, cancel and undo ----
+    const PLAN_INFO = {
+      1: { name: 'Foundation', price: '$20 a month', monthly: true },
+      2: { name: 'Guided', price: '$100 a month', monthly: true },
+      3: { name: 'Virtual Intensive', monthly: false },
+      4: { name: 'In-Person Starter', monthly: false },
+      5: { name: 'In-Person Standard', monthly: false },
+      6: { name: 'In-Person Elite', monthly: false },
+    };
+    let currentPlan = null;
+    function planDate(iso) {
+      return new Date(iso).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    }
+    function renderPlan(m) {
+      const info = PLAN_INFO[m.tier];
+      if (!info) return;
+      currentPlan = m;
+      const cancelBtn = document.getElementById('plan-cancel');
+      const resumeBtn = document.getElementById('plan-resume');
+      const detail = document.getElementById('plan-detail');
+      document.getElementById('plan-error').style.display = 'none';
+      cancelBtn.style.display = 'none'; resumeBtn.style.display = 'none';
+      cancelBtn.disabled = false; resumeBtn.disabled = false;
+      document.getElementById('plan-name').textContent = info.name + (info.price ? ' · ' + info.price : '');
+
+      if (!info.monthly) {
+        // One-time package: nothing recurs, so there is nothing to cancel here.
+        detail.textContent = m.expires_at
+          ? 'A 12-week package, paid once. Your access runs until ' + planDate(m.expires_at) + '. There are no further charges.'
+          : 'A 12-week package, paid once. There are no further charges.';
+      } else if (m.next_billing_date) {
+        detail.textContent = 'Your next charge is on ' + planDate(m.next_billing_date) + '. No contract and no cancellation fee.';
+        cancelBtn.style.display = 'inline-block';
+      } else if (m.expires_at) {
+        detail.textContent = 'Your plan is cancelled. You will not be charged again, and you keep full access until ' + planDate(m.expires_at) + '. Changed your mind? You can keep your plan any time before then.';
+        resumeBtn.style.display = 'inline-block';
+      } else {
+        detail.textContent = 'Your plan is active.';
+      }
+      document.getElementById('plan-section').style.display = 'block';
+    }
+
+    // Says "cancelled" only after the server confirms the plan row actually changed.
+    async function changePlan(action) {
+      const errorEl = document.getElementById('plan-error');
+      const btn = document.getElementById(action === 'cancel' ? 'plan-cancel' : 'plan-resume');
+      errorEl.style.display = 'none';
+      btn.disabled = true;
+      try {
+        const authToken = await getAuthToken();
+        const response = await fetch(SUPABASE_URL + '/functions/v1/cancel-membership', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_PUBLISHABLE_KEY, 'Authorization': 'Bearer ' + authToken },
+          body: JSON.stringify({ action }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || !payload.success) throw new Error(payload.error || 'Request failed');
+
+        if (payload.state === 'cancelled') {
+          currentPlan.next_billing_date = null; currentPlan.expires_at = payload.accessUntil;
+          setStatus('Plan cancelled. You will not be charged again.', 'saved');
+        } else {
+          currentPlan.next_billing_date = payload.nextBillingDate; currentPlan.expires_at = null;
+          setStatus('Plan kept. Nothing else changes.', 'saved');
+        }
+        renderPlan(currentPlan);
+      } catch (err) {
+        console.error(err);
+        errorEl.textContent = action === 'cancel'
+          ? "We couldn't cancel just now, so nothing has changed and your plan is still active. Please check your connection and try again."
+          : "We couldn't update your plan just now, so nothing has changed. Please check your connection and try again.";
+        errorEl.style.display = 'block';
+        setStatus('Nothing was changed.', 'warn');
+        btn.disabled = false;
+      }
+    }
+    document.getElementById('plan-cancel').addEventListener('click', async function () {
+      if (!currentPlan || !currentPlan.next_billing_date) return;
+      const sure = await confirmAction(
+        'Cancel your ' + PLAN_INFO[currentPlan.tier].name + ' plan? You will not be charged again, and you keep full access until ' + planDate(currentPlan.next_billing_date) + '. You can undo this any time before then.',
+        'Yes, cancel my plan', 'Keep my plan');
+      if (sure) changePlan('cancel');
+    });
+    document.getElementById('plan-resume').addEventListener('click', function () { changePlan('resume'); });
+
     async function checkMembership(email) {
       if (email === ADMIN_EMAIL) {
         clientHasMembership = true;
@@ -556,16 +656,13 @@
         .eq('client_email', email)
         .eq('status', 'active')
         .order('tier', { ascending: false })
-        .limit(1);
+        .limit(20);
 
-      const active = memberships && memberships.length
-        ? memberships[0]
-        : null;
-
-      const hasValidMembership = active && (
-        !active.expires_at || new Date(active.expires_at) > new Date()
-      );
+      // An ended plan or package stays on record. Skip those so an old row never hides a current one.
+      const active = (memberships || []).find(m => !m.expires_at || new Date(m.expires_at) > new Date()) || null;
+      const hasValidMembership = !!active;
       clientHasMembership = !!hasValidMembership;
+      if (hasValidMembership) renderPlan(active);
 
       if (hasValidMembership) {
         document.getElementById('gated-tools').style.display = 'block';

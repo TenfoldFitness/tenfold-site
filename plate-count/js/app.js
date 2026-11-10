@@ -2423,7 +2423,8 @@ function entFromMembership(m){
   var started=Date.parse(m.started_at||"")||0, exp=m.expires_at?Date.parse(m.expires_at):null;
   var active=m.status==="active"&&(!exp||exp>now);
   if(!started||started<RULES_START) return {kind:"legacy",allowed:total,readOnly:!active,nextUnlock:null};
-  if(exp){   /* one-time package */
+  /* A monthly plan (tier 1 or 2) gets an end date when the client cancels it. It is still a subscription, not a package. */
+  if(exp&&m.tier!==1&&m.tier!==2){   /* one-time package */
     var pkg=Math.max(1,Math.min(total,Math.floor(Math.round((exp-started)/WEEK_MS)/4)));
     var allowed=active?Math.min(pkg,1+Math.floor((now-started)/(4*WEEK_MS))):pkg;
     return {kind:"package",allowed:allowed,readOnly:!active,nextUnlock:(active&&allowed<pkg)?started+allowed*4*WEEK_MS:null};
