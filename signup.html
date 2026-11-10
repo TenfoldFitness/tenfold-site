@@ -87,7 +87,7 @@
           </div>
           <div class="field">
             <label for="su-priority">What is your top priority right now?</label>
-            <select id="su-priority" name="priority" required aria-describedby="err-su-priority">
+            <select id="su-priority" name="priority" required aria-describedby="su-priority-hint err-su-priority">
               <option value="">Select one</option>
               <option value="Physical health">Physical health</option>
               <option value="Improving my fitness">Improving my fitness</option>
@@ -95,6 +95,7 @@
               <option value="Planning for the future">Planning for the future</option>
               <option value="Mental health">Mental health</option>
             </select>
+            <p class="hint" id="su-priority-hint">Used only to shape your plan. Only I see it.</p>
             <p class="field-error" id="err-su-priority" hidden></p>
           </div>
           <div class="field">
@@ -112,6 +113,7 @@
         <div class="tool-box" id="payment-step" style="display:none;">
           <button type="button" class="back-link" id="back-to-details">&larr; Back to your details</button>
           <p class="small" style="margin:0 0 12px;">Your login is created once your payment goes through.</p>
+          <p class="small" style="margin:0 0 12px;">Next: seven quick questions (about three minutes) so your plan starts where you are, then your portal.</p>
           <p class="small" id="policy-line" style="margin:0 0 14px; color:var(--text-primary);"></p>
           <div id="card-container" style="margin-bottom:14px;"></div>
           <p class="form-error" id="checkout-error"></p>
@@ -138,7 +140,7 @@
 
     const TIER_INFO = {
       '1': { name: 'Foundation', price: '$20/mo', total: '$20/month, billed monthly', kind: 'subscription',
-             features: ['Client portal access', 'Daily workout (6-day split)', 'Fridge-to-recipe &amp; restaurant macro tools'] },
+             features: ['Client portal access', 'Your program, day by day (4-day Starter or 6-day full)', 'Fridge-to-recipe &amp; restaurant macro tools'] },
       '2': { name: 'Guided', price: '$100/mo', total: '$100/month, billed monthly', kind: 'subscription',
              features: ['Everything in Foundation', 'A new custom 4-week plan each month', '2 virtual check-ins per month'] },
       '3': { name: 'Virtual Intensive', price: '$1,000 / 12 weeks', total: '$1,000 one-time, covers 12 weeks', kind: 'package',
@@ -391,7 +393,8 @@
         // If the payment service only accepts signed-in visitors, fall back to the older order:
         // create the login first, then pay. Nothing has been charged at this point.
         if (outcome.state === 'auth_required') {
-          const acct = await createAccount(d);
+          // A retry after a declined card: the login from the first attempt already exists, so reuse it.
+          const acct = accountReady ? { ok: true } : await createAccount(d);
           if (!acct.ok) {
             showNotice(acct.exists
               ? 'That email already has an account. Please log in below, or use a different email. Nothing has been charged.'

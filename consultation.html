@@ -55,20 +55,20 @@
     <div class="tool-box" id="contact-form-wrap">
       <div class="field">
         <label for="lead-name">Name</label>
-        <input type="text" id="lead-name" required />
+        <input type="text" id="lead-name" name="name" autocomplete="name" required />
       </div>
       <div class="field">
         <label for="lead-email">Email</label>
-        <input type="email" id="lead-email" required />
+        <input type="email" id="lead-email" name="email" autocomplete="email" required />
       </div>
       <div class="field">
         <label for="lead-phone">Phone number</label>
-        <input type="tel" id="lead-phone" required />
+        <input type="tel" id="lead-phone" name="tel" autocomplete="tel" required />
         <p class="small" style="margin:4px 0 0;">So we can reach you about your consultation.</p>
       </div>
       <div class="field">
         <label for="lead-priority">What is your top priority right now?</label>
-        <select id="lead-priority" style="width:100%; padding:10px 12px; border-radius:var(--radius); border:1px solid var(--border); font-family:var(--font-body); font-size:14px;">
+        <select id="lead-priority" style="width:100%; padding:10px 12px; border-radius:var(--radius); border:1px solid var(--border); font-family:var(--font-body); font-size:16px;">
           <option value="">Select one</option>
           <option value="Physical health">Physical health</option>
           <option value="Improving my fitness">Improving my fitness</option>
@@ -77,22 +77,23 @@
           <option value="Mental health">Mental health</option>
         </select>
       </div>
-      <p class="form-error" id="contact-error"></p>
+      <p class="form-error" id="contact-error" role="alert"></p>
       <button class="btn btn-primary btn-sm" id="contact-continue">Continue to scheduling</button>
     </div>
 
     <div class="tool-box" id="schedule-form-wrap" style="display:none;">
-      <p class="small" style="margin-bottom:14px; color:var(--accent);">Thanks! Now pick a time that works for you.</p>
+      <button type="button" class="back-link" id="back-to-contact">&larr; Back to your details</button>
+      <p class="small" style="margin-bottom:14px; color:var(--accent);">Thanks! Now pick a time that works for you. The call is 15 minutes, by video.</p>
       <div class="field">
         <label for="lead-date">Pick a date for your free consultation</label>
         <input type="date" id="lead-date" required />
       </div>
       <div id="slot-picker" style="margin:12px 0;"></div>
 
-      <p class="form-error" id="lead-error"></p>
+      <p class="form-error" id="lead-error" role="alert"></p>
       <button class="btn btn-primary btn-sm" id="lead-submit" disabled>Confirm free consultation</button>
     </div>
-    <p class="small" id="lead-success" style="display:none; color:var(--accent); margin-top:16px;"></p>
+    <div id="lead-success" role="status" style="display:none; margin-top:16px;"></div>
   </main>
 
   <footer>Tenfold Method &nbsp;&middot;&nbsp; In person &amp; virtual training &nbsp;&middot;&nbsp; <a href="policies.html">Privacy, refunds &amp; terms</a> &nbsp;&middot;&nbsp; <a href="consultation.html">Contact</a></footer>
@@ -134,6 +135,8 @@
     const params = new URLSearchParams(window.location.search);
     const tierInterest = params.get('tier') || null;
     let leadId = null;
+    let selectedSlotISO = null;
+    let selectedSlotLabel = '';
 
     document.getElementById('contact-continue').addEventListener('click', async function () {
       const errorEl = document.getElementById('contact-error');
@@ -144,8 +147,14 @@
       const phone = document.getElementById('lead-phone').value.trim();
       const priority = document.getElementById('lead-priority').value;
 
-      if (!name || !email || !phone || !priority) {
-        errorEl.textContent = 'Please fill in all fields above.';
+      const missing = [];
+      if (!name) missing.push('your name');
+      if (!email) missing.push('your email');
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) missing.push('an email address in the form name@example.com');
+      if (!phone) missing.push('your phone number');
+      if (!priority) missing.push('your top priority');
+      if (missing.length) {
+        errorEl.textContent = 'Still needed: ' + missing.join(', ') + '.';
         errorEl.style.display = 'block';
         return;
       }
@@ -186,7 +195,8 @@
       submitBtn.disabled = true;
       picker.innerHTML = '<p class="small">Loading available times...</p>';
 
-      const allSlots = generateSlotsForDate(dateStr);
+      // Never offer a time that has already passed today
+      const allSlots = generateSlotsForDate(dateStr).filter(s => s.getTime() > Date.now());
       if (!allSlots.length) {
         picker.innerHTML = '<p class="small">Sarah isn\'t available on this day. Please pick another date.</p>';
         return;
@@ -235,11 +245,20 @@
           document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
           btn.classList.add('selected');
           selectedSlotISO = slot.toISOString();
+          selectedSlotLabel = slot.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' }) + ' at ' + slot.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
           submitBtn.disabled = false;
         });
         grid.appendChild(btn);
       });
     }
+
+    document.getElementById('back-to-contact').addEventListener('click', function () {
+      document.getElementById('schedule-form-wrap').style.display = 'none';
+      document.getElementById('contact-form-wrap').style.display = 'block';
+      const cont = document.getElementById('contact-continue');
+      cont.disabled = false; cont.textContent = 'Continue to scheduling';
+      document.getElementById('lead-name').focus();
+    });
 
     document.getElementById('lead-date').addEventListener('change', function () {
       if (this.value) renderSlotsForDate(this.value);
@@ -275,7 +294,9 @@
         if (!response.ok) throw new Error(payload.error?.message || 'Could not book your consultation right now.');
 
         document.getElementById('schedule-form-wrap').style.display = 'none';
-        successEl.textContent = "You're booked! Check your email for the confirmation and video call link.";
+        successEl.innerHTML = '<p style="color:var(--accent); font-weight:600; margin:0 0 8px;">You are booked for ' + selectedSlotLabel + '.</p>'
+          + '<p class="small" style="margin:0 0 8px;">A confirmation with the video call link is on its way to your email. Nothing else is needed from you before the call.</p>'
+          + '<p class="small" style="margin:0;">While you wait: <a href="sample-workout.html" style="color:var(--accent); text-decoration:underline;">try a free session</a> or <a href="pricing.html" style="color:var(--accent); text-decoration:underline;">see every plan and price</a>.</p>';
         successEl.style.display = 'block';
       } catch (err) {
         console.error(err);
