@@ -1395,7 +1395,7 @@ function renderTrain(){
   if(d.rest){
     if(!(day(rd).extras||[]).length){
       h="<div class='card'><div class='session'><div class='ttl'><div class='eyebrow'>"+esc(prettyDate(rd,{weekday:"long"}))+"</div><h1 class='h1'>"+esc(d.title)+"</h1></div>"+chip+"</div></div>"+
-        "<div class='restday'>"+esc(d.rest)+"</div>"+
+        "<div class='restday'>"+esc(d.rest)+"</div>"+pmCard(rd)+
         "<div class='card' style='margin-top:12px'><p class='muted small' style='margin:0 0 10px'>Training anyway? Add the exercises you did, or log cardio below.</p><button class='btn ghost' id='addEx'>+ Add an exercise</button> <button class='btn ghost' id='freeOn'>Freestyle: I did my own thing</button></div>"+
         cardioCard(d,rd,p);
       var rp=$("panel-train"); rp.innerHTML=h; wireTrain(rp,rd,[],day(rd).sets,wd); mountMusic(rp); return;
