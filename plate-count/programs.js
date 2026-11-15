@@ -553,6 +553,8 @@ window.PERSONAL = (function () {
     from: "2026-11-16", until: "2026-12-30", phases: ["ph3", "ph4"],
     targets: {k: 1800, p: 160, c: 165, f: 55},
     cardio: {perSession: "35-40 min", sessions: 6},
+    /* PM session reminder: due 4 hours after the morning lift is finished, never later than 7:30 pm. */
+    pm: {delayMin: 240, latest: "19:30"},
     deload: {from: "2026-12-07", to: "2026-12-13"},
     /* Calorie cycling: kcal added to (or taken from) the daily target by workout day, Mon..Sun. Sums to zero,
        so the weekly average stays at targets.k. Heavier leg and back days eat more; volume days and rest day eat less. */
