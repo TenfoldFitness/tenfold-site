@@ -95,9 +95,7 @@ window.DAYS = [
  bands:["Band pull-aparts 2x20","Band lat pulldown 2x15","Band face pulls 2x15"],
  cardio:WALK, cardioSwap:BIKE,
  ex:[
-  {L:"A",n:"Deadlift",t:"main",cue:"Reset every rep. Speed off the floor tells you whether the weight is right. Belt on for the working sets.",
-   sw:["Trap Bar Deadlift","Rack Pull"]},
-  {L:"B",n:"Incline Pulldown",t:"main",cue:"Chest on an incline bench facing the cable. Pull to the chest and lift the torso slightly into the squeeze.",
+  {L:"A",n:"Incline Pulldown",t:"main",cue:"Chest on an incline bench facing the cable. Pull to the chest and lift the torso slightly into the squeeze.",
    sw:["Neutral Grip Lat Pulldown","Pull-up","Hammer Strength Pulldown"]},
   {L:"C",n:"Low Cable Row",t:"sec",cue:"Sit up high, on a plate or box, so you pull upward. Lean forward into every rep for the stretch, then come upright at the contraction.",
    sw:["Chest-Supported Row","Seated Machine Row"]},
@@ -395,11 +393,8 @@ window.ROT_SET = {ph3:"A", ph4:"B", ph5:"C", ph6:"A"};
   hyp(D[3], "Lying Leg Curl");
   hyp(D[4], "Seated Dumbbell Press");
 
-  /* Back day had no heavy lift in the peak-strength phase: its only main lift is the bodyweight pull-up.
-     Phase 3 gets the deadlift back, first in the session while fresh. Shown from ROT_FROM, Phase 3 only. */
-  D[2].ex.unshift({L:"A", n:"Deadlift", t:"main", only:["ph3"],
-    cue:"Reset every rep. Speed off the floor tells you whether the weight is right. Belt on for the working sets.",
-    sw:["Trap Bar Deadlift","Rack Pull"]});
+  /* The conventional deadlift (and its trap bar and rack pull variants) is not used in any program, by decision.
+     Romanian deadlift variations are a different hinge and stay. */
 })();
 
 /* Coaching cues for the rotated exercises. A slot's own cue only fits its own exercise. */
@@ -467,6 +462,7 @@ window.ROT_CUES = {
      - Daily targets a little under the shared 1,900 kcal; protein unchanged.
      - Deload week: one set fewer on everything, same weights.
    Exercises are copied from DAYS_V2 by name, so cues, swaps and the accessory rotation come along.
+   No hip thrusts, trap bar work or deadlift variants for this login (see BANNED below).
    --------------------------------------------------------------------------------------------- */
 window.PERSONAL = (function () {
   var V = window.DAYS_V2, missing = [];
@@ -478,6 +474,13 @@ window.PERSONAL = (function () {
     var s = find(n); if (!s) { missing.push(n); return null; }
     var e = JSON.parse(JSON.stringify(s)); delete e.only;
     if (o) Object.keys(o).forEach(function (k) { e[k] = o[k]; });
+    return clean(e);
+  }
+  /* This login never gets hip thrusts, trap bar work or any deadlift variant, in a slot, a swap list or the rotation. */
+  var BANNED = /hip thrust|trap bar|rack pull|^deadlift$/i;
+  function clean(e) {
+    if (e.sw) e.sw = e.sw.filter(function (n) { return !BANNED.test(n); });
+    if (e.rot) Object.keys(e.rot).forEach(function (k) { if (BANNED.test(e.rot[k])) delete e.rot[k]; });
     return e;
   }
   function list(a) { return a.filter(Boolean); }
@@ -487,9 +490,12 @@ window.PERSONAL = (function () {
     if (extra && extra.bosu) o.bosu = extra.bosu;
     return o;
   }
-  var hipThrust = {L: "B", n: "Barbell Hip Thrust", t: "main", hyp: true, s: 4,
-    cue: (window.ROT_CUES || {})["Barbell Hip Thrust"] || "Two second hold at lockout, chin tucked.",
-    sw: ["Single Leg Hip Thrust", "Glute Focused DB Step-Up", "Kettlebell Swing"]};
+  var barbellRow = clean({L: "B", n: "Barbell Row", t: "main", hyp: true, s: 4,
+    cue: (window.ROT_CUES || {})["Barbell Row"] || "Hinge to about 45 degrees and keep that angle. Pull to the lower ribs, lower under control.",
+    sw: ["Chest-Supported Row", "Seated Machine Row", "Single Arm Dumbbell Row"]});
+  var pullThrough = clean({L: "C", n: "Cable Pull-Through", t: "sec", s: 3,
+    cue: "Cable low, rope between the legs, facing away. Push the hips back with soft knees, then squeeze the glutes to stand tall. Ribs down.",
+    sw: ["Dumbbell RDL", "Kettlebell Swing", "Glute Focused DB Step-Up"]});
   var days = [
     day("Mon", "Push A (heavy)", V[0], [
       pick("Barbell Bench Press"),
@@ -499,8 +505,8 @@ window.PERSONAL = (function () {
       pick("Tricep Rope Pushdown", {s: 3}),
       pick("Cable Rope Crunch")]),
     day("Tue", "Pull A (heavy)", V[2], [
-      pick("Deadlift"),
       pick("Pull-up (bodyweight)"),
+      barbellRow,
       pick("Low Cable Row", {s: 3}),
       pick("Hammer Strength Pulldown", {s: 3}),
       pick("EZ Bar Drag Curl", {t: "sec", s: 3}),
@@ -523,7 +529,7 @@ window.PERSONAL = (function () {
       pick("Cable Wood Chop")]),
     day("Fri", "Pull B (volume)", V[2], [
       pick("Chin-up (bodyweight)"),
-      pick("Bent-Over Dumbbell Row", {t: "main", hyp: true, s: 3}),
+      pick("Bent-Over Dumbbell Row", {t: "main", hyp: true, s: 3, rot: null}),   /* no Barbell Row rotation: Tuesday already has it */
       pick("Preacher Curl", {t: "sec", s: 3}),
       pick("Rear Delt Cable Fly", {s: 3}),
       pick("Cable Face Pull", {s: 2}),
@@ -531,8 +537,8 @@ window.PERSONAL = (function () {
       pick("Wrist Curl and Reverse Wrist Curl", {s: 2})]),
     day("Sat", "Legs B (hamstrings, glutes)", V[3], [
       pick("Elevated Romanian Deadlift", {hyp: true}),
-      hipThrust,
       pick("Lying Leg Curl"),
+      pullThrough,
       pick("Seated Leg Curl", {s: 3}),
       pick("Bulgarian Split Squat", {t: "sec", s: 3}),
       pick("Seated Calf Raise", {s: 2}),
