@@ -410,7 +410,7 @@ function cardioSessions(){ var c=cardioCfg(); return c?c.sessions:4; }
    When every set of the morning lift is ticked and no cardio is logged, a "Next up" card shows and a reminder is saved
    to plate_reminders (reminders-setup.sql). A scheduled Supabase function (send-pm-reminders) sends it to this phone as a
    push notification once it is due. Logging the cardio cancels it. Nothing here touches anyone else's account. */
-var VAPID_PUBLIC="";   /* PUBLIC key from `npx web-push generate-vapid-keys`. The private key lives only in Supabase secrets. */
+var VAPID_PUBLIC="BJgNqk58L2i_mHRAMfBE2XJ72wE-4eMqna5LHSUcM1LxUfFUJWNPuBleCmkVPFpco_qy8gjo35EZ7as-6MbDQrc";   /* PUBLIC key from `npx web-push generate-vapid-keys`. The private key lives only in Supabase secrets. */
 var pm={on:false,sig:"",due:null};
 function pmCfg(k){ var X=personal(PROGRAMS[programPos(k).idx]||program(),k); return (X&&X.pm)?X.pm:null; }
 function pmSupported(){ return !DEV&&"serviceWorker" in navigator&&"PushManager" in window&&"Notification" in window; }
