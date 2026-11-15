@@ -456,3 +456,100 @@ window.ROT_CUES = {
   "Incline Dumbbell Curl":"Lie back on a 45 to 60 degree incline and let the arms hang. Curl without the elbows drifting forward.",
   "Hammer Curl":"Palms facing in. Elbows stay pinned to your sides."
 };
+
+/* ---------------------------------------------------------------------------------------------
+   PERSONAL OVERRIDE (coach login only; app.js checks the email). Everyone else keeps the shared plan.
+   Goal: add a little muscle, keep what is there, and get leaner by 2026-12-30.
+   Runs on Phases 3 and 4 from `from` to `until`; before that date, or after it, the shared program applies.
+     - 6-day push / pull / legs, each muscle twice a week: a heavy day (A) and a volume day (B).
+     - Secondary work trimmed to 3 sets; isolation on the volume days trimmed to 2. Main lifts keep their sets.
+     - Cardio: a separate PM session on all six lifting days (the weekly goal counts 6 sessions, not 4).
+     - Daily targets a little under the shared 1,900 kcal; protein unchanged.
+     - Deload week: one set fewer on everything, same weights.
+   Exercises are copied from DAYS_V2 by name, so cues, swaps and the accessory rotation come along.
+   --------------------------------------------------------------------------------------------- */
+window.PERSONAL = (function () {
+  var V = window.DAYS_V2, missing = [];
+  function find(n) {
+    for (var i = 0; i < V.length; i++) for (var j = 0; j < (V[i].ex || []).length; j++) if (V[i].ex[j].n === n) return V[i].ex[j];
+    return null;
+  }
+  function pick(n, o) {
+    var s = find(n); if (!s) { missing.push(n); return null; }
+    var e = JSON.parse(JSON.stringify(s)); delete e.only;
+    if (o) Object.keys(o).forEach(function (k) { e[k] = o[k]; });
+    return e;
+  }
+  function list(a) { return a.filter(Boolean); }
+  var PM = "PM session, separate from lifting (a few hours later if you can): 35-40 min incline treadmill walk, 5 incline at 3.5 mph, holding 8 lb dumbbells. Aim for 10,000 steps across the day.";
+  function day(d, title, src, ex, extra) {
+    var o = {d: d, title: title, bands: JSON.parse(JSON.stringify(src.bands || [])), cardio: PM, cardioSwap: BIKE, ex: list(ex)};
+    if (extra && extra.bosu) o.bosu = extra.bosu;
+    return o;
+  }
+  var hipThrust = {L: "B", n: "Barbell Hip Thrust", t: "main", hyp: true, s: 4,
+    cue: (window.ROT_CUES || {})["Barbell Hip Thrust"] || "Two second hold at lockout, chin tucked.",
+    sw: ["Single Leg Hip Thrust", "Glute Focused DB Step-Up", "Kettlebell Swing"]};
+  var days = [
+    day("Mon", "Push A (heavy)", V[0], [
+      pick("Barbell Bench Press"),
+      pick("Incline Dumbbell Press"),
+      pick("Seated Dumbbell Press", {t: "sec", s: 3}),
+      pick("Dumbbell Lateral Raise", {s: 3}),
+      pick("Tricep Rope Pushdown", {s: 3}),
+      pick("Cable Rope Crunch")]),
+    day("Tue", "Pull A (heavy)", V[2], [
+      pick("Deadlift"),
+      pick("Pull-up (bodyweight)"),
+      pick("Low Cable Row", {s: 3}),
+      pick("Hammer Strength Pulldown", {s: 3}),
+      pick("EZ Bar Drag Curl", {t: "sec", s: 3}),
+      pick("High Cable Reverse Fly", {s: 3}),
+      pick("Hanging Leg Raise")]),
+    day("Wed", "Legs A (quads, heavy)", V[1], [
+      pick("Low Bar Back Squat"),
+      pick("Reverse Hack Squat"),
+      pick("Leg Press", {s: 3}),
+      pick("Leg Extension", {s: 3}),
+      pick("Standing Calf Raise", {s: 3}),
+      pick("Weighted Plank Hold")], {bosu: V[1].bosu}),
+    day("Thu", "Push B (volume)", V[0], [
+      pick("Decline Press", {t: "main", hyp: true}),
+      pick("Close Grip Bench Press", {hyp: true}),
+      pick("Seated Machine Chest Press", {s: 3}),
+      pick("Overhead Cable Tricep Extension", {s: 3}),
+      pick("Pec Deck Fly", {s: 2}),
+      pick("Seated Machine Lateral Raise", {s: 2}),
+      pick("Cable Wood Chop")]),
+    day("Fri", "Pull B (volume)", V[2], [
+      pick("Chin-up (bodyweight)"),
+      pick("Bent-Over Dumbbell Row", {t: "main", hyp: true, s: 3}),
+      pick("Preacher Curl", {t: "sec", s: 3}),
+      pick("Rear Delt Cable Fly", {s: 3}),
+      pick("Cable Face Pull", {s: 2}),
+      pick("Barbell Shrug", {s: 2}),
+      pick("Wrist Curl and Reverse Wrist Curl", {s: 2})]),
+    day("Sat", "Legs B (hamstrings, glutes)", V[3], [
+      pick("Elevated Romanian Deadlift", {hyp: true}),
+      hipThrust,
+      pick("Lying Leg Curl"),
+      pick("Seated Leg Curl", {s: 3}),
+      pick("Bulgarian Split Squat", {t: "sec", s: 3}),
+      pick("Seated Calf Raise", {s: 2}),
+      pick("Cable Rope Crunch")]),
+    {d: "Sun", title: "Rest", rest: "Full rest. An easy walk is fine if you want to move, but nothing structured."}
+  ];
+  if (missing.length && window.console) console.warn("PERSONAL split: exercises not found in DAYS_V2:", missing.join(", "));
+  return {
+    from: "2026-11-16", until: "2026-12-30", phases: ["ph3", "ph4"],
+    targets: {k: 1800, p: 160, c: 165, f: 55},
+    cardio: {perSession: "35-40 min", sessions: 6},
+    deload: {from: "2026-12-07", to: "2026-12-13"},
+    /* Calorie cycling: kcal added to (or taken from) the daily target by workout day, Mon..Sun. Sums to zero,
+       so the weekly average stays at targets.k. Heavier leg and back days eat more; volume days and rest day eat less. */
+    cycle: [0, 100, 200, -100, -100, 200, -300],
+    /* Final 10 days (12/21 to 12/30): one set fewer on non-main work, 10 g more protein. */
+    taper: {from: "2026-12-21", protein: 10},
+    days: days
+  };
+})();

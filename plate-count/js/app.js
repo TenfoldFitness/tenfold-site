@@ -389,8 +389,21 @@ function program(){ return PROGRAMS[S.profile.programIdx]||PROGRAMS[0]; }
    so numbers entered on the old site still sit under the right workout. */
 var NEW_SPLIT_FROM="2026-10-26";
 function daysFor(p,dateKey){
+  var X=personal(p,dateKey); if(X) return X.days;
   return (p.days===window.DAYS_V2&&window.DAYS&&dateKey<NEW_SPLIT_FROM)?window.DAYS:p.days;
 }
+/* Personal override (programs.js: window.PERSONAL): the coach login only, on the listed phases, between its dates.
+   Everyone else, and every other date, gets the shared program. */
+function personal(p,dateKey){
+  var X=window.PERSONAL;
+  return (X&&userEmail===ADMIN_EMAIL&&p&&X.phases.indexOf(p.id)>=0&&dateKey>=X.from&&dateKey<=X.until)?X:null;
+}
+function phaseTargets(p,dateKey){
+  var X=personal(p,dateKey||todayKey());
+  return X&&X.targets?X.targets:(p&&p.phase&&p.phase.targets);
+}
+function cardioCfg(k){ var X=personal(program(),k||todayKey()); return X&&X.cardio?X.cardio:null; }
+function cardioSessions(){ var c=cardioCfg(); return c?c.sessions:4; }
 
 /* Phase and week are COMPUTED from one fixed start date. */
 function programPosRaw(dateKey){
@@ -491,8 +504,9 @@ function maybeAdvance(){
   S.profile.programIdx=pos.idx;
   S.profile.phaseNote={from:cp.id,to:PROGRAMS[pos.idx].id};   /* shown on Train until dismissed, so the change is explained and not just flashed */
   /* A client who set their own goal keeps their own targets; phase targets only auto-apply to legacy profiles. */
-  var retarget=!S.profile.goal&&to.targets&&!sameTargets(from.targets,to.targets);
-  if(retarget) S.profile.targets={k:to.targets.k,p:to.targets.p,c:to.targets.c,f:to.targets.f};
+  var toT=phaseTargets(PROGRAMS[pos.idx]), fromT=phaseTargets(cp);
+  var retarget=!S.profile.goal&&toT&&!sameTargets(fromT,toT);
+  if(retarget) S.profile.targets={k:toT.k,p:toT.p,c:toT.c,f:toT.f};
   persistProfile(); softRender();
   toast("Moved to "+PROGRAMS[pos.idx].name+(retarget?" — targets now "+S.profile.targets.k+" kcal":""),"Undo",function(){
     S.profile.programIdx=prevIdx; S.profile.targets=prevT; S.profile.phaseNote=null; persistProfile(); renderAll();
@@ -556,11 +570,21 @@ function weeklyWeight(k){
 }
 /* Protein follows bodyweight by default (1 g per lb). 0 means "use my fixed number instead". */
 function perLb(){ var v=S.profile.proteinPerLb; return v===0?0:(v>0?v:1); }
-function targetsFor(k){
+function targetsBase(k){
   var P=S.profile, t=P.targets, pl=perLb(); if(!pl) return t;
   var wt=weeklyWeight(k); if(!wt) return t;
   var p=Math.ceil(wt*pl-0.0001), c=Math.max(0,Math.round((t.k-p*4-t.f*9)/4/5)*5);
   return {k:t.k,p:p,c:c,f:t.f};
+}
+/* Personal override (programs.js: PERSONAL.cycle, PERSONAL.taper): calories shift by workout day with the weekly
+   average unchanged, carbs absorb the change; the final days add protein. Everyone else gets targetsBase as is. */
+function targetsFor(k){
+  var t=targetsBase(k), X=personal(PROGRAMS[programPos(k).idx]||program(),k); if(!X) return t;
+  var wi=(S.days[k]&&S.days[k].wd!=null)?S.days[k].wd:wdIndex(k);
+  var adj=X.cycle?(X.cycle[wi]||0):0, xp=(X.taper&&k>=X.taper.from)?(X.taper.protein||0):0;
+  if(!adj&&!xp) return t;
+  var kc=t.k+adj, p=t.p+xp, c=Math.max(0,Math.round((kc-p*4-t.f*9)/4/5)*5);
+  return {k:kc,p:p,c:c,f:t.f};
 }
 function kcalMET(met,min,kg){ return met*3.5*kg/200*min; }
 function estBurn(k){
@@ -1099,6 +1123,10 @@ function buildItems(p,d,wd,rdate){
       var tier=sch[e.t]||sch.iso, k=(e.t==="main"&&focus==="s"&&tier.s&&!e.hyp)?tier.s:tier.h;
       it.warm=k.w; it.s=k.s; it.r=k.r; it.rest=k.rest; it.tech=k.tech; it.t=e.t;
       if(e.s) it.s=e.s; if(e.r) it.r=e.r; it.bw=!!e.bw;
+      var PX=personal(p,rdate);   /* deload week: one set fewer, same weights */
+      if(PX&&PX.deload&&rdate>=PX.deload.from&&rdate<=PX.deload.to&&it.s>2){ it.s=it.s-1; it.tech=(it.tech?it.tech+" ":"")+"Deload week: one set fewer, same weights."; }
+      /* Final-days taper: main lifts keep their sets and weights; secondary, isolation and core work drops one set. */
+      else if(PX&&PX.taper&&rdate>=PX.taper.from&&e.t!=="main"&&it.s>2){ it.s=it.s-1; it.tech=(it.tech?it.tech+" ":"")+"Taper: one set fewer, heaviest weights stay on the main lifts."; }
     } else {
       var sp; if(p.levels){ var L=p.levels[S.profile.plyoLevel]||p.levels[0]; sp=parseSpec(L.s+"x"+L.r); } else sp=parseSpec(e.s+"x"+e.r);
       it.s=sp.s; it.r=sp.reps.every(function(r){ return r===sp.reps[0]; })?String(sp.reps[0]):sp.reps.join(", ");
@@ -1222,7 +1250,7 @@ function walkCard(rd){
 }
 function cardioCard(d,rd,p){
   if(isStarter()){ var wc=day(rd).cardio; if(!wc.type){ wc.type="Walk outdoors"; } return walkCard(rd); }
-  var c=day(rd).cardio, cs=cardioStatus(rd), dur=p.phase&&p.phase.cardio?p.phase.cardio:"", typ=c.type||"Treadmill", planned=!!d.cardio;
+  var c=day(rd).cardio, cs=cardioStatus(rd), dur=cardioCfg(rd)?cardioCfg(rd).perSession:(p.phase&&p.phase.cardio?p.phase.cardio:""), typ=c.type||"Treadmill", planned=!!d.cardio;
   var types="<p class='eyebrow' style='margin:12px 0 8px'>What did you do?</p><div class='chips' id='cTypes'>"+CARDIO_TYPES.map(function(t){
     return "<button class='chip' type='button' data-ct='"+esc(t[0])+"' aria-pressed='"+(t[0]===typ)+"'>"+esc(t[0])+"</button>"; }).join("")+"</div>";
   return "<details class='fold'"+((planned||c.done||c.minutes)?" open":"")+"><summary>Cardio<span class='r'>"+(c.done?"Done · "+esc(typ):esc(planned?dur:"optional"))+"</span></summary><div class='inner'>"+
@@ -1540,7 +1568,7 @@ function openPhaseSheet(){
   if(S.profile.goal){ var MT=targetsFor(todayKey());
     body+="<p class='eyebrow' style='margin:18px 0 8px'>Your daily targets</p><div class='tgt4'><div><b>"+MT.k+"</b><span>kcal</span></div><div><b>"+MT.p+"</b><span>protein</span></div><div><b>"+MT.c+"</b><span>carbs</span></div><div><b>"+MT.f+"</b><span>fat</span></div></div>"+
       "<button class='btn ghost sm' id='recalc' style='margin-top:10px'>Update weight &amp; targets</button>";
-  } else if(p.phase&&p.phase.targets){ var T=p.phase.targets;
+  } else if(p.phase&&phaseTargets(p)){ var T=phaseTargets(p);
     body+="<p class='eyebrow' style='margin:18px 0 8px'>Daily targets</p><div class='tgt4'><div><b>"+T.k+"</b><span>kcal</span></div><div><b>"+T.p+"</b><span>protein</span></div><div><b>"+T.c+"</b><span>carbs</span></div><div><b>"+T.f+"</b><span>fat</span></div></div>"+
       "<button class='btn ghost sm' id='useT' style='margin-top:10px' "+(sameTargets(T,S.profile.targets)?"disabled":"")+">"+(sameTargets(T,S.profile.targets)?"In use":"Use these targets")+"</button>"; }
   if(canChoosePlan()) body+="<p class='eyebrow' style='margin:18px 0 8px'>Your program</p><p class='muted small' style='margin:0 0 8px'>You are on the "+(isStarter()?"Starter program, 4 days a week":"Full program, 6 days a week")+".</p><button class='btn ghost sm' id='chgPlan'>Change program</button>";
@@ -1553,7 +1581,7 @@ function openPhaseSheet(){
   var rc=$("recalc"); if(rc) rc.onclick=function(){ openOnboarding(false); };
   var cp=$("chgPlan"); if(cp) cp.onclick=function(){ openPlanChooser(false); };
   var shw=$("shiftWeek"); if(shw) shw.onclick=function(){ shiftWeekFrom(S.date); };
-  var ut=$("useT"); if(ut) ut.onclick=function(){ var T=p.phase.targets; S.profile.targets={k:T.k,p:T.p,c:T.c,f:T.f}; persistProfile(); closeSheet(); toast("Targets updated"); };
+  var ut=$("useT"); if(ut) ut.onclick=function(){ var T=phaseTargets(p); S.profile.targets={k:T.k,p:T.p,c:T.c,f:T.f}; persistProfile(); closeSheet(); toast("Targets updated"); };
   $("pstart").onchange=function(){
     if(!/^\d{4}-\d{2}-\d{2}$/.test(this.value)) return; S.profile.programStart=this.value;
     if(PROGRAMS[S.profile.programIdx]&&PROGRAMS[S.profile.programIdx].phase) S.profile.programIdx=programPos(todayKey()).idx;
@@ -1563,13 +1591,13 @@ function openPhaseSheet(){
 
 /* ---- weekly cardio goal (4 sessions' worth of minutes, folded into the days left) ---- */
 function baseCardioPerSession(){
-  var raw=program().phase&&program().phase.cardio, n=(String(raw||"").match(/\d+/g)||[]).map(Number);
+  var cc=cardioCfg(), raw=cc?cc.perSession:(program().phase&&program().phase.cardio), n=(String(raw||"").match(/\d+/g)||[]).map(Number);
   if(!n.length) return 25; return n.length>1?(n[0]+n[1])/2:n[0];
 }
 /* the phase's cardio, plus any bump you accepted from the Progress tab */
 function cardioPerSession(){ return Math.round(baseCardioPerSession()*(1+(S.profile.cardioBump||0)/100)); }
 function cardioStatus(k){
-  var mon=mondayOf(k), target=cardioPerSession()*4, done=0, sessions=0;
+  var mon=mondayOf(k), target=cardioPerSession()*cardioSessions(), done=0, sessions=0;
   for(var i=0;i<7;i++){ var kk=shiftKey(mon,i); if(kk>k) break; var c=S.days[kk]&&S.days[kk].cardio; if(c&&(c.minutes||c.done)){ done+=(c.minutes||0); sessions++; } }
   var left=Math.max(0,daysBetween(k,shiftKey(mon,6))), tc=S.days[k]&&S.days[k].cardio, logged=!!(tc&&(tc.minutes||tc.done));
   var remaining=Math.max(0,target-done), slots=Math.max(1,left+(logged?0:1)), perDay=Math.ceil(remaining/slots);
@@ -1968,7 +1996,7 @@ function weekCardio(mon){
   return {min:t,n:n};
 }
 function cardioAdherence(){
-  var m=mondayOf(todayKey()), a=weekCardio(shiftKey(m,-14)), b=weekCardio(shiftKey(m,-7)), tgt=cardioPerSession()*4, avg=(a.min+b.min)/2;
+  var m=mondayOf(todayKey()), a=weekCardio(shiftKey(m,-14)), b=weekCardio(shiftKey(m,-7)), tgt=cardioPerSession()*cardioSessions(), avg=(a.min+b.min)/2;
   return {avg:avg,target:tgt,pct:tgt?avg/tgt:1,sessions:(a.n+b.n)/2};
 }
 function cardioReport(cw,pace){
@@ -2028,7 +2056,7 @@ function planSuggestions(cw,pace){
   var pct=pace.rate/cw*100, b=blockNow(), r=paceBand(), T=P.targets, bump=P.cardioBump||0, bonus=P.bonusEx||0, A=cardioAdherence();
   var since=Math.min(daysSince(P.calAdjAt),daysSince(P.cardioBumpAt),daysSince(P.bonusAt)), rt=sgn(pace.rate)+" lb a week";
   var wait="You changed your plan "+since+" days ago. Give it two weeks before the next change so the scale can show what it did.";
-  function cardioTo(v){ var base=baseCardioPerSession(); return Math.round(base*(1+v/100))*4; }
+  function cardioTo(v){ var base=baseCardioPerSession(); return Math.round(base*(1+v/100))*cardioSessions(); }
   if(pct>r.hi){
     var why=b==="cut"?"Your weight is not dropping as fast as a cut should ("+rt+").":b==="build"?"You are gaining faster than a lean build ("+rt+"), which is mostly fat.":"Your weight is drifting up ("+rt+").";
     if(since<14) o.note=wait;
@@ -2063,7 +2091,7 @@ function planSuggestionsCal(cw,pace){
   else if(delta<0&&T.k+delta<CAL_FLOOR){ o.note="Your calories are already near the "+CAL_FLOOR+" floor. Add cardio instead of cutting more."; delta=0; }
   if(delta) o.items.push({kind:"cal",v:delta,head:(delta<0?"Lower":"Raise")+" calories by "+CAL_STEP,msg:why+" Change "+T.k+" to "+(T.k+delta)+" kcal"+(delta<0?"":" and keep protein where it is")+"."});
   if(!isStarter()&&b==="cut"&&pct>r.hi&&bump<CARDIO_MAX&&daysSince(P.cardioBumpAt)>=7){
-    var base=baseCardioPerSession()*4, from=Math.round(baseCardioPerSession()*(1+bump/100))*4, to=Math.round(baseCardioPerSession()*(1+(bump+CARDIO_STEP)/100))*4;
+    var cs6=cardioSessions(), base=baseCardioPerSession()*cs6, from=Math.round(baseCardioPerSession()*(1+bump/100))*cs6, to=Math.round(baseCardioPerSession()*(1+(bump+CARDIO_STEP)/100))*cs6;
     o.items.push({kind:"cardio",v:bump+CARDIO_STEP,head:"Add "+CARDIO_STEP+"% more cardio",msg:"Weekly cardio would go from "+from+" to "+to+" minutes (base plan "+base+"). Change one thing at a time: take either this or the calorie change first, then give it two weeks."});
   }
   if(bump>0&&(pct<r.lo||b!=="cut")) o.items.push({kind:"cardioReset",v:0,head:"Return cardio to the plan",msg:"You added "+bump+"% cardio earlier. "+(b!=="cut"?"You are no longer in a cut.":"Your weight is dropping fast enough now.")+" Go back to the base minutes?"});
