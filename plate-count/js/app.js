@@ -1225,7 +1225,7 @@ function buildItems(p,d,wd,rdate){
     if(sch&&e.t){
       var tier=sch[e.t]||sch.iso, k=(e.t==="main"&&focus==="s"&&tier.s&&!e.hyp)?tier.s:tier.h;
       it.warm=k.w; it.s=k.s; it.r=k.r; it.rest=k.rest; it.tech=k.tech; it.t=e.t;
-      if(e.s) it.s=e.s; if(e.r) it.r=e.r; it.bw=!!e.bw;
+      if(e.s) it.s=e.s; if(e.r) it.r=e.r; it.bw=!!e.bw; if(e.rest) it.rest=e.rest; if(e.tech!==undefined) it.tech=e.tech;
       var PX=personal(p,rdate);   /* deload week: one set fewer, same weights */
       if(PX&&PX.deload&&rdate>=PX.deload.from&&rdate<=PX.deload.to&&it.s>2){ it.s=it.s-1; it.tech=(it.tech?it.tech+" ":"")+"Deload week: one set fewer, same weights."; }
       /* Final-days taper: main lifts keep their sets and weights; secondary, isolation and core work drops one set. */
@@ -1475,6 +1475,7 @@ function renderTrain(){
     }
     h+="</div>";
   });
+  if(d.cool&&d.cool.length) h+="<details class='fold'><summary>Cool-down<span class='r'>optional</span></summary><div class='inner'><ul style='margin:0;padding-left:18px'>"+d.cool.map(function(x){ return "<li>"+esc(x)+"</li>"; }).join("")+"</ul></div></details>";
   h+="<button class='btn ghost' id='addEx' style='margin-top:12px'>+ Add an exercise</button>";
   h+=cardioHtml;
   h+="<p class='foot'>Numbers save per day. Grey numbers are suggestions: tap ✓ with empty boxes to log them. Star an exercise you love and it is used wherever it fits.</p>";
