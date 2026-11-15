@@ -493,6 +493,10 @@ window.PERSONAL = (function () {
   var barbellRow = clean({L: "B", n: "Barbell Row", t: "main", hyp: true, s: 4,
     cue: (window.ROT_CUES || {})["Barbell Row"] || "Hinge to about 45 degrees and keep that angle. Pull to the lower ribs, lower under control.",
     sw: ["Chest-Supported Row", "Seated Machine Row", "Single Arm Dumbbell Row"]});
+  /* Charles Glass's seated single-leg curl, replacing the Elevated Romanian Deadlift on Legs B (not liked). */
+  var seatedSingleCurl = clean({L: "A", n: "Seated Single-Leg Curl", t: "main", hyp: true, s: 4,
+    cue: "One leg at a time. Put a yoga block or rolled towel behind your back so you sit upright, and set the pad at the Achilles. Focus on the hamstring just behind the knee, and squeeze hard at the bottom of the curl.",
+    sw: ["Seated Leg Curl", "Unilateral Standing Leg Curl", "Banded Leg Curl"]});
   var pullThrough = clean({L: "C", n: "Cable Pull-Through", t: "sec", s: 3,
     cue: "Cable low, rope between the legs, facing away. Push the hips back with soft knees, then squeeze the glutes to stand tall. Ribs down.",
     sw: ["Dumbbell RDL", "Kettlebell Swing", "Glute Focused DB Step-Up"]});
@@ -536,10 +540,9 @@ window.PERSONAL = (function () {
       pick("Barbell Shrug", {s: 2}),
       pick("Wrist Curl and Reverse Wrist Curl", {s: 2})]),
     day("Sat", "Legs B (hamstrings, glutes)", V[3], [
-      pick("Elevated Romanian Deadlift", {hyp: true}),
+      seatedSingleCurl,
       pick("Lying Leg Curl"),
       pullThrough,
-      pick("Seated Leg Curl", {s: 3}),
       pick("Bulgarian Split Squat", {t: "sec", s: 3}),
       pick("Seated Calf Raise", {s: 2}),
       pick("Cable Rope Crunch")]),
