@@ -35,7 +35,7 @@ create policy "own reminders" on public.plate_reminders
   for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- Schedule: every 5 minutes, call the send-pm-reminders function. Run this part AFTER the function is deployed
--- and CRON_SECRET is set. Replace PASTE_YOUR_CRON_SECRET with the same value you saved as the CRON_SECRET secret.
+-- and CRON_SECRET is set. Replace PASTE_YOUR_PM_CRON_SECRET with the same value you saved as the PM_CRON_SECRET secret.
 -- (Turn on the pg_cron and pg_net extensions first: Database -> Extensions.)
 --
 -- select cron.schedule(
@@ -43,7 +43,7 @@ create policy "own reminders" on public.plate_reminders
 --   '*/5 * * * *',
 --   $$ select net.http_post(
 --        url     := 'https://aeoqczhdhzlggivkgaob.supabase.co/functions/v1/send-pm-reminders',
---        headers := jsonb_build_object('Content-Type','application/json','x-cron-secret','PASTE_YOUR_CRON_SECRET'),
+--        headers := jsonb_build_object('Content-Type','application/json','x-cron-secret','PASTE_YOUR_PM_CRON_SECRET'),
 --        body    := '{}'::jsonb
 --      ) $$
 -- );

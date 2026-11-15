@@ -11,7 +11,7 @@
 //   - at most 50 per run
 //
 // Required secrets (Edge Functions > Secrets):
-//   CRON_SECRET        a long random string; the same value goes in the cron job
+//   PM_CRON_SECRET        a long random string; the same value goes in the cron job
 //   VAPID_PUBLIC_KEY   the PUBLIC key from `npx web-push generate-vapid-keys` (same one pasted into app.js)
 //   VAPID_PRIVATE_KEY  the PRIVATE key from the same command. Never put this in the repo.
 //   VAPID_SUBJECT      mailto:tenfoldfunctional@gmail.com
@@ -34,7 +34,7 @@ function json(body, status = 200) {
 }
 
 serve(async (req) => {
-  const secret = Deno.env.get("CRON_SECRET");
+  const secret = Deno.env.get("PM_CRON_SECRET");
   if (!secret || req.headers.get("x-cron-secret") !== secret) return json({ error: "Not allowed." }, 401);
 
   let dry = false;
