@@ -412,7 +412,12 @@ function cardioSessions(){ var c=cardioCfg(); return c?c.sessions:4; }
    push notification once it is due. Logging the cardio cancels it. Nothing here touches anyone else's account. */
 var VAPID_PUBLIC="BJgNqk58L2i_mHRAMfBE2XJ72wE-4eMqna5LHSUcM1LxUfFUJWNPuBleCmkVPFpco_qy8gjo35EZ7as-6MbDQrc";   /* PUBLIC key from `npx web-push generate-vapid-keys`. The private key lives only in Supabase secrets. */
 var pm={on:false,sig:"",due:null};
-function pmCfg(k){ var X=personal(PROGRAMS[programPos(k).idx]||program(),k); return (X&&X.pm)?X.pm:null; }
+function pmCfg(k){
+  var X=personal(PROGRAMS[programPos(k).idx]||program(),k);
+  /* Before the personal plan starts, the coach login can still switch reminders on, so the phone can be set up ahead of day one. */
+  if(!X&&userEmail===ADMIN_EMAIL&&window.PERSONAL&&k<window.PERSONAL.from) X=window.PERSONAL;
+  return (X&&X.pm)?X.pm:null;
+}
 function pmSupported(){ return !DEV&&"serviceWorker" in navigator&&"PushManager" in window&&"Notification" in window; }
 function cardioLogged(k){ var c=(S.days[k]||{}).cardio; return !!(c&&(c.done||c.minutes)); }
 /* Same rule as the "Workout logged" message: every planned set is ticked. */
