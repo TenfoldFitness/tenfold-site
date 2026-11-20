@@ -609,6 +609,19 @@ window.PERSONAL = (function () {
         cool: ["Seated forward fold 45 sec", "Pigeon stretch 45 sec each side", "90/90 hip stretch 30 sec each side"]}),
     {d: "Sun", title: "Rest", rest: "Full rest. An easy walk is fine if you want to move, but nothing structured."}
   ];
+  /* Effort targets (added 2026-11-20 to make sessions harder). Shown under each exercise; app.js leaves them off in the deload week.
+     Main lifts: one clean rep left. Secondary and isolation: closer, last set to failure. Bodyweight pulls keep their own
+     "rep or two in reserve" cue, and the power openers and core work stay as they are. */
+  var EFFORT = {
+    main: "Effort: end each set with about one clean rep left. Use safeties or a spotter on barbell presses and squats.",
+    acc:  "Effort: first sets one rep short of failure. Last set: keep going until you cannot do another rep with good form."
+  };
+  days.forEach(function (d) {
+    (d.ex || []).forEach(function (e) {
+      if (e.t === "main" && !e.bw) e.effort = EFFORT.main;
+      else if (e.t === "sec" || e.t === "iso") e.effort = EFFORT.acc;
+    });
+  });
   if (missing.length && window.console) console.warn("PERSONAL split: exercises not found in DAYS_V2:", missing.join(", "));
   return {
     from: "2026-11-16", until: "2026-12-30", phases: ["ph3", "ph4"],

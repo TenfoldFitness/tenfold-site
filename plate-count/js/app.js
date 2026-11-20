@@ -1230,6 +1230,8 @@ function buildItems(p,d,wd,rdate){
       if(PX&&PX.deload&&rdate>=PX.deload.from&&rdate<=PX.deload.to&&it.s>2){ it.s=it.s-1; it.tech=(it.tech?it.tech+" ":"")+"Deload week: one set fewer, same weights."; }
       /* Final-days taper: main lifts keep their sets and weights; secondary, isolation and core work drops one set. */
       else if(PX&&PX.taper&&rdate>=PX.taper.from&&e.t!=="main"&&it.s>2){ it.s=it.s-1; it.tech=(it.tech?it.tech+" ":"")+"Taper: one set fewer, heaviest weights stay on the main lifts."; }
+      /* Effort target (only exercises that carry e.effort, which only the personal plan sets). Left off in the deload week. */
+      if(e.effort&&!(PX&&PX.deload&&rdate>=PX.deload.from&&rdate<=PX.deload.to)) it.tech=(it.tech?it.tech+" ":"")+e.effort;
     } else {
       var sp; if(p.levels){ var L=p.levels[S.profile.plyoLevel]||p.levels[0]; sp=parseSpec(L.s+"x"+L.r); } else sp=parseSpec(e.s+"x"+e.r);
       it.s=sp.s; it.r=sp.reps.every(function(r){ return r===sp.reps[0]; })?String(sp.reps[0]):sp.reps.join(", ");
