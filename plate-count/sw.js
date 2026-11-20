@@ -1,10 +1,27 @@
 /* Plate Count service worker — app shell works offline; data calls always go to the network. */
-var VERSION = "pc-v34";   /* when you change app files, bump this AND the ?v= numbers in index.html */
+var VERSION = "pc-v44";   /* when you change app files, bump this AND the ?v= numbers in index.html */
 var SHELL = [
-  "index.html","css/plate.css?v=32","js/app.js?v=34","foods.js?v=28","programs.js?v=34","starter-program.js?v=28","spotify.js?v=28",
+  "index.html","css/plate.css?v=32","js/app.js?v=44","foods.js?v=28","programs.js?v=44","starter-program.js?v=28","spotify.js?v=28",
   "manifest.webmanifest","icons/icon-192.png","icons/icon-512.png","icons/icon-180.png","../js/supabase-client.js"
 ];
 var CDN = /^https:\/\/(cdn\.jsdelivr\.net|fonts\.googleapis\.com|fonts\.gstatic\.com)\//;
+
+// Push notifications (the PM session reminder, sent by the send-pm-reminders function).
+self.addEventListener("push", function(e){
+  var d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (x) { d = {}; }
+  e.waitUntil(self.registration.showNotification(d.title || "Plate Count", {
+    body: d.body || "", icon: "icons/icon-192.png", badge: "icons/icon-192.png", tag: "pm-session", data: { url: d.url || "/plate-count/index.html" }
+  }));
+});
+self.addEventListener("notificationclick", function(e){
+  e.notification.close();
+  var url = (e.notification.data && e.notification.data.url) || "/plate-count/index.html";
+  e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function(list){
+    for (var i = 0; i < list.length; i++) { if (list[i].url.indexOf("/plate-count/") > -1 && "focus" in list[i]) return list[i].focus(); }
+    return self.clients.openWindow(url);
+  }));
+});
 
 self.addEventListener("install", function(e){
   e.waitUntil(caches.open(VERSION).then(function(c){ return c.addAll(SHELL); }).then(function(){ return self.skipWaiting(); }));

@@ -95,9 +95,7 @@ window.DAYS = [
  bands:["Band pull-aparts 2x20","Band lat pulldown 2x15","Band face pulls 2x15"],
  cardio:WALK, cardioSwap:BIKE,
  ex:[
-  {L:"A",n:"Deadlift",t:"main",cue:"Reset every rep. Speed off the floor tells you whether the weight is right. Belt on for the working sets.",
-   sw:["Trap Bar Deadlift","Rack Pull"]},
-  {L:"B",n:"Incline Pulldown",t:"main",cue:"Chest on an incline bench facing the cable. Pull to the chest and lift the torso slightly into the squeeze.",
+  {L:"A",n:"Incline Pulldown",t:"main",cue:"Chest on an incline bench facing the cable. Pull to the chest and lift the torso slightly into the squeeze.",
    sw:["Neutral Grip Lat Pulldown","Pull-up","Hammer Strength Pulldown"]},
   {L:"C",n:"Low Cable Row",t:"sec",cue:"Sit up high, on a plate or box, so you pull upward. Lean forward into every rep for the stretch, then come upright at the contraction.",
    sw:["Chest-Supported Row","Seated Machine Row"]},
@@ -395,11 +393,8 @@ window.ROT_SET = {ph3:"A", ph4:"B", ph5:"C", ph6:"A"};
   hyp(D[3], "Lying Leg Curl");
   hyp(D[4], "Seated Dumbbell Press");
 
-  /* Back day had no heavy lift in the peak-strength phase: its only main lift is the bodyweight pull-up.
-     Phase 3 gets the deadlift back, first in the session while fresh. Shown from ROT_FROM, Phase 3 only. */
-  D[2].ex.unshift({L:"A", n:"Deadlift", t:"main", only:["ph3"],
-    cue:"Reset every rep. Speed off the floor tells you whether the weight is right. Belt on for the working sets.",
-    sw:["Trap Bar Deadlift","Rack Pull"]});
+  /* The conventional deadlift (and its trap bar and rack pull variants) is not used in any program, by decision.
+     Romanian deadlift variations are a different hinge and stay. */
 })();
 
 /* Coaching cues for the rotated exercises. A slot's own cue only fits its own exercise. */
@@ -454,7 +449,19 @@ window.ROT_CUES = {
   "Tricep Pressdown":"Elbows pinned. Press down, pause, return slowly.",
   "Machine Preacher Curl":"Do not lock out at the bottom. Keep the tension on.",
   "Incline Dumbbell Curl":"Lie back on a 45 to 60 degree incline and let the arms hang. Curl without the elbows drifting forward.",
-  "Hammer Curl":"Palms facing in. Elbows stay pinned to your sides."
+  "Hammer Curl":"Palms facing in. Elbows stay pinned to your sides.",
+  "Incline Explosive Push-up":"Hands on a bench. Lower for two counts, then push hard enough that your hands leave it.",
+  "Band-Resisted Push-up":"Band across the upper back. Lower for two counts, then push up fast.",
+  "Explosive Pull-up":"Pull fast, aiming to bring the chest toward the bar. Lower under control.",
+  "Dumbbell Swing":"One dumbbell in both hands. Snap the hips and let the arms just guide.",
+  "Landmine Rotation":"Hold the bar end with both hands. Turn through the hips and sweep across, same reps each side.",
+  "Jump Squat":"Quarter squat, then jump. Land soft and quiet, reset between reps.",
+  "Broad Jump (stick the landing)":"Swing the arms and jump forward. Land soft and hold the landing for a second.",
+  "Step-Up with Knee Drive":"Drive off the top leg and lift the other knee to hip height. Control the step down.",
+  "Single-Arm Kettlebell Swing":"Same snap as the two-hand swing. Same reps each side.",
+  "Skater Hop":"Hop sideways from one leg to the other. Land soft and hold for a second.",
+  "Landmine Press":"One arm, half-kneeling or standing. Press up and slightly forward, ribs down.",
+  "Landmine Row":"Hinge with a flat back. Pull the elbow to the hip, lower under control."
 };
 
 /* ---------------------------------------------------------------------------------------------
@@ -467,6 +474,7 @@ window.ROT_CUES = {
      - Daily targets a little under the shared 1,900 kcal; protein unchanged.
      - Deload week: one set fewer on everything, same weights.
    Exercises are copied from DAYS_V2 by name, so cues, swaps and the accessory rotation come along.
+   No hip thrusts, trap bar work or deadlift variants for this login (see BANNED below).
    --------------------------------------------------------------------------------------------- */
 window.PERSONAL = (function () {
   var V = window.DAYS_V2, missing = [];
@@ -478,65 +486,126 @@ window.PERSONAL = (function () {
     var s = find(n); if (!s) { missing.push(n); return null; }
     var e = JSON.parse(JSON.stringify(s)); delete e.only;
     if (o) Object.keys(o).forEach(function (k) { e[k] = o[k]; });
+    return clean(e);
+  }
+  /* This login never gets hip thrusts, trap bar work or any deadlift variant, in a slot, a swap list or the rotation. */
+  var BANNED = /hip thrust|trap bar|rack pull|^deadlift$/i;
+  function clean(e) {
+    if (e.sw) e.sw = e.sw.filter(function (n) { return !BANNED.test(n); });
+    if (e.rot) Object.keys(e.rot).forEach(function (k) { if (BANNED.test(e.rot[k])) delete e.rot[k]; });
     return e;
   }
   function list(a) { return a.filter(Boolean); }
   var PM = "PM session, separate from lifting (a few hours later if you can): 35-40 min incline treadmill walk, 5 incline at 3.5 mph, holding 8 lb dumbbells. Aim for 10,000 steps across the day.";
   function day(d, title, src, ex, extra) {
-    var o = {d: d, title: title, bands: JSON.parse(JSON.stringify(src.bands || [])), cardio: PM, cardioSwap: BIKE, ex: list(ex)};
+    var o = {d: d, title: title, bands: JSON.parse(JSON.stringify((extra && extra.bands) || src.bands || [])), cardio: PM, cardioSwap: BIKE, ex: list(ex)};
     if (extra && extra.bosu) o.bosu = extra.bosu;
+    if (extra && extra.cool) o.cool = extra.cool;
     return o;
   }
-  var hipThrust = {L: "B", n: "Barbell Hip Thrust", t: "main", hyp: true, s: 4,
-    cue: (window.ROT_CUES || {})["Barbell Hip Thrust"] || "Two second hold at lockout, chin tucked.",
-    sw: ["Single Leg Hip Thrust", "Glute Focused DB Step-Up", "Kettlebell Swing"]};
+  /* Power opener: one fast, low-rep move at the top of each lifting day, done fresh. Logged like any other set. */
+  function power(n, o) {
+    var e = {L: "A", n: n, t: "core", s: 3, rest: "90 sec", tech: ""};
+    Object.keys(o).forEach(function (k) { e[k] = o[k]; });
+    return clean(e);
+  }
+  function more(e, names) {
+    if (!e) return e;
+    e.sw = e.sw || [];
+    names.forEach(function (n) { if (n !== e.n && e.sw.indexOf(n) < 0) e.sw.push(n); });
+    return clean(e);
+  }
+  var pallof = clean({L: "A", n: "Pallof Press", t: "core", s: 3, r: "10", tech: "",
+    cue: "Stand side-on to the cable. Press straight out, hold one second, and do not let it pull you round. Same reps each side.",
+    sw: ["Weighted Plank Hold", "Bosu Plank", "Ab Wheel Rollout"]});
+  var cossack = clean({L: "A", n: "Cossack Squat", t: "iso", s: 3, r: "6", tech: "",
+    cue: "Wide stance. Sit into one hip with the other leg straight and the toes up, slow down and quick up. Same reps each side. A light dumbbell at the chest is fine.",
+    sw: ["Side Lunge", "Goblet Squat"]});
+  var barbellRow = clean({L: "B", n: "Barbell Row", t: "main", hyp: true, s: 4,
+    cue: (window.ROT_CUES || {})["Barbell Row"] || "Hinge to about 45 degrees and keep that angle. Pull to the lower ribs, lower under control.",
+    sw: ["Chest-Supported Row", "Seated Machine Row", "Single Arm Dumbbell Row"]});
+  /* Charles Glass's seated single-leg curl, replacing the Elevated Romanian Deadlift on Legs B (not liked). */
+  var seatedSingleCurl = clean({L: "A", n: "Seated Single-Leg Curl", t: "main", hyp: true, s: 4,
+    cue: "One leg at a time. Put a yoga block or rolled towel behind your back so you sit upright, and set the pad at the Achilles. Focus on the hamstring just behind the knee, and squeeze hard at the bottom of the curl.",
+    sw: ["Seated Leg Curl", "Unilateral Standing Leg Curl", "Banded Leg Curl"]});
+  var pullThrough = clean({L: "C", n: "Cable Pull-Through", t: "sec", s: 3,
+    cue: "Cable low, rope between the legs, facing away. Push the hips back with soft knees, then squeeze the glutes to stand tall. Ribs down.",
+    sw: ["Dumbbell RDL", "Kettlebell Swing", "Glute Focused DB Step-Up"]});
   var days = [
     day("Mon", "Push A (heavy)", V[0], [
-      pick("Barbell Bench Press"),
+      power("Explosive Push-up", {bw: true, r: "5",
+        cue: "Lower for two counts, then push hard enough that your hands leave the floor. Stop the set when the pushes slow down.",
+        sw: ["Incline Explosive Push-up", "Band-Resisted Push-up"]}),
+      pick("Barbell Bench Press", {hyp: true, cue: "Lower for two counts, bar to the lower chest, then press up fast. Stop just short of lockout."}),
       pick("Incline Dumbbell Press"),
-      pick("Seated Dumbbell Press", {t: "sec", s: 3}),
+      more(pick("Seated Dumbbell Press", {t: "sec", s: 3, cue: "Lower for two counts, press up fast. Ribs down, glutes tight."}), ["Landmine Press"]),
       pick("Dumbbell Lateral Raise", {s: 3}),
       pick("Tricep Rope Pushdown", {s: 3}),
-      pick("Cable Rope Crunch")]),
+      pick("Cable Rope Crunch")], {
+        bands: ["Band pull-aparts 2x20", "Band chest press 2x15", "Scapular push-ups 2x10", "Open books 1x8 each side"],
+        cool: ["Doorway chest stretch 30 sec each side", "Thread the needle 30 sec each side", "Child's pose with reach 30 sec"]}),
     day("Tue", "Pull A (heavy)", V[2], [
-      pick("Deadlift"),
+      power("Dumbbell High Pull", {r: "5",
+        cue: "Dumbbells at mid-thigh. Snap the hips and pull the elbows high and wide, then lower under control. Log the dumbbell weight.",
+        sw: ["Explosive Pull-up", "Single-Arm Kettlebell Swing"]}),
       pick("Pull-up (bodyweight)"),
+      barbellRow,
       pick("Low Cable Row", {s: 3}),
       pick("Hammer Strength Pulldown", {s: 3}),
       pick("EZ Bar Drag Curl", {t: "sec", s: 3}),
-      pick("High Cable Reverse Fly", {s: 3}),
-      pick("Hanging Leg Raise")]),
+      pick("Hanging Leg Raise")], {
+        bands: ["Band pull-aparts 2x20", "Band lat pulldown 2x15", "Dead hang 2x20 sec", "Cat-cow 1x8"],
+        cool: ["Dead hang 30 sec", "Lat stretch on a rack 30 sec each side", "Cross-body shoulder stretch 30 sec each side"]}),
     day("Wed", "Legs A (quads, heavy)", V[1], [
-      pick("Low Bar Back Squat"),
+      power("Box Jump", {bw: true, r: "4",
+        cue: "Jump onto the box, land soft and quiet, stand tall, then step down. Reset every rep.",
+        sw: ["Jump Squat", "Broad Jump (stick the landing)", "Step-Up with Knee Drive"]}),
+      pick("Low Bar Back Squat", {n: "High Bar Back Squat", hyp: true, sw: ["Front Squat", "Smith Machine Back Squat", "Belt Squat", "Low Bar Back Squat"],
+        cue: "Bar high on the traps, torso upright. Warm up thoroughly, lower for two counts to the same depth every set, then drive up fast."}),
       pick("Reverse Hack Squat"),
       pick("Leg Press", {s: 3}),
       pick("Leg Extension", {s: 3}),
       pick("Standing Calf Raise", {s: 3}),
-      pick("Weighted Plank Hold")], {bosu: V[1].bosu}),
+      pallof], {
+        bosu: V[1].bosu,
+        bands: ["Mini band glute bridge 2x20", "Mini band lateral walk 2x15 each way", "Mini band squat 2x12", "Deep squat hold 2x30 sec"],
+        cool: ["Couch stretch 45 sec each side", "Deep squat hold 45 sec", "Standing calf stretch 30 sec each side"]}),
     day("Thu", "Push B (volume)", V[0], [
+      power("Fast Cable Wood Chop", {r: "5",
+        cue: "Light weight. Turn through the hips and chop across fast, then control it back. Same reps each side.",
+        sw: ["Landmine Rotation", "Cable Wood Chop"]}),
       pick("Decline Press", {t: "main", hyp: true}),
       pick("Close Grip Bench Press", {hyp: true}),
       pick("Seated Machine Chest Press", {s: 3}),
       pick("Overhead Cable Tricep Extension", {s: 3}),
       pick("Pec Deck Fly", {s: 2}),
-      pick("Seated Machine Lateral Raise", {s: 2}),
-      pick("Cable Wood Chop")]),
+      pick("Seated Machine Lateral Raise", {s: 2})], {
+        bands: ["Band pull-aparts 2x20", "Band external rotation 2x15 each", "Mini band lateral raise 2x15", "Band shoulder dislocates 2x10"],
+        cool: ["Doorway chest stretch 30 sec each side", "Overhead triceps stretch 30 sec each side", "Child's pose with reach 30 sec"]}),
     day("Fri", "Pull B (volume)", V[2], [
+      power("Kettlebell Swing", {r: "10",
+        cue: "Snap the hips and let the arms just guide. The bell floats to chest height. Stop when the snap slows.",
+        sw: ["Single-Arm Kettlebell Swing", "Dumbbell Swing"]}),
       pick("Chin-up (bodyweight)"),
-      pick("Bent-Over Dumbbell Row", {t: "main", hyp: true, s: 3}),
+      more(pick("Bent-Over Dumbbell Row", {t: "main", hyp: true, s: 3, rot: null}), ["Landmine Row"]),   /* no Barbell Row rotation: Tuesday already has it */
       pick("Preacher Curl", {t: "sec", s: 3}),
       pick("Rear Delt Cable Fly", {s: 3}),
       pick("Cable Face Pull", {s: 2}),
-      pick("Barbell Shrug", {s: 2}),
-      pick("Wrist Curl and Reverse Wrist Curl", {s: 2})]),
+      pick("Barbell Shrug", {s: 2})], {
+        bands: ["Band pull-aparts 2x20", "Band face pulls 2x15", "Dead hang 2x20 sec", "Cat-cow 1x8"],
+        cool: ["Dead hang 30 sec", "Lat stretch on a rack 30 sec each side", "Cross-body shoulder stretch 30 sec each side"]}),
     day("Sat", "Legs B (hamstrings, glutes)", V[3], [
-      pick("Elevated Romanian Deadlift", {hyp: true}),
-      hipThrust,
+      power("Lateral Bound", {r: "5",
+        cue: "Push off one leg sideways, land on the other and stick it for a second. Eyes forward. Same reps each side.",
+        sw: ["Broad Jump (stick the landing)", "Skater Hop"]}),
+      seatedSingleCurl,
       pick("Lying Leg Curl"),
-      pick("Seated Leg Curl", {s: 3}),
+      pullThrough,
       pick("Bulgarian Split Squat", {t: "sec", s: 3}),
-      pick("Seated Calf Raise", {s: 2}),
-      pick("Cable Rope Crunch")]),
+      cossack,
+      pick("Seated Calf Raise", {s: 2})], {
+        bands: ["Mini band glute bridge 2x20", "Mini band lateral walk 2x15 each way", "Mini band monster walk 2x15", "90/90 hip switches 1x8 each side"],
+        cool: ["Seated forward fold 45 sec", "Pigeon stretch 45 sec each side", "90/90 hip stretch 30 sec each side"]}),
     {d: "Sun", title: "Rest", rest: "Full rest. An easy walk is fine if you want to move, but nothing structured."}
   ];
   if (missing.length && window.console) console.warn("PERSONAL split: exercises not found in DAYS_V2:", missing.join(", "));
@@ -544,6 +613,8 @@ window.PERSONAL = (function () {
     from: "2026-11-16", until: "2026-12-30", phases: ["ph3", "ph4"],
     targets: {k: 1800, p: 160, c: 165, f: 55},
     cardio: {perSession: "35-40 min", sessions: 6},
+    /* PM session reminder: due 4 hours after the morning lift is finished, never later than 7:30 pm. */
+    pm: {delayMin: 240, latest: "19:30"},
     deload: {from: "2026-12-07", to: "2026-12-13"},
     /* Calorie cycling: kcal added to (or taken from) the daily target by workout day, Mon..Sun. Sums to zero,
        so the weekly average stays at targets.k. Heavier leg and back days eat more; volume days and rest day eat less. */

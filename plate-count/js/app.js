@@ -190,6 +190,7 @@ function persistDay(k){
   if(roBlocked()) return;
   var d=day(k); d.updatedAt=Date.now(); S.dirty.days[k]=true; lsSave(); queueFlush();
   if(!autoMoving) maybeAutoMove(k);
+  if(k===todayKey()) pmSync();
 }
 /* ---- A missed workout done the next day moves itself onto the day it was really done ----
    When the first set (or cardio) is logged on YESTERDAY while today has no training yet, the
@@ -404,6 +405,108 @@ function phaseTargets(p,dateKey){
 }
 function cardioCfg(k){ var X=personal(program(),k||todayKey()); return X&&X.cardio?X.cardio:null; }
 function cardioSessions(){ var c=cardioCfg(); return c?c.sessions:4; }
+
+/* ---- PM session reminder (coach login only: programs.js PERSONAL.pm) ----
+   When every set of the morning lift is ticked and no cardio is logged, a "Next up" card shows and a reminder is saved
+   to plate_reminders (reminders-setup.sql). A scheduled Supabase function (send-pm-reminders) sends it to this phone as a
+   push notification once it is due. Logging the cardio cancels it. Nothing here touches anyone else's account. */
+var VAPID_PUBLIC="BJgNqk58L2i_mHRAMfBE2XJ72wE-4eMqna5LHSUcM1LxUfFUJWNPuBleCmkVPFpco_qy8gjo35EZ7as-6MbDQrc";   /* PUBLIC key from `npx web-push generate-vapid-keys`. The private key lives only in Supabase secrets. */
+var pm={on:false,sig:"",due:null};
+function pmCfg(k){
+  var X=personal(PROGRAMS[programPos(k).idx]||program(),k);
+  /* Before the personal plan starts, the coach login can still switch reminders on, so the phone can be set up ahead of day one. */
+  if(!X&&userEmail===ADMIN_EMAIL&&window.PERSONAL&&k<window.PERSONAL.from) X=window.PERSONAL;
+  return (X&&X.pm)?X.pm:null;
+}
+function pmSupported(){ return !DEV&&"serviceWorker" in navigator&&"PushManager" in window&&"Notification" in window; }
+function cardioLogged(k){ var c=(S.days[k]||{}).cardio; return !!(c&&(c.done||c.minutes)); }
+/* Same rule as the "Workout logged" message: every planned set is ticked. */
+function workoutComplete(k){
+  var pos=programPos(k), p=PROGRAMS[pos.idx]; if(!p||!p.phase) return false;
+  var pd=daysFor(p,k); if(pd.length<7||day(k).free) return false;
+  var wd=workoutIdx(k), d=pd[Math.min(wd,pd.length-1)]; if(!d||d.rest||!(d.ex||[]).length) return false;
+  var items=buildItems(p,d,wd,k), sets=day(k).sets||{}, total=0, done=0;
+  items.forEach(function(it){ for(var i=0;i<it.s;i++){ total++; if((sets[it.key+"|"+i]||{}).done) done++; } });
+  return total>0&&done===total;
+}
+/* Due: delayMin after the lift, never sooner than 30 minutes from now, and not later than `latest` today. */
+function pmDueAt(cfg){
+  var now=Date.now(), t=now+(cfg.delayMin||240)*60000, hm=String(cfg.latest||"19:30").split(":"), lim=new Date();
+  lim.setHours(+hm[0]||19,+hm[1]||0,0,0);
+  return new Date(Math.max(now+30*60000,Math.min(t,lim.getTime())));
+}
+function pmRefresh(){ if(S.tab==="train"&&!typing()) renderTrain(); }
+function pmSync(){
+  var td=todayKey(); if(!uid||!pm.on||!pmSupported()) return;
+  var cfg=pmCfg(td); if(!cfg) return;
+  var done=workoutComplete(td), cl=cardioLogged(td), sig=td+"|"+done+"|"+cl; if(sig===pm.sig) return; pm.sig=sig;
+  var tbl=supabaseClient.from("plate_reminders");
+  if(done&&!cl){
+    var cc=cardioCfg(td), due=pmDueAt(cfg);
+    tbl.upsert({user_id:uid,day:td,due_at:due.toISOString(),title:"Time for your PM session",
+      body:(cc?cc.perSession+" incline walk. ":"")+"Log it in Plate Count when you finish."},{onConflict:"user_id,day",ignoreDuplicates:true}).then(function(r){
+      if(r.error){ console.warn(r.error); return; }
+      supabaseClient.from("plate_reminders").select("due_at,sent_at").eq("user_id",uid).eq("day",td).maybeSingle().then(function(q){
+        pm.due=(q.data&&!q.data.sent_at)?q.data.due_at:null; pmRefresh();
+      });
+    });
+  } else if(cl){
+    pm.due=null; tbl.delete().eq("user_id",uid).eq("day",td).is("sent_at",null).then(function(r){ if(r.error) console.warn(r.error); });
+  }
+}
+function pmInit(){
+  if(!pmSupported()||!VAPID_PUBLIC||!pmCfg(todayKey())) return;
+  navigator.serviceWorker.ready.then(function(reg){ return reg.pushManager.getSubscription(); }).then(function(sub){
+    pm.on=!!sub&&Notification.permission==="granted"; pm.sig=""; pmSync(); pmRefresh();
+  }).catch(function(){});
+}
+function b64ToU8(s){ var p="=".repeat((4-s.length%4)%4), b=(s+p).replace(/-/g,"+").replace(/_/g,"/"), r=atob(b), o=new Uint8Array(r.length); for(var i=0;i<r.length;i++) o[i]=r.charCodeAt(i); return o; }
+function pmEnable(){
+  if(!VAPID_PUBLIC){ toast("Reminders aren’t set up on the server yet."); return; }
+  Notification.requestPermission().then(function(perm){
+    if(perm!=="granted"){ toast("Notifications are blocked. Allow them for Plate Count in your phone’s settings, then try again."); return; }
+    return navigator.serviceWorker.ready.then(function(reg){
+      return reg.pushManager.getSubscription().then(function(s){ return s||reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64ToU8(VAPID_PUBLIC)}); });
+    }).then(function(sub){
+      var j=sub.toJSON();
+      return supabaseClient.from("plate_push_subs").upsert({user_id:uid,endpoint:j.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth,ua:String(navigator.userAgent).slice(0,200)},{onConflict:"endpoint"});
+    }).then(function(r){
+      if(r.error) throw r.error;
+      pm.on=true; pm.sig=""; toast("Phone reminders are on"); pmSync(); pmRefresh();
+    });
+  }).catch(function(e){ showErr(e); });
+}
+function pmDisable(){
+  navigator.serviceWorker.ready.then(function(reg){ return reg.pushManager.getSubscription(); }).then(function(sub){
+    if(!sub) return;
+    var ep=sub.endpoint; return sub.unsubscribe().then(function(){ return supabaseClient.from("plate_push_subs").delete().eq("endpoint",ep); });
+  }).then(function(){ pm.on=false; pm.due=null; toast("Phone reminders are off"); pmRefresh(); }).catch(function(e){ showErr(e); });
+}
+function pmCard(rd){
+  if(rd!==todayKey()||isStarter()||!pmCfg(rd)) return "";
+  var done=workoutComplete(rd), cl=cardioLogged(rd), c=day(rd).cardio||{}, cc=cardioCfg(rd), h="";
+  if(done&&cl) h+="<div class='card' style='margin-top:12px'><p style='margin:0'><b>PM session done.</b> "+(c.minutes?esc(String(c.minutes))+" min logged. ":"")+"Both sessions are in for today.</p></div>";
+  else if(done){
+    var when=pm.on&&pm.due?new Date(pm.due).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}):"";
+    h+="<div class='card' style='margin-top:12px;border:2px solid var(--accent)'><p style='margin:0 0 4px'><b>Next up: PM session</b></p>"+
+       "<p class='small' style='margin:0 0 8px'>"+esc(cc?cc.perSession:"Cardio")+" incline walk, a few hours from now."+(when?" Reminder set for "+esc(when)+".":"")+"</p>"+
+       "<button class='btn ghost sm' id='pmOpen'>Open cardio log</button></div>";
+  }
+  if(!cl){
+    if(pmSupported()&&VAPID_PUBLIC){
+      h+=pm.on?"<p class='muted small' style='margin:10px 4px 0'>Phone reminders are on. <button class='linkbtn' id='pmOff'>Turn off</button></p>"
+              :"<div class='card' style='margin-top:12px'><p style='margin:0 0 8px'><b>Get a phone reminder for your PM session</b></p><p class='small muted' style='margin:0 0 8px'>You’ll get one notification a few hours after you finish your morning lift.</p><button class='btn sm' id='pmOn'>Turn on reminders</button></div>";
+    } else if(/iphone|ipad/i.test(navigator.userAgent)&&!window.navigator.standalone){
+      h+="<p class='muted small' style='margin:10px 4px 0'>For phone reminders on iPhone, add Plate Count to your Home Screen and open it from there.</p>";
+    }
+  }
+  return h;
+}
+function pmWire(){
+  var o=$("pmOpen"); if(o) o.onclick=function(){ var t=$("cTick"), f=t&&t.closest("details"); if(f){ f.open=true; f.scrollIntoView({behavior:"smooth",block:"center"}); } };
+  var on=$("pmOn"); if(on) on.onclick=pmEnable;
+  var off=$("pmOff"); if(off) off.onclick=pmDisable;
+}
 
 /* Phase and week are COMPUTED from one fixed start date. */
 function programPosRaw(dateKey){
@@ -1122,7 +1225,7 @@ function buildItems(p,d,wd,rdate){
     if(sch&&e.t){
       var tier=sch[e.t]||sch.iso, k=(e.t==="main"&&focus==="s"&&tier.s&&!e.hyp)?tier.s:tier.h;
       it.warm=k.w; it.s=k.s; it.r=k.r; it.rest=k.rest; it.tech=k.tech; it.t=e.t;
-      if(e.s) it.s=e.s; if(e.r) it.r=e.r; it.bw=!!e.bw;
+      if(e.s) it.s=e.s; if(e.r) it.r=e.r; it.bw=!!e.bw; if(e.rest) it.rest=e.rest; if(e.tech!==undefined) it.tech=e.tech;
       var PX=personal(p,rdate);   /* deload week: one set fewer, same weights */
       if(PX&&PX.deload&&rdate>=PX.deload.from&&rdate<=PX.deload.to&&it.s>2){ it.s=it.s-1; it.tech=(it.tech?it.tech+" ":"")+"Deload week: one set fewer, same weights."; }
       /* Final-days taper: main lifts keep their sets and weights; secondary, isolation and core work drops one set. */
@@ -1292,7 +1395,7 @@ function renderTrain(){
   if(d.rest){
     if(!(day(rd).extras||[]).length){
       h="<div class='card'><div class='session'><div class='ttl'><div class='eyebrow'>"+esc(prettyDate(rd,{weekday:"long"}))+"</div><h1 class='h1'>"+esc(d.title)+"</h1></div>"+chip+"</div></div>"+
-        "<div class='restday'>"+esc(d.rest)+"</div>"+
+        "<div class='restday'>"+esc(d.rest)+"</div>"+pmCard(rd)+
         "<div class='card' style='margin-top:12px'><p class='muted small' style='margin:0 0 10px'>Training anyway? Add the exercises you did, or log cardio below.</p><button class='btn ghost' id='addEx'>+ Add an exercise</button> <button class='btn ghost' id='freeOn'>Freestyle: I did my own thing</button></div>"+
         cardioCard(d,rd,p);
       var rp=$("panel-train"); rp.innerHTML=h; wireTrain(rp,rd,[],day(rd).sets,wd); mountMusic(rp); return;
@@ -1309,6 +1412,7 @@ function renderTrain(){
      (p.note&&!free?"<details class='fold' style='border:0;margin-top:8px'><summary style='padding:0;min-height:40px;font-size:13px;color:var(--text-2)'>About this phase</summary><div class='inner' style='padding:0 0 4px'><p style='margin:0 0 8px'>"+esc(p.note)+"</p>"+(p.phase&&p.phase.tech?"<p class='tech'>"+esc(p.phase.tech)+"</p>":"")+"</div></details>":"")+"</div>";
   if(total>0&&done===total) h+="<div class='card' style='margin-top:12px;background:var(--accent-bg)'><p style='margin:0'><b>Workout logged.</b> Every number here is your starting point for next time.</p></div>";
   else if(done>0&&rd<todayKey()) h+="<div class='card' style='margin-top:12px'><p style='margin:0'><b>"+done+" set"+(done===1?"":"s")+" logged.</b> That counts.</p></div>";
+  h+=pmCard(rd);
   if(!free&&rd===todayKey()) h+=phaseNoteCard(p);
   var my=free?null:missedYesterday(rd);
   if(my) h+="<div class='card' style='margin-top:12px'><p style='margin:0 0 8px'><b>Missed yesterday’s "+esc(my.title||my.name)+"?</b> Do it today and it counts for today, next to the food you’ve logged.</p><button class='btn sm' id='moveYest'>Do it today</button> <span class='muted small'>Moves the rest of the week back a day. You can undo it.</span></div>";
@@ -1371,6 +1475,7 @@ function renderTrain(){
     }
     h+="</div>";
   });
+  if(d.cool&&d.cool.length) h+="<details class='fold'><summary>Cool-down<span class='r'>optional</span></summary><div class='inner'><ul style='margin:0;padding-left:18px'>"+d.cool.map(function(x){ return "<li>"+esc(x)+"</li>"; }).join("")+"</ul></div></details>";
   h+="<button class='btn ghost' id='addEx' style='margin-top:12px'>+ Add an exercise</button>";
   h+=cardioHtml;
   h+="<p class='foot'>Numbers save per day. Grey numbers are suggestions: tap ✓ with empty boxes to log them. Star an exercise you love and it is used wherever it fits.</p>";
@@ -1514,6 +1619,7 @@ function wireTrain(panel,rd,items,sets,wd){
   }; });
   panel.querySelectorAll("[data-ct]").forEach(function(b){ b.onclick=function(){ c().type=b.dataset.ct; persistDay(rd); renderTrain(); }; });
   var c=function(){ var cd=day(rd); return cd.cardio=cd.cardio||{done:false,miles:null,minutes:null,type:""}; };
+  pmWire();
   var ct=$("cTick"); if(ct) ct.onclick=function(){ c().done=!c().done; persistDay(rd); renderTrain(); renderWeek(); };
   var cm=$("cMin"); if(cm) cm.oninput=function(){ c().minutes=cm.value===""?null:num(cm.value); persistDay(rd); };
   var cmi=$("cMi"); if(cmi) cmi.oninput=function(){ c().miles=cmi.value===""?null:num(cmi.value); persistDay(rd); };
@@ -2579,7 +2685,7 @@ function start(u){
       var wantTrack=isStarter()?"starter":(S.profile.plan==="full"?"full":(S.profile.track||""));
       if(S.profile.name!==firstName()||S.profile.email!==userEmail||(S.profile.track||"")!==wantTrack){ S.profile.name=firstName(); S.profile.email=userEmail; if(wantTrack) S.profile.track=wantTrack; persistProfile(); }
     }
-    maybeAdvance(); maybeOnboard();
+    maybeAdvance(); maybeOnboard(); pmInit();
     return loadMsgs().then(function(){ if(S.coachReply) softRender(); });
   });
   if("serviceWorker" in navigator&&!DEV) navigator.serviceWorker.register("sw.js").catch(function(){});
