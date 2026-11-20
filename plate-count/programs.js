@@ -469,7 +469,8 @@ window.ROT_CUES = {
    Goal: add a little muscle, keep what is there, and get leaner by 2026-12-30.
    Runs on Phases 3 and 4 from `from` to `until`; before that date, or after it, the shared program applies.
      - 6-day push / pull / legs, each muscle twice a week: a heavy day (A) and a volume day (B).
-     - Secondary work trimmed to 3 sets; isolation on the volume days trimmed to 2. Main lifts keep their sets.
+     - Accessory work runs at the phase's full set count (Phase 3: 4 secondary, 3 isolation; Phase 4: 3 and 3).
+       It was trimmed to 3 and 2 until 2026-11-20, then put back to make the sessions harder.
      - Cardio: a separate PM session on all six lifting days (the weekly goal counts 6 sessions, not 4).
      - Daily targets a little under the shared 1,900 kcal; protein unchanged.
      - Deload week: one set fewer on everything, same weights.
@@ -528,7 +529,7 @@ window.PERSONAL = (function () {
   var seatedSingleCurl = clean({L: "A", n: "Seated Single-Leg Curl", t: "main", hyp: true, s: 4,
     cue: "One leg at a time. Put a yoga block or rolled towel behind your back so you sit upright, and set the pad at the Achilles. Focus on the hamstring just behind the knee, and squeeze hard at the bottom of the curl.",
     sw: ["Seated Leg Curl", "Unilateral Standing Leg Curl", "Banded Leg Curl"]});
-  var pullThrough = clean({L: "C", n: "Cable Pull-Through", t: "sec", s: 3,
+  var pullThrough = clean({L: "C", n: "Cable Pull-Through", t: "sec",
     cue: "Cable low, rope between the legs, facing away. Push the hips back with soft knees, then squeeze the glutes to stand tall. Ribs down.",
     sw: ["Dumbbell RDL", "Kettlebell Swing", "Glute Focused DB Step-Up"]});
   var days = [
@@ -538,9 +539,9 @@ window.PERSONAL = (function () {
         sw: ["Incline Explosive Push-up", "Band-Resisted Push-up"]}),
       pick("Barbell Bench Press", {hyp: true, cue: "Lower for two counts, bar to the lower chest, then press up fast. Stop just short of lockout."}),
       pick("Incline Dumbbell Press"),
-      more(pick("Seated Dumbbell Press", {t: "sec", s: 3, cue: "Lower for two counts, press up fast. Ribs down, glutes tight."}), ["Landmine Press"]),
-      pick("Dumbbell Lateral Raise", {s: 3}),
-      pick("Tricep Rope Pushdown", {s: 3}),
+      more(pick("Seated Dumbbell Press", {t: "sec", cue: "Lower for two counts, press up fast. Ribs down, glutes tight."}), ["Landmine Press"]),
+      pick("Dumbbell Lateral Raise"),
+      pick("Tricep Rope Pushdown"),
       pick("Cable Rope Crunch")], {
         bands: ["Band pull-aparts 2x20", "Band chest press 2x15", "Scapular push-ups 2x10", "Open books 1x8 each side"],
         cool: ["Doorway chest stretch 30 sec each side", "Thread the needle 30 sec each side", "Child's pose with reach 30 sec"]}),
@@ -550,9 +551,9 @@ window.PERSONAL = (function () {
         sw: ["Explosive Pull-up", "Single-Arm Kettlebell Swing"]}),
       pick("Pull-up (bodyweight)"),
       barbellRow,
-      pick("Low Cable Row", {s: 3}),
-      pick("Hammer Strength Pulldown", {s: 3}),
-      pick("EZ Bar Drag Curl", {t: "sec", s: 3}),
+      pick("Low Cable Row"),
+      pick("Hammer Strength Pulldown"),
+      pick("EZ Bar Drag Curl", {t: "sec"}),
       pick("Hanging Leg Raise")], {
         bands: ["Band pull-aparts 2x20", "Band lat pulldown 2x15", "Dead hang 2x20 sec", "Cat-cow 1x8"],
         cool: ["Dead hang 30 sec", "Lat stretch on a rack 30 sec each side", "Cross-body shoulder stretch 30 sec each side"]}),
@@ -563,9 +564,9 @@ window.PERSONAL = (function () {
       pick("Low Bar Back Squat", {n: "High Bar Back Squat", hyp: true, sw: ["Front Squat", "Smith Machine Back Squat", "Belt Squat", "Low Bar Back Squat"],
         cue: "Bar high on the traps, torso upright. Warm up thoroughly, lower for two counts to the same depth every set, then drive up fast."}),
       pick("Reverse Hack Squat"),
-      pick("Leg Press", {s: 3}),
-      pick("Leg Extension", {s: 3}),
-      pick("Standing Calf Raise", {s: 3}),
+      pick("Leg Press"),
+      pick("Leg Extension"),
+      pick("Standing Calf Raise"),
       pallof], {
         bosu: V[1].bosu,
         bands: ["Mini band glute bridge 2x20", "Mini band lateral walk 2x15 each way", "Mini band squat 2x12", "Deep squat hold 2x30 sec"],
@@ -576,10 +577,10 @@ window.PERSONAL = (function () {
         sw: ["Landmine Rotation", "Cable Wood Chop"]}),
       pick("Decline Press", {t: "main", hyp: true}),
       pick("Close Grip Bench Press", {hyp: true}),
-      pick("Seated Machine Chest Press", {s: 3}),
-      pick("Overhead Cable Tricep Extension", {s: 3}),
-      pick("Pec Deck Fly", {s: 2}),
-      pick("Seated Machine Lateral Raise", {s: 2})], {
+      pick("Seated Machine Chest Press"),
+      pick("Overhead Cable Tricep Extension"),
+      pick("Pec Deck Fly"),
+      pick("Seated Machine Lateral Raise")], {
         bands: ["Band pull-aparts 2x20", "Band external rotation 2x15 each", "Mini band lateral raise 2x15", "Band shoulder dislocates 2x10"],
         cool: ["Doorway chest stretch 30 sec each side", "Overhead triceps stretch 30 sec each side", "Child's pose with reach 30 sec"]}),
     day("Fri", "Pull B (volume)", V[2], [
@@ -588,10 +589,10 @@ window.PERSONAL = (function () {
         sw: ["Single-Arm Kettlebell Swing", "Dumbbell Swing"]}),
       pick("Chin-up (bodyweight)"),
       more(pick("Bent-Over Dumbbell Row", {t: "main", hyp: true, s: 3, rot: null}), ["Landmine Row"]),   /* no Barbell Row rotation: Tuesday already has it */
-      pick("Preacher Curl", {t: "sec", s: 3}),
-      pick("Rear Delt Cable Fly", {s: 3}),
-      pick("Cable Face Pull", {s: 2}),
-      pick("Barbell Shrug", {s: 2})], {
+      pick("Preacher Curl", {t: "sec"}),
+      pick("Rear Delt Cable Fly"),
+      pick("Cable Face Pull"),
+      pick("Barbell Shrug")], {
         bands: ["Band pull-aparts 2x20", "Band face pulls 2x15", "Dead hang 2x20 sec", "Cat-cow 1x8"],
         cool: ["Dead hang 30 sec", "Lat stretch on a rack 30 sec each side", "Cross-body shoulder stretch 30 sec each side"]}),
     day("Sat", "Legs B (hamstrings, glutes)", V[3], [
@@ -601,9 +602,9 @@ window.PERSONAL = (function () {
       seatedSingleCurl,
       pick("Lying Leg Curl"),
       pullThrough,
-      pick("Bulgarian Split Squat", {t: "sec", s: 3}),
+      pick("Bulgarian Split Squat", {t: "sec"}),
       cossack,
-      pick("Seated Calf Raise", {s: 2})], {
+      pick("Seated Calf Raise")], {
         bands: ["Mini band glute bridge 2x20", "Mini band lateral walk 2x15 each way", "Mini band monster walk 2x15", "90/90 hip switches 1x8 each side"],
         cool: ["Seated forward fold 45 sec", "Pigeon stretch 45 sec each side", "90/90 hip stretch 30 sec each side"]}),
     {d: "Sun", title: "Rest", rest: "Full rest. An easy walk is fine if you want to move, but nothing structured."}
